@@ -6554,6 +6554,8 @@ html body .app.perspective3d .discardSeat .tile::before {
     setGameSurfaceVisible(true);
     const lobby = byId('tw16Lobby');
     if (lobby) lobby.hidden = true;
+    const md2 = dom.tw16MiniDashboard || byId('tw16MiniDashboard'); if (md2) md2.style.removeProperty('display');
+    const cb = byId('tw16ChatBoard'); if (cb) cb.style.removeProperty('display');
   }
 
   function showInterface329Lobby(reason) {
@@ -6563,6 +6565,8 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (lobby) lobby.hidden = false;
     try { const savedName=localStorage.getItem('tw16_last_player_name'),savedRoom=localStorage.getItem('tw16_last_room_name'),nEl=byId('tw16LobbyName'),rEl=byId('tw16LobbyRoom'); if(nEl&&savedName)nEl.value=savedName; if(rEl&&savedRoom)rEl.value=savedRoom; } catch(e){}
     const cb = byId('tw16ChatBoard'); if (cb) cb.style.display = 'none';
+    const md = dom.tw16MiniDashboard || byId('tw16MiniDashboard'); if (md) md.style.setProperty('display','none','important');
+    const cs = document.querySelector('.tw16-mini-dashboard-chip-sum'); if (cs) cs.remove();
     restoreLobbyAblyApiKeyFromStoredValue(false);
     updateRoomText();
     if (reason) updateLobbyStatus(reason);
