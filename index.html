@@ -6564,59 +6564,42 @@ html body .app.perspective3d .discardSeat .tile::before {
       app.appendChild(dash);
       dom.tw16MiniDashboard = dash;
       dom.tw16MiniDashboardGrid = byId('tw16MiniDashboardGrid');
-      document.addEventListener('touchstart', function(ev) {
+      let dashLastTouchHandled = false;
+      const handleDashToggle = function(x, y) {
+        let hit = null;
+        dash.querySelectorAll('.tw16-mini-dashboard-card').forEach(c => {
+          const r = c.getBoundingClientRect();
+          if (x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom) hit=c;
+        });
+        if (!hit) return;
+        const plus = hit.querySelector('.tw16-mini-dashboard-chip-plus');
+        if (!plus) return;
+        plus.style.display = plus.style.display !== 'none' ? 'none' : '';
+        const grid2 = byId('tw16MiniDashboardGrid');
+        const oldSum = dash.querySelector('.tw16-mini-dashboard-chip-sum');
+        if (oldSum) oldSum.remove();
+        const sel = Array.from(grid2 ? grid2.querySelectorAll('.tw16-mini-dashboard-card') : [])
+          .filter(c => c.querySelector('.tw16-mini-dashboard-chip-plus') && c.querySelector('.tw16-mini-dashboard-chip-plus').style.display !== 'none');
+        if (!sel.length) return;
+        const total = sel.reduce((s,c) => s + (Number(state.chips && state.chips[c.dataset.seat]) || 0), 0);
+        const sumEl = document.createElement('div');
+        sumEl.className = 'tw16-mini-dashboard-chip-sum';
+        sumEl.textContent = '合計 ' + total;
+        sumEl.style.top = (dash.getBoundingClientRect().bottom + 4) + 'px';
+        dash.appendChild(sumEl);
+      };
+      document.addEventListener('touchend', function(ev) {
         if (!dash.classList.contains('show')) return;
         const t = ev.changedTouches && ev.changedTouches[0];
         if (!t) return;
-        let hit = null;
-        dash.querySelectorAll('.tw16-mini-dashboard-card').forEach(c => {
-          const r = c.getBoundingClientRect();
-          if (t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom) hit=c;
-        });
-        if (!hit) return;
-        const plus = hit.querySelector('.tw16-mini-dashboard-chip-plus');
-        if (!plus) return;
-        const isOn = plus.style.display !== 'none';
-        plus.style.display = isOn ? 'none' : '';
-        /* 更新加總 */
-        const grid2 = byId('tw16MiniDashboardGrid');
-        const old2 = dash.querySelector('.tw16-mini-dashboard-chip-sum');
-        if (old2) old2.remove();
-        const sel = Array.from(grid2 ? grid2.querySelectorAll('.tw16-mini-dashboard-card') : [])
-          .filter(c => c.querySelector('.tw16-mini-dashboard-chip-plus') && c.querySelector('.tw16-mini-dashboard-chip-plus').style.display !== 'none');
-        if (!sel.length) return;
-        const total = sel.reduce((s,c) => s + (Number(state.chips && state.chips[c.dataset.seat]) || 0), 0);
-        const sumEl = document.createElement('div');
-        sumEl.className = 'tw16-mini-dashboard-chip-sum';
-        sumEl.textContent = '合計 ' + total;
-        sumEl.style.top = (dash.getBoundingClientRect().bottom + 4) + 'px';
-        dash.appendChild(sumEl);
+        dashLastTouchHandled = true;
+        setTimeout(() => { dashLastTouchHandled = false; }, 600);
+        handleDashToggle(t.clientX, t.clientY);
       }, { capture: true, passive: true });
-      /* 滑鼠點擊 */
       document.addEventListener('click', function(ev) {
         if (!dash.classList.contains('show')) return;
-        let hit = null;
-        dash.querySelectorAll('.tw16-mini-dashboard-card').forEach(c => {
-          const r = c.getBoundingClientRect();
-          if (ev.clientX>=r.left&&ev.clientX<=r.right&&ev.clientY>=r.top&&ev.clientY<=r.bottom) hit=c;
-        });
-        if (!hit) return;
-        const plus = hit.querySelector('.tw16-mini-dashboard-chip-plus');
-        if (!plus) return;
-        const isOn = plus.style.display !== 'none';
-        plus.style.display = isOn ? 'none' : '';
-        const grid2 = byId('tw16MiniDashboardGrid');
-        const old2 = dash.querySelector('.tw16-mini-dashboard-chip-sum');
-        if (old2) old2.remove();
-        const sel = Array.from(grid2 ? grid2.querySelectorAll('.tw16-mini-dashboard-card') : [])
-          .filter(c => c.querySelector('.tw16-mini-dashboard-chip-plus') && c.querySelector('.tw16-mini-dashboard-chip-plus').style.display !== 'none');
-        if (!sel.length) return;
-        const total = sel.reduce((s,c) => s + (Number(state.chips && state.chips[c.dataset.seat]) || 0), 0);
-        const sumEl = document.createElement('div');
-        sumEl.className = 'tw16-mini-dashboard-chip-sum';
-        sumEl.textContent = '合計 ' + total;
-        sumEl.style.top = (dash.getBoundingClientRect().bottom + 4) + 'px';
-        dash.appendChild(sumEl);
+        if (dashLastTouchHandled) return;
+        handleDashToggle(ev.clientX, ev.clientY);
       }, { capture: true });
     }
     const table = byId('table');
