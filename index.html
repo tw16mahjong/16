@@ -1290,7 +1290,7 @@
 .result .buttons .btn{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:2px 5px!important;min-width:0!important;min-height:0!important;color:#ef4444!important;font-size:16px!important;line-height:1.1!important;text-shadow:0 1px 2px rgba(0,0,0,.35)!important;}
 .result h2{margin:0 0 12px!important;color:#fde68a!important;font-size:18px!important;font-weight:900!important;line-height:1.16!important;}
 .tw16-lobby{
-  position:fixed;inset:0;z-index:2147483600;display:block;overflow:auto;padding:max(18px,calc(env(safe-area-inset-top) + 12px)) 18px max(18px,calc(env(safe-area-inset-bottom) + 12px));
+  position:fixed;inset:0;z-index:2147483646;display:block;overflow:auto;padding:max(18px,calc(env(safe-area-inset-top) + 12px)) 18px max(18px,calc(env(safe-area-inset-bottom) + 12px));
   background:rgba(3,8,18,.78);overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
 }
 .tw16-lobby[hidden]{display:none!important;}
@@ -1325,17 +1325,17 @@
 @media(max-width:700px){.tw16-lobby-key-summary-state{min-width:68px;padding:0 7px;font-size:12px}.tw16-lobby-key-summary-input{font-size:14px}}.tw16-lobby-key-sheet-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.tw16-lobby-key-sheet-tools .tw16-lobby-btn{width:100%;font-size:11px}.tw16-lobby-key-input{min-width:240px}}
 .tw16-mini-dashboard{position:fixed;left:0;top:0;transform:none;z-index:119;width:auto;display:none;pointer-events:none;user-select:none;overflow:visible;}
 .tw16-mini-dashboard.show{display:block;}
-.tw16-chat-board{position:fixed;top:56px;right:0;z-index:9990;width:80px;display:none;}
+.tw16-chat-board{position:fixed;top:56px;right:0;z-index:119;width:80px;display:none;}
 .tw16-chat-board.show{display:block;}
 .tw16-chat-board-close{display:block;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:3px;padding:1px 5px;font-size:11px;cursor:pointer;margin-bottom:2px;}
 #tw16ChatBoardList{list-style:none;margin:0;padding:0;height:120px;overflow-y:scroll;touch-action:pan-y;-webkit-overflow-scrolling:touch;}
 .tw16-chat-board-item{font-size:10px;font-weight:bold;line-height:1.5;word-break:break-all;padding:1px 2px;}
 .tw16-chat-board-name{color:#000;font-weight:bold;margin-right:2px;}
 .tw16-chat-board-text{color:#fff;text-shadow:0 1px 2px #000;}
-.tw16-seat-avatar-wm{position:absolute;z-index:4;pointer-events:none;width:48px;height:48px;overflow:hidden;opacity:0.6;display:none;border-radius:4px;}
+.tw16-seat-avatar-wm{position:absolute;z-index:4;pointer-events:none;width:32px;height:32px;overflow:hidden;opacity:0.6;display:none;border-radius:2px;}
 .tw16-seat-avatar-wm img{width:100%;height:100%;object-fit:cover;display:block;}
 .tw16-mini-dashboard-chip-plus{color:#ef4444;font-weight:1000;margin-right:1px;}
-.tw16-mini-dashboard-chip-sum{position:fixed;left:50%;transform:translateX(-50%);background:rgba(2,6,23,.90);border:1px solid rgba(255,60,60,.80);border-radius:8px;padding:2px 10px;color:#ef4444;font-size:clamp(11px,3vw,15px);font-weight:1000;white-space:nowrap;pointer-events:none;z-index:9999;line-height:1.4;}
+.tw16-mini-dashboard-chip-sum{position:fixed;left:50%;transform:translateX(-50%);background:rgba(2,6,23,.90);border:1px solid rgba(255,60,60,.80);border-radius:8px;padding:2px 10px;color:#ef4444;font-size:clamp(11px,3vw,15px);font-weight:1000;white-space:nowrap;pointer-events:none;z-index:119;line-height:1.4;}
 .tw16-mini-dashboard-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;align-items:start;width:100%;}
 .tw16-mini-dashboard-card{position:relative;min-width:0;min-height:0;border-radius:8px!important;padding:1px 3px 2px!important;background:transparent!important;border:1px solid rgba(255,255,255,.52)!important;box-shadow:none!important;color:#f8fafc;text-align:center;overflow:hidden;}
 .tw16-mini-dashboard-card.active{border:1px solid rgba(255,32,32,.96)!important;border-radius:8px!important;box-shadow:0 0 6px rgba(255,32,32,.50)!important;background:transparent!important;}
@@ -6593,6 +6593,23 @@ html body .app.perspective3d .discardSeat .tile::before {
       document.body.appendChild(dash);
       dom.tw16MiniDashboard = dash;
       dom.tw16MiniDashboardGrid = byId('tw16MiniDashboardGrid');
+      /* 大廳顯示時自動隱藏迷你儀表板 */
+      const updateDashVisibility = () => {
+        const lobby = byId('tw16Lobby');
+        const rp = dom.resultPanel || byId('resultPanel');
+        const lobbyVisible = lobby && !lobby.hidden;
+        const resultVisible = rp && rp.classList.contains('show');
+        dash.style.setProperty('visibility', (lobbyVisible || resultVisible) ? 'hidden' : '', 'important');
+      };
+      const hideDashWhenLobby = () => {
+        const lobby = byId('tw16Lobby');
+        if (lobby) new MutationObserver(updateDashVisibility).observe(lobby, { attributes: true, attributeFilter: ['hidden'] });
+        const rp = dom.resultPanel || byId('resultPanel');
+        if (rp) new MutationObserver(updateDashVisibility).observe(rp, { attributes: true, attributeFilter: ['class'] });
+        updateDashVisibility();
+      };
+      if (document.readyState === 'complete') hideDashWhenLobby();
+      else window.addEventListener('load', hideDashWhenLobby);
 
       let dashLastTouchHandled = false;
       const handleDashToggle = function(x, y) {
@@ -10109,6 +10126,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
   function newGame() {
     shuffleSeatAvatars();
+    ['avatarWmBottom','avatarWmTop','avatarWmLeft','avatarWmRight'].forEach(id=>{const el=byId(id);if(el)delete el.dataset.posFixed;});
     settlementVoiceStoppedHandId = 0;
     if (net.role === 'guest') {
       startGuestSnapshotSync('guest-newgame-blocked');
@@ -17676,34 +17694,49 @@ function concealedKongOwnerOfMeld(meld) {
       }
     });
     positionSeatLabels(map);
-    /* 方形頭像浮水印：定位在各座位手牌旁 */
+    /* 方形頭像浮水印：用實際牌位置定位 */
     (function(){
       const tEl=byId('table'); if(!tEl) return;
       const tR=tEl.getBoundingClientRect();
       const dm=displayMap();
       const avMap={bottom:dom.avatarWmBottom,top:dom.avatarWmTop,left:dom.avatarWmLeft,right:dom.avatarWmRight};
       const handMap={bottom:'handBottom',top:'handTop',left:'handLeft',right:'handRight'};
-      const sz=48, gap=4;
+      const sz=32;
       const playPhase=state.phase==='discard'||state.phase==='claim'||state.phase==='draw'||state.phase==='selfwin';
       SEATS.forEach(seat=>{
         const pos=dm[seat]; if(!pos) return;
         const el=avMap[pos]; if(!el) return;
         if(!playPhase||!seatAvatarMap||!seatAvatarMap[seat]){el.style.display='none';return;}
         if(!el.querySelector('img')){const img=document.createElement('img');img.src=seatAvatarMap[seat];el.appendChild(img);}
-        const hEl=byId(handMap[pos]); if(!hEl){el.style.display='none';return;}
-        const hR=hEl.getBoundingClientRect();
-        let lx,ty;
-        if(pos==='bottom'){lx=hR.left-tR.left-sz-gap; ty=(hR.top+hR.bottom)/2-tR.top-sz/2;}
-        else if(pos==='top'){lx=hR.right-tR.left+gap; ty=(hR.top+hR.bottom)/2-tR.top-sz/2;}
-        else if(pos==='left'){lx=(hR.left+hR.right)/2-tR.left-sz/2; ty=hR.top-tR.top-sz-gap;}
-        else{lx=(hR.left+hR.right)/2-tR.left-sz/2; ty=hR.bottom-tR.top+gap;}
-        /* 超出邊界則移到手牌角落 */
-        const tW=tEl.offsetWidth,tH=tEl.offsetHeight;
-        if(lx<0||ty<0||lx+sz>tW||ty+sz>tH){
-          lx=hR.right-tR.left-sz; ty=hR.top-tR.top-sz-gap;
-          lx=Math.max(0,Math.min(lx,tW-sz)); ty=Math.max(0,Math.min(ty,tH-sz));
+        el.style.display='block';
+        if(el.dataset.posFixed==='1') return;
+        if(state.phase==='draw'||state.phase==='discard'||state.phase==='claim'){
+          const hEl=byId(handMap[pos]); if(!hEl) return;
+          /* 取 .hand-tile-row 內的手牌，排除副露 */
+          const tileRow=hEl.querySelector('.hand-tile-row');
+          const allTiles=tileRow?Array.from(tileRow.querySelectorAll('.tile')):Array.from(hEl.querySelectorAll('.tile'));
+          if(!allTiles.length) return;
+          const fR=allTiles[0].getBoundingClientRect();
+          const lR=allTiles[allTiles.length-1].getBoundingClientRect();
+          /* 用 fixed 座標直接定位，避免 table transform 偏差 */
+          el.style.position='fixed';
+          let lx,ty;
+          if(pos==='bottom'){
+            lx=fR.left-sz;
+            ty=(fR.top+fR.bottom)/2-sz/2;
+          } else if(pos==='top'){
+            lx=lR.right;
+            ty=(fR.top+fR.bottom)/2-sz/2;
+          } else if(pos==='left'){
+            lx=(fR.left+fR.right)/2-sz/2;
+            ty=fR.top-sz;
+          } else {
+            lx=(fR.left+fR.right)/2-sz/2;
+            ty=fR.top-sz;
+          }
+          el.style.left=Math.round(lx)+'px'; el.style.top=Math.round(ty)+'px';
+          if(state.phase==='draw'||state.phase==='discard') el.dataset.posFixed='1';
         }
-        el.style.left=Math.round(lx)+'px'; el.style.top=Math.round(ty)+'px'; el.style.display='block';
       });
     })();
     (function(){
