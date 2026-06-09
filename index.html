@@ -3528,7 +3528,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     nextRoundPlan: null,
     lastSettlement: null,
     continuousRun: { enabled: false, remaining: 0, delayMs: 700 },
-    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 100, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, voiceEventEnabled: false, scoreBaseChip: 100, scoreTaiChip: 30 },
+    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 100, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: true, voiceEventEnabled: false, scoreBaseChip: 100, scoreTaiChip: 30 },
     handVisualColors: null,
     locked: false,
     lockedAt: 0,
@@ -6781,6 +6781,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     ensureUiSettings();
     let changed = false;
     if (state.uiSettings.turnHandFrameEnabled !== true) { state.uiSettings.turnHandFrameEnabled = true; changed = true; }
+    if (state.uiSettings.avatarEnabled === undefined) { state.uiSettings.avatarEnabled = true; changed = true; }
     const guestSeat = NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : (NETWORK_SEAT_ORDER.includes(state.viewSeat) ? state.viewSeat : '');
     if (!net.guestAutoplayInitializedSeats || typeof net.guestAutoplayInitializedSeats !== 'object') net.guestAutoplayInitializedSeats = {};
     if (guestSeat && !net.guestAutoplayInitializedSeats[guestSeat]) {
@@ -12975,6 +12976,7 @@ html body .app.perspective3d .discardSeat .tile::before {
       + '<label class="settingsRow"><span>輪到出牌時顯示手牌金框</span><input id="setTurnHandFrameEnabled" type="checkbox" ' + (state.uiSettings.turnHandFrameEnabled ? 'checked' : '') + '><b></b></label>'
       + '<label class="settingsRow"><span>聽牌輔助</span><input id="setTingAssistEnabled" type="checkbox" ' + (state.uiSettings.tingAssistEnabled ? 'checked' : '') + '><b></b></label>'
       + '<label class="settingsRow"><span>顯示迷你儀表板</span><input id="setMiniDashboardEnabled" type="checkbox" ' + (state.uiSettings.miniDashboardEnabled ? 'checked' : '') + '><b></b></label>'
+      + '<label class="settingsRow"><span>顯示座位頭像</span><input id="setAvatarEnabled" type="checkbox" ' + (state.uiSettings.avatarEnabled !== false ? 'checked' : '') + '><b></b></label>'
       + '<div class="menuGrid"><button class="btn" id="settingsApplyBtn">套用</button><button class="btn red" id="settingsDefaultBtn">恢復預設</button></div>'
       + '<div style="font-size:13px;color:#cbd5e1;line-height:1.55">每底 / 每台籌碼只由房主或單機端調整；來賓由房主快照同步設定。</div>'
       + '</div>';
@@ -13014,6 +13016,7 @@ html body .app.perspective3d .discardSeat .tile::before {
       state.uiSettings.turnHandFrameEnabled = !!byId('setTurnHandFrameEnabled').checked;
       state.uiSettings.tingAssistEnabled = !!byId('setTingAssistEnabled').checked;
       state.uiSettings.miniDashboardEnabled = !!byId('setMiniDashboardEnabled').checked;
+      state.uiSettings.avatarEnabled = byId('setAvatarEnabled') ? !!byId('setAvatarEnabled').checked : true;
       const nameInput = byId('setPlayerName');
       if (nameInput) applyLocalPlayerName(nameInput.value, 'settings-apply');
       ensureUiSettings();
@@ -17707,7 +17710,7 @@ function concealedKongOwnerOfMeld(meld) {
       SEATS.forEach(seat=>{
         const pos=dm[seat]; if(!pos) return;
         const el=avMap[pos]; if(!el) return;
-        if(!playPhase||!seatAvatarMap||!seatAvatarMap[seat]){el.style.display='none';return;}
+        if(!playPhase||!seatAvatarMap||!seatAvatarMap[seat]||state.uiSettings.avatarEnabled===false){el.style.display='none';return;}
         if(!el.querySelector('img')){const img=document.createElement('img');img.src=seatAvatarMap[seat];el.appendChild(img);}
         el.style.display='block';
         if(el.dataset.posFixed==='1') return;
