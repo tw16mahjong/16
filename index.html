@@ -14603,6 +14603,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
   function openTextBroadcastInput(reason) {
+    const cb = byId('tw16ChatBoard'); if (cb) cb.classList.add('show');
     const wrap = ensureTextBroadcastOverlay();
     wrap.hidden = false;
     wrap.style.display = '';
