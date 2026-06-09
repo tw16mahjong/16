@@ -14683,6 +14683,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     board.className = 'tw16-chat-board';
     board.innerHTML = '<button class="tw16-chat-board-close" id="tw16ChatBoardClose">✕</button><ul id="tw16ChatBoardList"></ul>';
     document.body.appendChild(board);
+    board.querySelector('#tw16ChatBoardClose').addEventListener('click', () => { board.classList.remove('show'); });
   })();
   function addChatBoardMessage(seat, text) {
     const board = byId('tw16ChatBoard');
@@ -14695,11 +14696,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     list.appendChild(li);
     board.classList.add('show');
     list.scrollTop = list.scrollHeight;
-    const closeBtn = byId('tw16ChatBoardClose');
-    if (closeBtn && !closeBtn._bound) {
-      closeBtn._bound = true;
-      closeBtn.addEventListener('click', () => { board.classList.remove('show'); });
-    }
+
   }
   function stopGameVoiceForSettlement(reason) {
     settlementVoiceStoppedHandId = state.handId || settlementVoiceStoppedHandId || 0;
