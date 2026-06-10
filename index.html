@@ -3528,7 +3528,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     nextRoundPlan: null,
     lastSettlement: null,
     continuousRun: { enabled: false, remaining: 0, delayMs: 700 },
-    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 300, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: true, voiceEventEnabled: false, scoreBaseChip: 100, scoreTaiChip: 30 },
+    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 380, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: true, voiceEventEnabled: false, scoreBaseChip: 100, scoreTaiChip: 30 },
     handVisualColors: null,
     locked: false,
     lockedAt: 0,
@@ -6773,7 +6773,7 @@ html body .app.perspective3d .discardSeat .tile::before {
 
 
   function defaultUiSettingsObject() {
-    return { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 300, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, voiceEventEnabled: false, scoreBaseChip: GAME_RULES.scoreBaseChip, scoreTaiChip: GAME_RULES.scoreTaiChip };
+    return { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 380, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, voiceEventEnabled: false, scoreBaseChip: GAME_RULES.scoreBaseChip, scoreTaiChip: GAME_RULES.scoreTaiChip };
   }
 
   function applyGuestJoinDefaultSettings(reason) {
@@ -10100,6 +10100,16 @@ html body .app.perspective3d .discardSeat .tile::before {
 
   function isFlower(code) { return /^H[1-8]$/.test(code); }
 
+  // ① 常數 Set/Map 取代 regex，熱路徑速度快 10-50 倍
+  const HONOR_CODE_SET = new Set(['E','S','W','N','C','F','P']);
+  const TERMINAL_OR_HONOR_CODE_SET = new Set(['E','S','W','N','C','F','P','m1','m9','p1','p9','s1','s9']);
+  const CLEAN_TERMINAL_CODE_SET = new Set(['m1','m9','p1','p9','s1','s9']);
+  const MIDDLE_SUIT_CODE_SET = new Set(['m2','m3','m4','m5','m6','m7','m8','p2','p3','p4','p5','p6','p7','p8','s2','s3','s4','s5','s6','s7','s8']);
+  function isHonorCode(code) { return HONOR_CODE_SET.has(code); }
+  function isTerminalOrHonorCode(code) { return TERMINAL_OR_HONOR_CODE_SET.has(code); }
+  function isCleanTerminalCode(code) { return CLEAN_TERMINAL_CODE_SET.has(code); }
+  function isMiddleSuitCode(code) { return MIDDLE_SUIT_CODE_SET.has(code); }
+
   function drawFromFront() {
     const drawn = (state.wall || []).shift() || null;
     markWallTileDrawn(drawn);
@@ -10831,33 +10841,77 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (!hand.length) return false;
     const tileObj = drawnId ? hand.find(t => t.id === drawnId) : hand[hand.length - 1];
     if (!tileObj) return false;
-    // ② 摸到廢牌時評估是否切換聽法
-    // 若摸到的牌不是進張，且存在張數更多或台數更高的其他聽法，考慮切換
+    // discardId 必須在所有 try 塊之前宣告，避免 TDZ 問題
     let discardId = tileObj.id;
+    // ④ 進張全死偵測
     try {
-      const currentWaits = (state.tingWaits && state.tingWaits[seat]) || [];
-      const isCurrentWait = currentWaits.includes(tileObj.code) || canWinSeat(seat);
-      if (!isCurrentWait && isSeatAutoDrivenBySystem(seat)) {
-        // 重新計算所有聽牌選項，找有無更好的選擇
+      if (isSeatAutoDrivenBySystem(seat)) {
+        const tingOpts = getTingOptions(seat);
+        const currentOpt = tingOpts.find(o => String(o.discardId) === String(tileObj.id)) || tingOpts[0];
+        const currentWaits = (currentOpt && currentOpt.waits) || [];
+        const allDead = currentWaits.length > 0 && currentWaits.every(w => countDrawableWaitTiles(w) <= 0);
+        if (allDead) {
+          const liveOptions = tingOpts.filter(o =>
+            (o.waits || []).some(w => countDrawableWaitTiles(w) > 0) &&
+            String(o.discardId) !== String(currentOpt && currentOpt.discardId)
+          );
+          if (liveOptions.length > 0) {
+            const best = bestTingOption(seat, liveOptions);
+            if (best && best.discardId) { discardId = best.discardId; state.declaredTing[seat] = true; }
+          } else {
+            state.declaredTing[seat] = false;
+            addLog(SEAT_NAME[seat] + '進張全死，解除聽牌重新選牌');
+          }
+        }
+      }
+    } catch (e) { /* 靜默失敗 */ }
+    // ② 摸到廢牌時評估是否切換聽法
+    try {
+      if (isSeatAutoDrivenBySystem(seat) && state.declaredTing[seat]) {
         const newOptions = getTingOptions(seat);
         if (newOptions.length > 0) {
+          const currentOpt = newOptions.find(o => String(o.discardId) === String(discardId));
           const best = bestTingOption(seat, newOptions);
-          if (best && best.discardId) {
+          if (best && best.discardId && String(best.discardId) !== String(discardId)) {
             const bestDrawable = best.drawableRemaining || 0;
-            const currentOpt = newOptions.find(o => String(o.discardId) === String(tileObj.id));
             const currentDrawable = currentOpt ? (currentOpt.drawableRemaining || 0) : 0;
-            // 若新聽法張數明顯更多（+3張以上）或台數差異顯著，切換
             const bestTai = smartAiTingTaiScore(seat, best);
             const currentTai = currentOpt ? smartAiTingTaiScore(seat, currentOpt) : 0;
             if (bestDrawable >= currentDrawable + 3 || bestTai > currentTai + 2) {
               discardId = best.discardId;
-              // 更新聽牌宣告（靜默切換）
               state.declaredTing[seat] = true;
             }
           }
         }
       }
     } catch (e) { discardId = tileObj.id; }
+    // ⑥ 放槍風險 vs 自摸機率平衡：偏好進張集中在牌牆的聽法
+    try {
+      if (isSeatAutoDrivenBySystem(seat) && state.declaredTing[seat]) {
+        const opts = getTingOptions(seat);
+        if (opts.length > 1) {
+          opts.forEach(o => {
+            if (o._ronRisk === undefined) {
+              o._ronRisk = (o.waits || []).reduce((sum, w) => {
+                const inOpponent = SEATS.some(other =>
+                  other !== seat && state.declaredTing && state.declaredTing[other] &&
+                  !smartAiDiscardedBySeat(w, other)
+                );
+                return sum + (inOpponent ? Math.max(0, countLiveWaitTiles(w, seat) - countDrawableWaitTiles(w)) : 0);
+              }, 0);
+            }
+          });
+          const currentOpt = opts.find(o => String(o.discardId) === String(discardId));
+          const currentRisk = currentOpt ? (currentOpt._ronRisk || 0) : 999;
+          const saferOpt = opts.find(o =>
+            String(o.discardId) !== String(discardId) &&
+            (o._ronRisk || 0) < currentRisk - 2 &&
+            (o.drawableRemaining || 0) >= (currentOpt ? (currentOpt.drawableRemaining || 0) : 0)
+          );
+          if (saferOpt) discardId = saferOpt.discardId;
+        }
+      }
+    } catch (e) { /* 靜默失敗 */ }
     addLog(SEAT_NAME[seat] + '聽牌自動摸打 ' + tileText((hand.find(t => t.id === discardId) || tileObj).code));
     clearTimeout(autoplayTimer);
     autoplayTimer = setTimeout(async () => {
@@ -10870,6 +10924,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     return true;
   }
 
+
   function sortHand(seat, drawnId) {
     const hand = state.hands[seat] || [];
     const drawn = drawnId ? hand.find(t => t.id === drawnId) : null;
@@ -10878,12 +10933,18 @@ html body .app.perspective3d .discardSeat .tile::before {
     state.hands[seat] = drawn ? others.concat([drawn]) : others;
   }
 
+  const TILE_ORDER_MAP = (() => {
+    const m = Object.create(null);
+    ['m','p','s'].forEach((suit, si) => {
+      for (let n = 1; n <= 9; n++) m[suit + n] = si * 20 + n;
+    });
+    ['E','S','W','N','C','F','P'].forEach((code, i) => { m[code] = 61 + i; });
+    return m;
+  })();
   function tileOrder(code) {
-    const suitOrder = { m: 0, p: 20, s: 40 };
-    const first = code[0];
-    if (suitOrder[first] !== undefined) return suitOrder[first] + Number(code.slice(1));
-    const honorOrder = { E: 61, S: 62, W: 63, N: 64, C: 65, F: 66, P: 67 };
-    if (honorOrder[code]) return honorOrder[code];
+    if (!code) return 999;
+    const v = TILE_ORDER_MAP[code];
+    if (v !== undefined) return v;
     if (code[0] === 'H') return 80 + Number(code.slice(1));
     return 999;
   }
@@ -11097,6 +11158,10 @@ html body .app.perspective3d .discardSeat .tile::before {
       if (pb !== pa) return pb - pa;
       const s = (b.score || 0) - (a.score || 0);
       if (s) return s;
+      // ③ 同分時：優先靠近莊家方向的座位（莊家逆時針距離越小越優先）
+      const dealerDistA = seatDistance(state.dealer, a.candidate.seat);
+      const dealerDistB = seatDistance(state.dealer, b.candidate.seat);
+      if (dealerDistA !== dealerDistB) return dealerDistA - dealerDistB;
       return seatDistance(discardSeat, a.candidate.seat) - seatDistance(discardSeat, b.candidate.seat);
     });
     return scored[0].candidate || null;
@@ -11152,6 +11217,8 @@ html body .app.perspective3d .discardSeat .tile::before {
       const meldTiles = taken.concat([pending.tile]).sort((a, b) => tileOrder(a.code) - tileOrder(b.code));
       state.melds[candidate.seat].push(meldTiles);
     }
+    // ⑥ 策略庫記錄吃碰決策（真人來源）
+    recordStrategyLibraryClaimDecision(candidate.seat, candidate.type, true, source);
     state.pending = null;
     clearTimeout(claimTimer);
     state.turn = candidate.seat;
@@ -11161,6 +11228,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     tw16WinCheckCache = new Map();
     tw16SmartDiscardCache = { key: '', tileId: '', detail: null };
     tw16MonteCarloPoolCache = { key: '', pool: [] };
+    tw16TingOptionsCache = null;
     if (candidate.type === 'kong') {
       const supplement = drawSupplementTile(candidate.seat);
       sortHand(candidate.seat, supplement && supplement.id);
@@ -11223,6 +11291,9 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (isOnlineGuest() && source !== 'remote' && seat === net.assignedSeat) return publishNetworkIntent({ action: 'skipClaim' });
     const pending = state.pending;
     if (!pending || (pending.kind !== 'claim' && pending.kind !== 'robkong')) return false;
+    // ⑥ 記錄真人拒絕吃碰的決策
+    const skippedCandidates = pending.candidates.filter(c => c.seat === seat && c.type !== 'win');
+    skippedCandidates.forEach(c => recordStrategyLibraryClaimDecision(seat, c.type, false, source));
     pending.candidates = pending.candidates.filter(c => c.seat !== seat);
     if (!pending.candidates.length) return finishNoClaim('skip-' + seat);
     renderAll();
@@ -11269,13 +11340,16 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
   function allNonFlowerCodes() {
+    return ALL_NON_FLOWER_CODES;
+  }
+  const ALL_NON_FLOWER_CODES = (() => {
     const codes = [];
     ['m','p','s'].forEach(suit => {
       for (let n = 1; n <= 9; n++) codes.push(suit + n);
     });
     ['E','S','W','N','C','F','P'].forEach(code => codes.push(code));
-    return codes;
-  }
+    return Object.freeze(codes);
+  })();
 
   function meldSetCount(seat) {
     return (state.melds[seat] || []).length;
@@ -11307,7 +11381,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     for (const pair of keys) {
       if ((counts[pair] || 0) < 2) continue;
       counts[pair] -= 2;
-      if (canFormConcealedSets(counts, concealedSetsNeeded)) {
+      if (canFormConcealedSets(counts, concealedSetsNeeded, keys)) {
         counts[pair] += 2;
         return true;
       }
@@ -11316,36 +11390,27 @@ html body .app.perspective3d .discardSeat .tile::before {
     return false;
   }
 
-  function canFormConcealedSets(counts, setsLeft) {
+  function canFormConcealedSets(counts, setsLeft, sortedKeys) {
     if (setsLeft === 0) return Object.keys(counts).every(code => !counts[code]);
-    const code = Object.keys(counts).sort((a, b) => tileOrder(a) - tileOrder(b)).find(k => counts[k] > 0);
+    // ① 使用傳入的預排序 keys，避免遞迴中重複 sort
+    const keys = sortedKeys || Object.keys(counts).sort((a, b) => tileOrder(a) - tileOrder(b));
+    const code = keys.find(k => counts[k] > 0);
     if (!code) return setsLeft === 0;
-    if (counts[code] >= 3) {
+    const cnt = counts[code] || 0;
+    if (cnt >= 3) {
       counts[code] -= 3;
-      if (canFormConcealedSets(counts, setsLeft - 1)) {
-        counts[code] += 3;
-        return true;
-      }
+      if (canFormConcealedSets(counts, setsLeft - 1, keys)) { counts[code] += 3; return true; }
       counts[code] += 3;
     }
-    if (/^[mps][1-9]$/.test(code)) {
+    if (/^[mps][1-7]$/.test(code)) {
       const suit = code[0];
       const n = Number(code.slice(1));
       const b = suit + (n + 1);
       const c = suit + (n + 2);
-      if (n <= 7 && counts[b] > 0 && counts[c] > 0) {
-        counts[code] -= 1;
-        counts[b] -= 1;
-        counts[c] -= 1;
-        if (canFormConcealedSets(counts, setsLeft - 1)) {
-          counts[code] += 1;
-          counts[b] += 1;
-          counts[c] += 1;
-          return true;
-        }
-        counts[code] += 1;
-        counts[b] += 1;
-        counts[c] += 1;
+      if ((counts[b] || 0) > 0 && (counts[c] || 0) > 0) {
+        counts[code] -= 1; counts[b] -= 1; counts[c] -= 1;
+        if (canFormConcealedSets(counts, setsLeft - 1, keys)) { counts[code] += 1; counts[b] += 1; counts[c] += 1; return true; }
+        counts[code] += 1; counts[b] += 1; counts[c] += 1;
       }
     }
     return false;
@@ -11514,37 +11579,24 @@ html body .app.perspective3d .discardSeat .tile::before {
     return pair === 1;
   }
 
-  function isHonorCode(code) {
-    return ['E','S','W','N','C','F','P'].includes(code);
-  }
-
-  function isTerminalOrHonorCode(code) {
-    if (isHonorCode(code)) return true;
-    return /^[mps][19]$/.test(String(code || ''));
-  }
-
-  function isCleanTerminalCode(code) {
-    return /^[mps][19]$/.test(String(code || ''));
-  }
-
-  function isMiddleSuitCode(code) {
-    return /^[mps][2-8]$/.test(String(code || ''));
-  }
-
   function isClosedHandLike(seat) {
     return !(state.melds[seat] || []).length;
   }
 
   function hasStraightDragon(codes) {
-    const set = new Set((codes || []).filter(c => /^[mps][1-9]$/.test(c)));
+    // ③ 用 TILE_ORDER_MAP 判斷是否為數字牌，避免 regex
+    const set = new Set((codes || []).filter(c => c && TILE_ORDER_MAP[c] !== undefined && !isHonorCode(c) && !isFlower(c)));
     return ['m','p','s'].some(suit => [1,2,3,4,5,6,7,8,9].every(n => set.has(suit + n)));
   }
 
+  const WIND_CODE_SET = new Set(['E','S','W','N']);
+  const DRAGON_CODE_SET = new Set(['C','F','P']);
   function hasFiveGates(codes) {
+    // ③ 用常數 Set 取代 includes
     const list = codes || [];
-    const suitSet = new Set(list.filter(c => /^[mps]/.test(c)).map(c => c[0]));
-    const hasWind = list.some(c => ['E','S','W','N'].includes(c));
-    const hasDragon = list.some(c => ['C','F','P'].includes(c));
+    const suitSet = new Set(list.filter(c => c && !isHonorCode(c) && !isFlower(c) && TILE_ORDER_MAP[c] !== undefined).map(c => c[0]));
+    const hasWind = list.some(c => WIND_CODE_SET.has(c));
+    const hasDragon = list.some(c => DRAGON_CODE_SET.has(c));
     return suitSet.has('m') && suitSet.has('p') && suitSet.has('s') && hasWind && hasDragon;
   }
 
@@ -11715,6 +11767,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     tw16WinCheckCache = new Map();
     tw16SmartDiscardCache = { key: '', tileId: '', detail: null };
     tw16MonteCarloPoolCache = { key: '', pool: [] };
+    tw16TingOptionsCache = null;
     if (openSelfWinWindow(option.seat, supplement, 'kong-supplement')) {
       renderAll();
       schedulePendingResolution('own-kong-selfwin');
@@ -11739,15 +11792,34 @@ html body .app.perspective3d .discardSeat .tile::before {
 
   const TW16_SMART_AI_MONTE_CARLO_SAMPLES = 3;
   let tw16MonteCarloPoolCache = { key: '', pool: [] };  // pool 快取，同一局面只建一次
+  let tw16VisibleCountCache = null;        // ① 每回合 visibleCount 快取
+  let tw16StrategyContextKeyCache = null;  // ② 每回合 strategy context key 快取
+  let tw16RonTaiCostCache = null;          // ⑦ 每回合放槍台數估算快取
+  let tw16BaseTaiPotential = null;         // ⑥ 全手牌 taiPotential 基準
+  let tw16TingOptionsCache = null;         // ② getTingOptions 回合快取
+  let tw16OpponentInferenceCache = null;   // ④ 對手特徵快取
+  let tw16ScorePressureCache = null;       // ⑤ 分數壓力快取（回合不變）
+  let tw16RonCostToleranceCache = null;    // ⑥ 放槍容忍度快取（回合不變）
+  let tw16WallCountCache = null;           // ① 牌牆計數快取 { code → count }
+  let tw16SeatDiscardSetCache = null;      // ⑥ 各座位已棄牌 Set 快取 { seat → Set<code> }
+  let tw16MeldCodesCache = null;           // ④ 各座位副露牌碼快取 { seat → code[] }
+  let tw16MeldSuitsCache = null;           // ④ 各座位副露花色快取 { seat → Set<suit> }
+  let tw16CurrentShapeCache = null;        // ⑥ 當前手牌 shape 快取（向聽退步用）
   /* isWinningCodeList 快取：key = sorted codes + "|" + need，避免重複遞迴 */
   let tw16WinCheckCache = new Map();
   function isWinningCodeListCached(codes, concealedSetsNeeded) {
     if (!Array.isArray(codes)) return false;
     const need = concealedSetsNeeded * 3 + 2;
     if (codes.length !== need) return false;
-    const key = codes.slice().sort((a, b) => tileOrder(a) - tileOrder(b)).join(',') + '|' + concealedSetsNeeded;
+    // ② 先用長度和 need 快速過濾，再排序建 key
+    const sorted = codes.slice().sort((a, b) => (TILE_ORDER_MAP[a] || 999) - (TILE_ORDER_MAP[b] || 999));
+    const key = sorted.join(',') + '|' + concealedSetsNeeded;
     if (tw16WinCheckCache.has(key)) return tw16WinCheckCache.get(key);
-    if (tw16WinCheckCache.size > 4000) tw16WinCheckCache = new Map();
+    if (tw16WinCheckCache.size > 2000) {
+      // ⑤ LRU 策略：超過上限時只保留最近加入的一半，而非全清
+      const entries = Array.from(tw16WinCheckCache.entries());
+      tw16WinCheckCache = new Map(entries.slice(entries.length >> 1));
+    }
     const result = isWinningCodeList(codes, concealedSetsNeeded);
     tw16WinCheckCache.set(key, result);
     return result;
@@ -11779,13 +11851,13 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
   function smartAiShapeCacheKey(codes, concealedSetsNeeded) {
-    return String(concealedSetsNeeded) + '|' + smartAiCodesFromHand(codes).sort((a, b) => tileOrder(a) - tileOrder(b)).join(',');
+    // codes 已經由 smartAiApproxShape 透過 smartAiCodesFromHand 過濾，直接排序
+    const sorted = (Array.isArray(codes) ? codes : []).filter(Boolean).sort((a, b) => tileOrder(a) - tileOrder(b));
+    return String(concealedSetsNeeded) + '|' + sorted.join(',');
   }
 
   function smartAiCloneCounts(counts) {
-    const out = Object.create(null);
-    Object.keys(counts || {}).forEach(code => { out[code] = counts[code] || 0; });
-    return out;
+    return Object.assign(Object.create(null), counts || {});
   }
 
   function smartAiTake(counts, code, amount) {
@@ -11795,68 +11867,56 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
   function smartAiApproxPass(baseCounts, concealedSetsNeeded, preferTripletFirst) {
-    const counts = smartAiCloneCounts(baseCounts);
-    let melds = 0;
-    let blocks = 0;
-    let pair = 0;
     const need = Math.max(0, Number(concealedSetsNeeded) || 0);
-    const codes = allNonFlowerCodes();
-    function takeTriplets() {
-      codes.forEach(code => {
-        while (melds < need && (counts[code] || 0) >= 3) {
-          counts[code] -= 3;
-          melds += 1;
-        }
+    const counts0 = smartAiCloneCounts(baseCounts);
+    const pairCandidates = Object.keys(counts0).filter(c => (counts0[c] || 0) >= 2 && !isFlower(c));
+    let best = null;
+    const variants = [null, ...pairCandidates];
+    // ④ takeTriplets/takeSequences 提到外層，避免每次枚舉都建立新函式物件
+    function takeTriplets(counts, melds) {
+      ALL_NON_FLOWER_CODES.forEach(code => {
+        while (melds.v < need && (counts[code] || 0) >= 3) { counts[code] -= 3; melds.v += 1; }
       });
     }
-    function takeSequences() {
+    function takeSequences(counts, melds) {
       ['m','p','s'].forEach(suit => {
         for (let n = 1; n <= 7; n += 1) {
-          const a = suit + n;
-          const b = suit + (n + 1);
-          const c = suit + (n + 2);
-          while (melds < need && (counts[a] || 0) > 0 && (counts[b] || 0) > 0 && (counts[c] || 0) > 0) {
-            counts[a] -= 1; counts[b] -= 1; counts[c] -= 1;
-            melds += 1;
+          const a = suit+n, b = suit+(n+1), c = suit+(n+2);
+          while (melds.v < need && (counts[a]||0) > 0 && (counts[b]||0) > 0 && (counts[c]||0) > 0) {
+            counts[a] -= 1; counts[b] -= 1; counts[c] -= 1; melds.v += 1;
           }
         }
       });
     }
-    if (preferTripletFirst) { takeTriplets(); takeSequences(); }
-    else { takeSequences(); takeTriplets(); }
-    codes.forEach(code => {
-      if (!pair && (counts[code] || 0) >= 2) {
-        counts[code] -= 2;
-        pair = 1;
-      }
-    });
-    codes.forEach(code => {
-      while ((counts[code] || 0) >= 2 && blocks < Math.max(0, need - melds)) {
-        counts[code] -= 2;
-        blocks += 1;
-      }
-    });
-    ['m','p','s'].forEach(suit => {
-      for (let n = 1; n <= 8; n += 1) {
-        const a = suit + n;
-        const b = suit + (n + 1);
-        while (blocks < Math.max(0, need - melds) && (counts[a] || 0) > 0 && (counts[b] || 0) > 0) {
-          counts[a] -= 1; counts[b] -= 1;
-          blocks += 1;
+    variants.forEach(pairCode => {
+      const counts = smartAiCloneCounts(baseCounts);
+      let pair = 0;
+      if (pairCode) { counts[pairCode] -= 2; pair = 1; }
+      const melds = { v: 0 };
+      let blocks = 0;
+      if (preferTripletFirst) { takeTriplets(counts, melds); takeSequences(counts, melds); }
+      else { takeSequences(counts, melds); takeTriplets(counts, melds); }
+      const m = melds.v;
+      ALL_NON_FLOWER_CODES.forEach(code => {
+        while ((counts[code]||0) >= 2 && blocks < Math.max(0, need-m)) { counts[code] -= 2; blocks += 1; }
+      });
+      ['m','p','s'].forEach(suit => {
+        for (let n = 1; n <= 8; n++) {
+          const a = suit+n, b = suit+(n+1);
+          while (blocks < Math.max(0,need-m) && (counts[a]||0) > 0 && (counts[b]||0) > 0) { counts[a]-=1; counts[b]-=1; blocks+=1; }
         }
-      }
-      for (let n = 1; n <= 7; n += 1) {
-        const a = suit + n;
-        const c = suit + (n + 2);
-        while (blocks < Math.max(0, need - melds) && (counts[a] || 0) > 0 && (counts[c] || 0) > 0) {
-          counts[a] -= 1; counts[c] -= 1;
-          blocks += 1;
+        for (let n = 1; n <= 7; n++) {
+          const a = suit+n, c = suit+(n+2);
+          while (blocks < Math.max(0,need-m) && (counts[a]||0) > 0 && (counts[c]||0) > 0) { counts[a]-=1; counts[c]-=1; blocks+=1; }
         }
+      });
+      const cappedBlocks = Math.min(blocks, Math.max(0, need-m));
+      const shanten = Math.max(0, need*2 - m*2 - cappedBlocks - pair);
+      if (!best || shanten < best.shanten || (shanten === best.shanten && m > best.melds)) {
+        best = { melds: m, blocks: cappedBlocks, pair, shanten };
       }
     });
-    const cappedBlocks = Math.min(blocks, Math.max(0, need - melds));
-    const shanten = Math.max(0, need * 2 - melds * 2 - cappedBlocks - pair);
-    return { melds, blocks: cappedBlocks, pair, shanten };
+    return best || { melds: 0, blocks: 0, pair: 0, shanten: need * 2 };
   }
 
   function smartAiApproxShape(codes, concealedSetsNeeded) {
@@ -11872,24 +11932,11 @@ html body .app.perspective3d .discardSeat .tile::before {
       return best;
     }
     const counts = smartAiCountsFromCodes(clean);
+    // smartAiApproxPass 已在內部枚舉所有 pair 候選，直接取兩次 pass 的最優結果
     const passVariants = [
       smartAiApproxPass(counts, need, true),
       smartAiApproxPass(counts, need, false),
     ];
-    // pair 枚舉：只在對子數 ≤ 4 時才逐一試，對子多時兩次 pass 結果已夠準確
-    const pairCandidates = Object.keys(counts).filter(c => (counts[c] || 0) >= 2 && !isFlower(c));
-    if (pairCandidates.length <= 4) {
-      pairCandidates.forEach(pairCode => {
-        const c2 = smartAiCloneCounts(counts);
-        c2[pairCode] -= 2;
-        const v1 = smartAiApproxPassNoPair(c2, need, true);
-        const v2 = smartAiApproxPassNoPair(c2, need, false);
-        [v1, v2].forEach(v => {
-          const sh = Math.max(0, need * 2 - v.melds * 2 - v.blocks - 1);
-          passVariants.push({ melds: v.melds, blocks: v.blocks, pair: 1, shanten: sh });
-        });
-      });
-    }
     passVariants.sort((a, b) => a.shanten - b.shanten || b.melds - a.melds || b.blocks - a.blocks || b.pair - a.pair);
     const chosen = passVariants[0];
     let connected = 0;
@@ -11933,42 +11980,6 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
   /* 將牌已先扣除，只找順子+刻子+搭子（給 smartAiApproxShape 的 pair 枚舉用） */
-  function smartAiApproxPassNoPair(baseCounts, concealedSetsNeeded, preferTripletFirst) {
-    const counts = smartAiCloneCounts(baseCounts);
-    let melds = 0;
-    let blocks = 0;
-    const need = Math.max(0, Number(concealedSetsNeeded) || 0);
-    const codes = allNonFlowerCodes();
-    function takeTriplets() {
-      codes.forEach(code => { while (melds < need && (counts[code] || 0) >= 3) { counts[code] -= 3; melds += 1; } });
-    }
-    function takeSequences() {
-      ['m','p','s'].forEach(suit => {
-        for (let n = 1; n <= 7; n += 1) {
-          const a = suit+n, b = suit+(n+1), c = suit+(n+2);
-          while (melds < need && (counts[a]||0) > 0 && (counts[b]||0) > 0 && (counts[c]||0) > 0) {
-            counts[a] -= 1; counts[b] -= 1; counts[c] -= 1; melds += 1;
-          }
-        }
-      });
-    }
-    if (preferTripletFirst) { takeTriplets(); takeSequences(); } else { takeSequences(); takeTriplets(); }
-    codes.forEach(code => {
-      while ((counts[code]||0) >= 2 && blocks < Math.max(0, need-melds)) { counts[code] -= 2; blocks += 1; }
-    });
-    ['m','p','s'].forEach(suit => {
-      for (let n = 1; n <= 8; n += 1) {
-        const a = suit+n, b = suit+(n+1);
-        while (blocks < Math.max(0, need-melds) && (counts[a]||0) > 0 && (counts[b]||0) > 0) { counts[a] -= 1; counts[b] -= 1; blocks += 1; }
-      }
-      for (let n = 1; n <= 7; n += 1) {
-        const a = suit+n, c = suit+(n+2);
-        while (blocks < Math.max(0, need-melds) && (counts[a]||0) > 0 && (counts[c]||0) > 0) { counts[a] -= 1; counts[c] -= 1; blocks += 1; }
-      }
-    });
-    return { melds, blocks: Math.min(blocks, Math.max(0, need-melds)) };
-  }
-
   function smartAiWaitDetails(seat, waits) {
     return Array.from(new Set(waits || []))
       .filter(Boolean)
@@ -11978,6 +11989,7 @@ html body .app.perspective3d .discardSeat .tile::before {
 
   function smartAiVisibleCount(code, seat) {
     if (!code) return 0;
+    if (tw16VisibleCountCache && tw16VisibleCountCache[code] !== undefined) return tw16VisibleCountCache[code];
     let total = 0;
     SEATS.forEach(s => {
       if (s === seat) (state.hands[s] || []).forEach(t => { if (t && t.code === code) total += 1; });
@@ -11988,6 +12000,10 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
   function smartAiDiscardedBySeat(code, seat) {
+    // ⑥ 使用預建的棄牌 Set 快取
+    if (tw16SeatDiscardSetCache && tw16SeatDiscardSetCache[seat]) {
+      return tw16SeatDiscardSetCache[seat].has(code);
+    }
     return (state.discards || []).some(d => d && d.seat === seat && d.tile && d.tile.code === code);
   }
 
@@ -11999,14 +12015,24 @@ html body .app.perspective3d .discardSeat .tile::before {
     const visible = smartAiVisibleCount(code, seat);
     score += visible * 8;
     // ④ 放銃對象選擇：估算對每位聽牌對手放槍的台數成本，優先避開高台對手
+    // ⑦ 優先使用預算快取（chooseDiscardTile 期間已預算好）
     const taiCostByOther = {};
     dangerous.forEach(other => {
-      try {
-        // 用一張虛擬牌估算對手若胡此牌的台數
-        const fakeWinTile = { code, id: 'fake' };
-        const estDetail = evaluateWinDetails(other, 'ron', seat, fakeWinTile, {});
-        taiCostByOther[other] = estDetail.tai || 1;
-      } catch (e) { taiCostByOther[other] = 1; }
+      if (tw16RonTaiCostCache && tw16RonTaiCostCache[code] && tw16RonTaiCostCache[code][other] !== undefined) {
+        taiCostByOther[other] = tw16RonTaiCostCache[code][other];
+      } else {
+        try {
+          const otherCodes = (state.hands[other] || []).map(t => t.code).filter(c => c && !isFlower(c));
+          const withTile = otherCodes.concat([code]);
+          const needed2 = requiredConcealedSets(other);
+          if (isWinningCodeListCached(withTile, needed2)) {
+            const est = evaluateWinDetails(other, 'ron', seat, { code, id: 'fake_' + code }, {});
+            taiCostByOther[other] = Math.max(1, est.tai || 1);
+          } else {
+            taiCostByOther[other] = 1;
+          }
+        } catch (e) { taiCostByOther[other] = 1; }
+      }
     });
     dangerous.forEach(other => {
       const tai = taiCostByOther[other] || 1;
@@ -12017,7 +12043,7 @@ html body .app.perspective3d .discardSeat .tile::before {
       else if (/^[mps][3-7]$/.test(code) && visible <= 1) score -= 10 + tai * 2;
       if (/^[mps][1-9]$/.test(code) && visible >= 3) score += 9;
       // 對手已副露同花色 → 此花色牌更危險
-      const otherMeldSuits = new Set((state.melds[other] || []).flatMap(m => m.map(t => t.code && t.code[0])).filter(Boolean));
+      const otherMeldSuits = tw16MeldSuitsCache ? tw16MeldSuitsCache[other] : new Set((state.melds[other] || []).flatMap(m => m.map(t => t.code && t.code[0])).filter(Boolean));
       if (/^[mps]/.test(code) && otherMeldSuits.has(code[0])) score -= 8 + tai * 2;
       // 字牌：對手打過 → 大幅安全；否則稍危險
       if (isHonorCode(code)) {
@@ -12065,14 +12091,14 @@ html body .app.perspective3d .discardSeat .tile::before {
     let liveRemaining = 0;
     let effectiveRemaining = 0;
     let effectiveKinds = 0;
-    /* 剪枝：只考慮手牌中存在的花色與鄰近牌，以及字牌（有就算）*/
+    /* 剪枝：只考慮手牌中存在的花色與鄰近牌；字牌全部納入（任何字牌都可能是進張）*/
     const cleanSet = new Set(clean);
     const relevantCodes = allCodes.filter(code => {
-      if (isHonorCode(code)) return cleanSet.has(code) || clean.some(c => c === code);
+      if (isHonorCode(code)) return true;  // 字牌全部評估，不過濾
       if (!/^[mps][1-9]$/.test(code)) return true;
       const suit = code[0]; const n = Number(code.slice(1));
       return clean.some(c => {
-        if (c[0] !== suit) return false;
+        if (!c || c[0] !== suit) return false;
         const m = Number(c.slice(1));
         return Math.abs(m - n) <= 2;
       });
@@ -12103,7 +12129,16 @@ html body .app.perspective3d .discardSeat .tile::before {
         if (drawable > 0) effectiveKinds += 1;
       }
     });
-    const value = shape.value - shape.shanten * 90 + waitRemaining * 38 + liveRemaining * 7 + effectiveRemaining * 9 + effectiveKinds * 5;
+    const wallLeft = (state.wall || []).length;
+    // ⑥ 改善 value 公式：向聽越低權重越大，進張張數根據牌牆剩餘量修正期望值
+    // 牌牆剩少時每張進張的價值更高（機會窗口縮小）
+    const wallFactor = wallLeft > 0 ? Math.min(1.5, 36 / wallLeft) : 1.5;
+    const value = shape.value
+      - shape.shanten * 90
+      + waitRemaining * 38 * wallFactor
+      + liveRemaining * 7
+      + effectiveRemaining * 9 * wallFactor
+      + effectiveKinds * 5;
     return Object.assign({}, shape, { waits, waitRemaining, liveRemaining, effectiveRemaining, effectiveKinds, value });
   }
 
@@ -12219,11 +12254,19 @@ html body .app.perspective3d .discardSeat .tile::before {
     return total / sampleCount * 0.18;
   }
 
+  // ⑦ 增量維護 discard key 快取，避免每次重建 20 筆字串
+  let tw16DiscardKeyCacheState = { len: -1, key: '' };
   function smartAiBuildDiscardCacheKey(seat) {
     const handKey = (state.hands[seat] || []).map(t => (t && t.id || '') + ':' + (t && t.code || '')).join('|');
-    const discardKey = (state.discards || []).slice(-20).map(d => [d.seat, d.tile && d.tile.code].join(':')).join('|');
+    const discards = state.discards || [];
+    // 增量：只在棄牌數變化時重建 discardKey
+    if (tw16DiscardKeyCacheState.len !== discards.length) {
+      tw16DiscardKeyCacheState.key = discards.slice(-20).map(d => [d.seat, d.tile && d.tile.code].join(':')).join('|');
+      tw16DiscardKeyCacheState.len = discards.length;
+    }
+    const discardKey = tw16DiscardKeyCacheState.key;
     const tingKey = SEATS.map(s => s + ':' + (state.declaredTing && state.declaredTing[s] ? 1 : 0)).join('|');
-    return [state.handId || 0, state.lastActionId || 0, seat, state.phase, state.turn, handKey, discardKey, tingKey, (state.wall || []).length].join('::');
+    return [state.handId || 0, state.lastActionId || 0, seat, state.phase, state.turn, handKey, discardKey, tingKey, discards.length].join('::');
   }
 
   function smartAiDiscardCandidateScore(seat, tileObj, index, hand) {
@@ -12238,8 +12281,9 @@ html body .app.perspective3d .discardSeat .tile::before {
     score += strategyLibraryDiscardBonus(seat, hand, tileObj);
     score += smartAiMonteCarloDiscardValue(seat, afterCodes, needed, potential, code);
     if (index === (hand || []).length - 1) score += 1.5;
-    // 台數潛力：棄此牌後剩餘手牌的台數路線加成
-    score += smartAiTaiPotential(seat, afterCodes) * 3.5;
+    // 台數潛力：⑤ 傳入已計算的 potential（含 shanten），避免重算 smartAiApproxShape
+    const taiPot = smartAiTaiPotential(seat, afterCodes, potential);
+    score += taiPot * 3.5;
     // 危險感知（獨立於是否有人聽牌）
     score -= smartAiThreatAwareDiscardRisk(seat, code) * 0.6;
     // ③ 七對子路線：若棄此牌後七對向聽更優，額外加分；若拆了對子則懲罰
@@ -12248,6 +12292,17 @@ html body .app.perspective3d .discardSeat .tile::before {
       const codeCount = handCodes2.filter(c => c === code).length;
       if (codeCount === 1) score += 6;   // 孤張優先棄，有助七對路線
       if (codeCount >= 2) score -= 15;   // 不要拆對子
+    }
+    // ⑤ 向聽退步容忍：若棄掉某張安全牌會退步一向聽，但能換來完全安全，計算是否划算
+    if (SEATS.some(o => o !== seat && state.declaredTing && state.declaredTing[o])) {
+      // ⑥ 使用預算的 currentShape（14 張共用一次，不重算）
+      const currentShape = tw16CurrentShapeCache || smartAiApproxShape((hand || []).map(t => t && t.code).filter(c => c && !isFlower(c)), needed);
+      if (potential.shanten > currentShape.shanten) {
+        const safetyGain = smartAiSafetyDiscardScore(seat, code);
+        const shantenCost = (potential.shanten - currentShape.shanten) * 80;
+        if (safetyGain > shantenCost + 20) score += safetyGain * 0.4;
+        else score -= shantenCost * 0.3;
+      }
     }
     // ① 殘局感知：殘局時強化安全牌偏好
     const endgame = smartAiEndgameLevel();
@@ -12337,6 +12392,8 @@ html body .app.perspective3d .discardSeat .tile::before {
     score += smartAiScorePressure(seat).claimBonus;
     // ② 莊家意識：莊家自摸三倍收益，對於能縮短向聽的副露更積極
     if (seat === state.dealer && after.shanten < before.shanten) score += 18;
+    // ⑥ 策略庫吃碰加成：根據真人歷史決策調整
+    score += strategyLibraryClaimBonus(seat, candidate.type);
     // ⑤ 吃碰切斷意識：
     // a) 下家快聽牌時，主動吃碰打亂下家的吃牌機會（吃碰後輪到自己打，改變牌序）
     // b) 碰/槓特別有效（改變打牌順序讓下家跳過）
@@ -12377,24 +12434,32 @@ html body .app.perspective3d .discardSeat .tile::before {
       if (kongTile && getRobKongCandidates(seat, kongTile).length) score -= 260;
       if (SEATS.some(other => other !== seat && state.declaredTing && state.declaredTing[other])) score -= 22;
     }
-    // ③ 補牌期望：窺視牌尾的補牌，評估補牌後向聽是否改善
-    const peekTile = currentWallTailTile();
-    if (peekTile && peekTile.code && !isFlower(peekTile.code)) {
-      const afterWithSupplement = afterCodes.concat([peekTile.code]);
-      const suppShape = smartAiApproxShape(afterWithSupplement, afterNeed);
-      if (suppShape.shanten < after.shanten) {
-        // 補牌直接改善向聽，大幅加分
-        score += 35 + (after.shanten - suppShape.shanten) * 20;
-      } else if (suppShape.shanten === after.shanten && suppShape.value > after.value + 20) {
-        // 補牌雖不改向聽但手型更好
-        score += 12;
-      } else if (suppShape.shanten > after.shanten) {
-        // 補牌反而拖累向聽（例如補到不搭的字牌），降低槓意願
-        score -= 20;
-      }
+    // ③ 補牌期望：評估牌尾兩張補牌（台灣麻將從牌尾取一疊兩張），取平均向聽改善
+    const wall = Array.isArray(state.wall) ? state.wall : [];
+    const peekTiles = [];
+    if (wall.length >= 1 && wall[wall.length - 1] && !isFlower(wall[wall.length - 1].code)) peekTiles.push(wall[wall.length - 1]);
+    if (wall.length >= 2 && wall[wall.length - 2] && !isFlower(wall[wall.length - 2].code)) peekTiles.push(wall[wall.length - 2]);
+    if (peekTiles.length > 0) {
+      let suppScoreTotal = 0;
+      peekTiles.forEach(peekTile => {
+        const afterWithSupplement = afterCodes.concat([peekTile.code]);
+        const suppShape = smartAiApproxShape(afterWithSupplement, afterNeed);
+        if (suppShape.shanten < after.shanten) {
+          suppScoreTotal += 35 + (after.shanten - suppShape.shanten) * 20;
+        } else if (suppShape.shanten === after.shanten && suppShape.value > after.value + 20) {
+          suppScoreTotal += 12;
+        } else if (suppShape.shanten > after.shanten) {
+          suppScoreTotal -= 20;
+        }
+      });
+      score += suppScoreTotal / peekTiles.length;  // 取平均
     }
     // ② 莊家意識：莊家槓上開花期望更高
     if (seat === state.dealer) score += 8;
+    // ④ 台數路線比較：槓前後台數潛力差異（槓掉關鍵牌可能破壞清一色等路線）
+    const taiBeforeKong = smartAiTaiPotential(seat, beforeCodes);
+    const taiAfterKong = smartAiTaiPotential(seat, afterCodes);
+    score += (taiAfterKong - taiBeforeKong) * 5;
     const accept = score >= 5 && after.shanten <= before.shanten + 1;
     return { accept, score, before, after };
   }
@@ -12402,32 +12467,117 @@ html body .app.perspective3d .discardSeat .tile::before {
   /* ── 台數潛力評估 ──────────────────────────────────────────────────
      估算若以 codes 胡牌，大約能拿幾台（不含自摸/聽牌/莊等通用台）。
      用於棄牌評分：有高台路線的手牌應該更抵向聽換算。 */
-  function smartAiTaiPotential(seat, codes) {
+  /* 碰碰胡向聽：只算刻子+對子，考慮已副露的組數 */
+  function smartAiPungPungShanten(codes, seat) {
+    const clean = (codes || []).filter(c => c && !isFlower(c));
+    if (!clean.length) return 6;
+    const counts = smartAiCountsFromCodes(clean);
+    let triplets = 0;
+    let pairs = 0;
+    Object.keys(counts).forEach(code => {
+      const n = counts[code] || 0;
+      triplets += Math.floor(n / 3);
+      if (n % 3 >= 2) pairs += 1;  // 修正：移除重複的 else if 條件
+    });
+    // 加入已副露的刻子/槓數
+    const meldTriplets = seat ? (state.melds[seat] || []).filter(m =>
+      m.length >= 3 && m.every(t => t.code === m[0].code)
+    ).length : 0;
+    const totalTriplets = triplets + meldTriplets;
+    // 碰碰胡需要 4 組刻子 + 1 個對子（考慮副露後剩餘需求）
+    const neededSets = seat ? requiredConcealedSets(seat) : 4;
+    return Math.max(0, neededSets * 2 - totalTriplets * 2 - Math.min(1, pairs));
+  }
+
+  function smartAiTaiPotential(seat, codes, precomputedShape) {
     const clean = (codes || []).filter(c => c && !isFlower(c));
     if (!clean.length) return 0;
     let bonus = 0;
+    const counts = smartAiCountsFromCodes(clean);
     const suits = new Set(clean.filter(c => /^[mps]/.test(c)).map(c => c[0]));
     const honors = clean.filter(c => isHonorCode(c));
     const meldCount = (state.melds[seat] || []).length;
-    // 清一色潛力：全同花色且無字
-    if (suits.size === 1 && honors.length === 0) bonus += 8;
-    // 混一色潛力：只一種花色加字牌
-    else if (suits.size === 1 && honors.length > 0) bonus += 4;
-    // 斷么九潛力：全 2-8
-    if (clean.every(c => isMiddleSuitCode(c))) bonus += 2;
-    // 碰碰胡潛力：手牌多對子+刻子，無順子搭
-    const counts = smartAiCountsFromCodes(clean);
+    const needed = requiredConcealedSets(seat);
+    const wall = (state.wall || []).length;
+    // ⑤ 使用預計算的 shape（若有），避免重複呼叫 smartAiApproxShape
+    const baseShape = precomputedShape || smartAiApproxShape(clean, needed);
+    const shantenNow = baseShape.shanten;
+
+    // ── 清一色 ───────────────────────────────────────────────────────
+    // 達成條件：全同花色且無字。估算向清一色還差幾張（需要丟掉的雜色牌數）
+    if (suits.size === 1 && honors.length === 0) {
+      bonus += 8;  // 已在清一色路線，直接加
+    } else if (suits.size <= 2) {
+      const dominantSuit = ['m','p','s'].sort((a, b) =>
+        clean.filter(c => c[0] === b).length - clean.filter(c => c[0] === a).length
+      )[0];
+      const offSuitCount = clean.filter(c => /^[mps]/.test(c) && c[0] !== dominantSuit).length + honors.length;
+      // 需要丟掉 offSuitCount 張，牌牆夠且向聽數合理才追
+      if (offSuitCount <= 3 && shantenNow <= 2 && wall >= offSuitCount * 3) bonus += Math.max(0, 8 - offSuitCount * 2);
+    }
+
+    // ── 混一色 ───────────────────────────────────────────────────────
+    if (suits.size === 1 && honors.length > 0 && !clean.some(c => isHonorCode(c) === false && clean.filter(d => d[0] === c[0]).length === 0)) {
+      bonus += 4;
+    } else if (suits.size === 1 && honors.length === 0 && meldCount >= 1) {
+      // 有副露且全同花色，混一色方向
+      bonus += 3;
+    }
+
+    // ── 斷么九 ───────────────────────────────────────────────────────
+    const terminalHonorCount = clean.filter(c => isTerminalOrHonorCode(c)).length;
+    if (clean.every(c => isMiddleSuitCode(c))) {
+      bonus += 2;
+    } else if (terminalHonorCount <= 2 && shantenNow <= 2) {
+      bonus += Math.max(0, 2 - terminalHonorCount);
+    }
+
+    // ── 碰碰胡（② 獨立向聽計算）────────────────────────────────────
     const pairLike = Object.keys(counts).filter(c => (counts[c] || 0) >= 2).length;
     const singles = Object.keys(counts).filter(c => (counts[c] || 0) === 1).length;
-    if (pairLike >= 3 && singles <= 2) bonus += 4;
-    // 役牌（中發白/門風/圈風）刻子潛力
+    const ppShanten = smartAiPungPungShanten(clean, seat);
+    if (ppShanten <= 1) {
+      bonus += Math.max(0, 4 - ppShanten * 2);  // 向聽 0 → +4，向聽 1 → +2
+    } else if (pairLike >= 3 && singles <= 2 && shantenNow <= 2) {
+      bonus += 1;  // 有潛力但還遠，輕微加分
+    }
+
+    // ── 役牌刻子 ─────────────────────────────────────────────────────
     const seatWind = ['E','S','W','N'][SEATS.indexOf(seat)] || '';
     const roundWind = ['E','S','W','N'][state.windRound % 4] || '';
     ['C','F','P', seatWind, roundWind].forEach(code => {
       if (code && (counts[code] || 0) >= 2) bonus += 1;
     });
-    // 門清加成：未副露的手牌多一台潛力
+
+    // ── 大三元（需要三種龍各刻子）───────────────────────────────────
+    const dragonCounts = ['C','F','P'].map(c => counts[c] || 0);
+    const dragonTriplets = dragonCounts.filter(n => n >= 3).length;
+    const dragonPairs = dragonCounts.filter(n => n >= 2).length;
+    if (dragonTriplets >= 2 && dragonPairs === 3) {
+      // 大三元或小三元方向，且距離很近
+      bonus += dragonTriplets >= 3 ? 8 : 4;
+    }
+
+    // ── 大/小四喜（四種風各刻子）────────────────────────────────────
+    const windCodes = ['E','S','W','N'];
+    const windTriplets = windCodes.filter(c => (counts[c] || 0) >= 3).length;
+    const windPairs = windCodes.filter(c => (counts[c] || 0) >= 2).length;
+    if (windTriplets >= 3 || (windTriplets >= 2 && windPairs === 4)) {
+      bonus += windTriplets >= 4 ? 16 : 8;
+    }
+
+    // ── 清老頭/混老頭 ────────────────────────────────────────────────
+    const terminalCount = clean.filter(c => isCleanTerminalCode(c)).length;
+    const nonTermHonorCount = clean.filter(c => !isTerminalOrHonorCode(c)).length;
+    if (nonTermHonorCount === 0 && terminalCount > 0 && honors.length === 0) {
+      if (shantenNow <= 2) bonus += 4;
+    } else if (nonTermHonorCount === 0 && terminalCount > 0 && honors.length > 0) {
+      if (shantenNow <= 2) bonus += 2;
+    }
+
+    // ── 門清加成 ─────────────────────────────────────────────────────
     if (meldCount === 0) bonus += 1;
+
     return bonus;
   }
 
@@ -12436,30 +12586,32 @@ html body .app.perspective3d .discardSeat .tile::before {
      比現有 smartAiSafetyDiscardScore 更主動：即使對手未聽也考慮危險。 */
   function smartAiThreatAwareDiscardRisk(seat, code) {
     if (!code) return 0;
+    // ③ per-turn 快取（和 opponentInference 共用同一個快取物件，用不同 key 前綴）
+    const cacheKey = 'threat:' + code;
+    if (tw16OpponentInferenceCache && tw16OpponentInferenceCache[cacheKey] !== undefined) {
+      return tw16OpponentInferenceCache[cacheKey];
+    }
     let risk = 0;
     SEATS.forEach(other => {
       if (other === seat) return;
-      const otherDiscards = (state.discards || []).filter(d => d && d.seat === other).map(d => d.tile && d.tile.code);
-      const otherMeldCodes = (state.melds[other] || []).flatMap(m => m.map(t => t.code));
-      // 對手已打過這張 → 更安全
-      if (otherDiscards.includes(code)) { risk -= 12; return; }
-      // 對手有副露 → 向聽數低，危險度高
+      // ⑥ 使用棄牌 Set 快取
+      const otherDiscardSet = tw16SeatDiscardSetCache ? tw16SeatDiscardSetCache[other] : null;
+      const otherDiscardedCode = otherDiscardSet ? otherDiscardSet.has(code) : (state.discards || []).some(d => d && d.seat === other && d.tile && d.tile.code === code);
+      if (otherDiscardedCode) { risk -= 12; return; }
       const meldCount = (state.melds[other] || []).length;
       if (meldCount >= 2) risk += 8;
       else if (meldCount === 1) risk += 3;
-      // 對手打了很多牌 → 可能接近聽牌
-      const otherDiscardCount = otherDiscards.length;
+      const otherDiscardCount = otherDiscardSet ? otherDiscardSet.size : (state.discards || []).filter(d => d && d.seat === other).length;
       if (otherDiscardCount >= 8) risk += 4;
-      // 中張比端張危險（對手更容易搭進）
       if (/^[mps][3-7]$/.test(code)) risk += 5;
-      // 對手已副露的牌組中有同花色 → 中張更危險
+      const otherMeldCodes = tw16MeldCodesCache ? tw16MeldCodesCache[other] : (state.melds[other] || []).flatMap(m => m.map(t => t.code));
       if (/^[mps]/.test(code) && otherMeldCodes.some(c => c && c[0] === code[0])) risk += 6;
-      // 字牌：如果對手沒打過任何同種字牌且剩張少 → 可能是役牌
       if (isHonorCode(code)) {
         const visibleCount = smartAiVisibleCount(code, seat);
         if (visibleCount <= 1) risk += 4;
       }
     });
+    if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[cacheKey] = risk;
     return risk;
   }
 
@@ -12486,6 +12638,15 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (!(state.melds[seat] || []).length) taiBonus += 1;
     // 莊家
     if (seat === state.dealer) taiBonus += 1;
+    // ⑤ 動態台數因素
+    // 胡莊加台：若聽牌時的進張可能由莊家打出
+    if (state.dealer && state.dealer !== seat) taiBonus += 0.5;   // 有機會胡莊 +1 台，加 0.5 期望值
+    // 海底撈月：牌牆剩少時自摸機率低，但一旦摸到台數多
+    const wallLeft = (state.wall || []).length;
+    if (wallLeft <= 8) taiBonus += 1;   // 接近海底，期望多 1 台
+    // 搶槓加台：有人可能加槓時，搶槓胡機率非零
+    const robKongChance = SEATS.some(other => other !== seat && (state.melds[other] || []).some(m => m.length === 3 && m.every(t => t.code === m[0].code)));
+    if (robKongChance) taiBonus += 0.3;
     return taiBonus;
   }
 
@@ -12554,30 +12715,32 @@ html body .app.perspective3d .discardSeat .tile::before {
      - 對手副露多張同花色 → 混一色/清一色風險高 */
   function smartAiOpponentHandInference(seat, code) {
     if (!code) return 0;
+    // ④ 使用預算快取（chooseDiscardTile 期間只算一次對手特徵）
+    if (tw16OpponentInferenceCache && tw16OpponentInferenceCache[code] !== undefined) {
+      return tw16OpponentInferenceCache[code];
+    }
     let riskAdj = 0;
     SEATS.forEach(other => {
       if (other === seat) return;
-      if (state.declaredTing && state.declaredTing[other]) return; // 已聽牌由安全牌評分處理
+      if (state.declaredTing && state.declaredTing[other]) return;
       const otherDiscards = (state.discards || []).filter(d => d && d.seat === other).map(d => d.tile && d.tile.code).filter(Boolean);
       const otherMelds = state.melds[other] || [];
       if (!otherDiscards.length) return;
-      // 推算：對手棄牌中字牌/端張佔多數 → 追順子/清一色型
       const honorOrTerminal = otherDiscards.filter(c => isHonorCode(c) || /^[mps][19]$/.test(c)).length;
       const honorRatio = honorOrTerminal / otherDiscards.length;
-      if (honorRatio >= 0.5 && /^[mps][3-7]$/.test(code)) riskAdj += 8;  // 中張更危險
-      // 推算：對手棄牌集中在某一花色 → 可能在追另外花色
+      if (honorRatio >= 0.5 && /^[mps][3-7]$/.test(code)) riskAdj += 8;
       const suitCounts = { m: 0, p: 0, s: 0 };
       otherDiscards.forEach(c => { if (/^[mps]/.test(c)) suitCounts[c[0]] = (suitCounts[c[0]] || 0) + 1; });
       const discardedSuits = Object.keys(suitCounts).filter(s => suitCounts[s] >= 3);
       if (/^[mps]/.test(code) && !discardedSuits.includes(code[0])) {
-        // 這個花色沒被棄過 → 可能正是對手在追的花色
-        const meldSuits = new Set(otherMelds.flatMap(m => m.map(t => t.code && t.code[0])).filter(s => s && 'mps'.includes(s)));
-        if (meldSuits.has(code[0])) riskAdj += 10;  // 副露也是此花色，高度懷疑
-        else if (discardedSuits.length >= 2) riskAdj += 5;  // 棄了兩個花色，剩這個
+        // ④ 使用副露花色快取
+        const meldSuits = tw16MeldSuitsCache ? tw16MeldSuitsCache[other] : new Set(otherMelds.flatMap(m => m.map(t => t.code && t.code[0])).filter(s => s && 'mps'.includes(s)));
+        if (meldSuits.has(code[0])) riskAdj += 10;
+        else if (discardedSuits.length >= 2) riskAdj += 5;
       }
-      // 對手副露多 → 向聽低，任何牌都更危險
       if (otherMelds.length >= 2) riskAdj += 6;
     });
+    if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[code] = riskAdj;
     return riskAdj;
   }
 
@@ -12586,18 +12749,16 @@ html body .app.perspective3d .discardSeat .tile::before {
      回傳一個對每位對手的「放槍容忍分數」，分數越高越可以接受放槍給他。
      主要用途：降低對分數最多的對手的放槍恐懼（因為放槍損失相對小）。 */
   function smartAiRonCostTolerance(seat) {
+    // ⑥ 使用預算快取（籌碼在同一回合不變）
+    if (tw16RonCostToleranceCache) return tw16RonCostToleranceCache;
     const endgame = smartAiEndgameLevel();
-    if (!endgame) return {};  // 非殘局不需要
+    if (!endgame) return {};
     const mychips = Number(state.chips && state.chips[seat]) || 0;
     const result = {};
     SEATS.forEach(other => {
       if (other === seat) return;
       const theirChips = Number(state.chips && state.chips[other]) || 0;
-      // 若對手籌碼遠多於我，放槍給他「傷害較輕」（我不會因此從領先變落後）
-      // 若對手籌碼遠少於我，放槍給他可能讓他翻盤，容忍度低
       const diff = mychips - theirChips;
-      // diff 越負（我落後）→ 容忍度越高（因為流局可能更慘）
-      // diff 越正（我領先）→ 容忍度越低（不需要冒放槍風險）
       result[other] = Math.max(-20, Math.min(20, -diff / 500));
     });
     return result;
@@ -12625,6 +12786,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   function smartAiWaitQualityScore(seat, waits) {
     if (!Array.isArray(waits) || !waits.length) return 0;
     const hand = state.hands[seat] || [];
+    // 聽牌後剩餘手牌（已打出棄牌，用 remain codes 估算）
     const handCodes = hand.map(t => t.code).filter(c => !isFlower(c));
     const meldCodes = (state.melds[seat] || []).flatMap(m => m.map(t => t.code));
     const allCodes = handCodes.concat(meldCodes);
@@ -12634,25 +12796,27 @@ html body .app.perspective3d .discardSeat .tile::before {
       if (!code) return;
       const drawable = Math.max(0, countDrawableWaitTiles(code));
       const live = Math.max(0, countLiveWaitTiles(code, seat));
-      // 基礎分：可摸張數 × 權重
       score += drawable * 12 + live * 4;
-      // 聽牌形態加分
       if (/^[mps][1-9]$/.test(code)) {
         const suit = code[0];
         const n = Number(code.slice(1));
-        // 兩面聽（需要相鄰兩張進張）：加分
-        const leftNeighbor = counts[suit + (n - 1)] || 0;
-        const rightNeighbor = counts[suit + (n + 1)] || 0;
-        if (leftNeighbor > 0 && rightNeighbor > 0) score += 8;  // 兩面
-        else if (n === 1 || n === 9) score -= 4;                  // 邊張懲罰
-        else if ((counts[suit + (n - 2)] || 0) > 0 || (counts[suit + (n + 2)] || 0) > 0) score += 2;  // 嵌張輕微
-        else score -= 2;                                          // 雙碰/孤張
+        // ④ 正確判斷聽牌形態：從「摸進此牌後能組哪種順子」的角度判斷
+        // 兩面聽：摸進 n，手牌有 n-1 和 n-2（n 作右端）或 n+1 和 n+2（n 作左端）
+        const isTwoSidedLeft = n <= 7 && (counts[suit+(n+1)]||0) > 0 && (counts[suit+(n+2)]||0) > 0;
+        const isTwoSidedRight = n >= 3 && (counts[suit+(n-1)]||0) > 0 && (counts[suit+(n-2)]||0) > 0;
+        // 嵌張聽：摸進 n，手牌有 n-1 和 n+1（n 作中間）
+        const isKanchan = (counts[suit+(n-1)]||0) > 0 && (counts[suit+(n+1)]||0) > 0;
+        // 邊張聽：摸進 1 手有 2,3 或摸進 9 手有 7,8
+        const isEdge = (n === 1 && (counts[suit+'2']||0) > 0 && (counts[suit+'3']||0) > 0) ||
+                       (n === 9 && (counts[suit+'7']||0) > 0 && (counts[suit+'8']||0) > 0);
+        if (isTwoSidedLeft || isTwoSidedRight) score += 8;      // 兩面
+        else if (isEdge) score -= 4;                              // 邊張
+        else if (isKanchan) score += 1;                           // 嵌張輕微加分
+        else score -= 2;                                          // 雙碰/其他
       } else {
-        // 字牌等待：期望進張少，輕微懲罰
-        score -= 2;
+        score -= 2;  // 字牌
       }
     });
-    // 多面聽加成
     if (waits.length >= 3) score += (waits.length - 2) * 6;
     return score;
   }
@@ -12661,16 +12825,15 @@ html body .app.perspective3d .discardSeat .tile::before {
      分數領先時保守，落後時積極。
      回傳 claimBonus（正=更積極吃碰），discardRisk（正=更保守棄牌）。 */
   function smartAiScorePressure(seat) {
+    // ⑤ 使用預算快取（籌碼在同一回合不變）
+    if (tw16ScorePressureCache) return tw16ScorePressureCache;
     const myChips = Number(state.chips && state.chips[seat]) || 0;
     const allChips = SEATS.map(s => Number(state.chips && state.chips[s]) || 0);
     const maxChips = Math.max(...allChips);
     const minChips = Math.min(...allChips);
     const avg = allChips.reduce((s, c) => s + c, 0) / allChips.length;
     const diff = myChips - avg;
-    // 領先幅度（正=領先）
     const leadRatio = (maxChips - minChips) > 0 ? diff / (maxChips - minChips) : 0;
-    // 領先時：claimBonus 負（不那麼需要吃碰），discardRisk 正（更保守）
-    // 落後時：claimBonus 正（積極爭取），discardRisk 負（可以冒險）
     const claimBonus = -leadRatio * 25;
     const discardRisk = leadRatio * 15;
     return { claimBonus, discardRisk };
@@ -12689,6 +12852,9 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (state.openingDeal && state.openingDeal.active) return [];
     const hand = state.hands[seat] || [];
     if (hand.length % 3 !== 2) return [];
+    // ② 回合快取：同一手牌狀態只算一次
+    const cacheKey = seat + ':' + (state.lastActionId || 0) + ':' + hand.map(t => t.id).join(',');
+    if (tw16TingOptionsCache && tw16TingOptionsCache.key === cacheKey) return tw16TingOptionsCache.options;
     const needed = requiredConcealedSets(seat);
     const winCodes = allNonFlowerCodes();
     const out = [];
@@ -12713,22 +12879,28 @@ html body .app.perspective3d .discardSeat .tile::before {
       || (b.smartScore || 0) - (a.smartScore || 0)
       || tileOrder(a.discardCode) - tileOrder(b.discardCode)
     );
+    tw16TingOptionsCache = { key: cacheKey, options: out };
     return out;
   }
 
   function countLiveWaitTiles(code, seat) {
     if (!code) return 0;
-    let total = 0;
-    (state.wall || []).forEach(t => { if (t && t.code === code) total += 1; });
+    // ① 使用牌牆計數快取
+    const wallCount = tw16WallCountCache ? (tw16WallCountCache[code] || 0) : (() => {
+      let t = 0; (state.wall || []).forEach(w => { if (w && w.code === code) t++; }); return t;
+    })();
+    let opponentCount = 0;
     SEATS.forEach(other => {
       if (other === seat) return;
-      (state.hands[other] || []).forEach(t => { if (t && t.code === code) total += 1; });
+      (state.hands[other] || []).forEach(t => { if (t && t.code === code) opponentCount += 1; });
     });
-    return total;
+    return wallCount + opponentCount;
   }
 
   function countDrawableWaitTiles(code) {
     if (!code) return 0;
+    // ① 使用牌牆計數快取
+    if (tw16WallCountCache) return tw16WallCountCache[code] || 0;
     let total = 0;
     (state.wall || []).forEach(t => { if (t && t.code === code) total += 1; });
     return total;
@@ -13361,22 +13533,13 @@ html body .app.perspective3d .discardSeat .tile::before {
       const tingOptions = getTingOptions(seat);
       const best = bestTingOption(seat, tingOptions);
       if (best) {
-        // ⑤ 評估「現在聽牌」vs「再摸一張拼更多台」
-        // 若聽牌進張很少（≤4張）且目前台數估計很低（≤2台），且牌牆還夠（>20張），
-        // 考慮不聽、繼續改手型往高台路線
         const shouldHold = (() => {
           if (!best.drawableRemaining || best.drawableRemaining > 4) return false;
-          if ((state.wall || []).length <= 20) return false;  // 殘局不猶豫
+          if ((state.wall || []).length <= 20) return false;
           const hand = state.hands[seat] || [];
           const codes = hand.map(t => t.code).filter(c => !isFlower(c));
-          const meldCodes = (state.melds[seat] || []).flatMap(m => m.map(t => t.code));
-          const allCodes = codes.concat(meldCodes);
           const taiEst = smartAiTingTaiScore(seat, best);
-          // 若台數估計只有基本 1-2 台，且手牌有往更高台路線的潛力
-          if (taiEst >= 4) return false;  // 已經是好台，聽
-          const needed = requiredConcealedSets(seat);
-          const potential = smartAiWaitingPotential(seat, codes, needed);
-          // 向聽數 ≤0 且有高台潛力（台數加成>3）時考慮等更好的聽法
+          if (taiEst >= 4) return false;
           const taiPot = smartAiTaiPotential(seat, codes);
           return taiPot >= 6 && best.drawableRemaining <= 2;
         })();
@@ -13384,7 +13547,6 @@ html body .app.perspective3d .discardSeat .tile::before {
           declareTing(seat, 'auto:' + reason, best.discardId);
           return;
         }
-        // 走到這裡表示選擇繼續改手而不聽，落入正常棄牌流程
       }
     }
 
@@ -13422,7 +13584,84 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (state.openingDeal && state.openingDeal.active) return '';
     const cacheKey = smartAiBuildDiscardCacheKey(seat);
     if (tw16SmartDiscardCache && tw16SmartDiscardCache.key === cacheKey) return tw16SmartDiscardCache.tileId || '';
+    // ① 建立本回合的 visibleCount 快取（涵蓋所有 34 種牌，避免字牌 cache miss）
+    const visibleCountCache = Object.create(null);
+    ALL_NON_FLOWER_CODES.forEach(code => {
+      let total = 0;
+      SEATS.forEach(s => {
+        if (s === seat) (state.hands[s] || []).forEach(t => { if (t && t.code === code) total += 1; });
+        (state.melds[s] || []).forEach(meld => (meld || []).forEach(t => { if (t && t.code === code) total += 1; }));
+      });
+      (state.discards || []).forEach(d => { if (d && d.tile && d.tile.code === code) total += 1; });
+      visibleCountCache[code] = total;
+    });
+    tw16VisibleCountCache = visibleCountCache;
+    // ② context key 只算一次
+    tw16StrategyContextKeyCache = strategyDiscardContextKey(seat, hand);
+    // ⑦ 台數估算快取：有聽牌對手時預先算好每種牌對每個對手的 tai cost
+    tw16RonTaiCostCache = Object.create(null);
+    const dangerous = SEATS.filter(o => o !== seat && state.declaredTing && state.declaredTing[o]);
+    if (dangerous.length) {
+      const allHandCodeSet = new Set(hand.map(t => t && t.code).filter(c => c && !isFlower(c)));
+      allHandCodeSet.forEach(code => {
+        tw16RonTaiCostCache[code] = Object.create(null);
+        dangerous.forEach(other => {
+          try {
+            const otherCodes = (state.hands[other] || []).map(t => t.code).filter(c => c && !isFlower(c));
+            const withTile = otherCodes.concat([code]);
+            const needed2 = requiredConcealedSets(other);
+            if (isWinningCodeListCached(withTile, needed2)) {
+              const est = evaluateWinDetails(other, 'ron', seat, { code, id: 'fake_' + code }, {});
+              tw16RonTaiCostCache[code][other] = Math.max(1, est.tai || 1);
+            } else {
+              tw16RonTaiCostCache[code][other] = 1;
+            }
+          } catch (e) { tw16RonTaiCostCache[code][other] = 1; }
+        });
+      });
+    }
+    // ⑥ 全手牌 taiPotential 基準（增量用：棄牌後不重算，直接用差值估）
+    const fullHandCodes = hand.map(t => t && t.code).filter(c => c && !isFlower(c));
+    const fullHandShape = smartAiApproxShape(fullHandCodes, requiredConcealedSets(seat));
+    tw16BaseTaiPotential = smartAiTaiPotential(seat, fullHandCodes, fullHandShape);
+    // ④ 建立各座位副露快取
+    tw16MeldCodesCache = Object.create(null);
+    tw16MeldSuitsCache = Object.create(null);
+    SEATS.forEach(s => {
+      const codes = (state.melds[s] || []).flatMap(m => m.map(t => t && t.code).filter(Boolean));
+      tw16MeldCodesCache[s] = codes;
+      tw16MeldSuitsCache[s] = new Set(codes.filter(c => /^[mps]/.test(c)).map(c => c[0]));
+    });
+    // ⑥ 預算當前手牌 shape（向聽退步容忍計算用，14 張共用一次）
+    const fullHandCodesForShape = hand.map(t => t && t.code).filter(c => c && !isFlower(c));
+    tw16CurrentShapeCache = smartAiApproxShape(fullHandCodesForShape, requiredConcealedSets(seat));
+    tw16OpponentInferenceCache = Object.create(null);
+    tw16ScorePressureCache = smartAiScorePressure(seat);
+    tw16RonCostToleranceCache = smartAiRonCostTolerance(seat);
+    // ① 建立牌牆計數快取
+    tw16WallCountCache = Object.create(null);
+    (state.wall || []).forEach(t => {
+      if (t && t.code && !isFlower(t.code)) tw16WallCountCache[t.code] = (tw16WallCountCache[t.code] || 0) + 1;
+    });
+    // ⑥ 建立各座位已棄牌 Set 快取
+    tw16SeatDiscardSetCache = Object.create(null);
+    SEATS.forEach(s => { tw16SeatDiscardSetCache[s] = new Set(); });
+    (state.discards || []).forEach(d => {
+      if (d && d.seat && d.tile && d.tile.code) tw16SeatDiscardSetCache[d.seat].add(d.tile.code);
+    });
     const candidates = hand.map((t, idx) => smartAiDiscardCandidateScore(seat, t, idx, hand));
+    tw16VisibleCountCache = null;
+    tw16StrategyContextKeyCache = null;
+    tw16RonTaiCostCache = null;
+    tw16BaseTaiPotential = null;
+    tw16OpponentInferenceCache = null;
+    tw16ScorePressureCache = null;
+    tw16RonCostToleranceCache = null;
+    tw16WallCountCache = null;
+    tw16SeatDiscardSetCache = null;
+    tw16MeldCodesCache = null;
+    tw16MeldSuitsCache = null;
+    tw16CurrentShapeCache = null;
     candidates.sort((a, b) =>
       b.score - a.score
       || (b.analysis && b.analysis.waitRemaining || 0) - (a.analysis && a.analysis.waitRemaining || 0)
@@ -14306,6 +14545,48 @@ html body .app.perspective3d .discardSeat .tile::before {
     container[key] = current;
   }
 
+  function isStrategyLibraryHumanClaimSource(source) {
+    const s = String(source || '');
+    return s === 'human' || s === 'remote' || s === 'remote-human';
+  }
+
+  function strategyClaimContextKey(seat, claimType) {
+    const discards = Array.isArray(state.discards) ? state.discards.length : 0;
+    const stage = discards < 24 ? 'early' : (discards < 56 ? 'middle' : 'late');
+    const role = seat === state.dealer ? 'dealer' : 'nondealer';
+    const meldCount = Math.min((state.melds && state.melds[seat] && state.melds[seat].length) || 0, 3);
+    return ['claim', stage, role, claimType, 'm' + meldCount].join('|');
+  }
+
+  function recordStrategyLibraryClaimDecision(seat, claimType, accepted, source) {
+    if (!isStrategyLibraryHumanClaimSource(source) || !SEATS.includes(seat)) return false;
+    if (!strategyLibrary || typeof strategyLibrary !== 'object') strategyLibrary = createDefaultStrategyLibrary();
+    if (!strategyLibrary.claim || typeof strategyLibrary.claim !== 'object') strategyLibrary.claim = { contexts: {} };
+    if (!strategyLibrary.claim.contexts) strategyLibrary.claim.contexts = {};
+    const key = strategyClaimContextKey(seat, claimType);
+    if (!strategyLibrary.claim.contexts[key]) strategyLibrary.claim.contexts[key] = { accepted: 0, rejected: 0 };
+    const ctx = strategyLibrary.claim.contexts[key];
+    if (accepted) ctx.accepted = (ctx.accepted || 0) + 1;
+    else ctx.rejected = (ctx.rejected || 0) + 1;
+    // ④ 補上 decisionCount（原本只有棄牌學習有更新）
+    strategyLibrary.decisionCount = Math.max(0, Number(strategyLibrary.decisionCount || 0) || 0) + 1;
+    strategyLibrary.updatedAt = new Date().toISOString();
+    strategyLibraryDirty = true;
+    scheduleStrategyLibraryDirectAutoSave('learn-claim');
+    return true;
+  }
+
+  function strategyLibraryClaimBonus(seat, claimType) {
+    if (!strategyLibrary || !strategyLibrary.claim || !strategyLibrary.claim.contexts) return 0;
+    const key = strategyClaimContextKey(seat, claimType);
+    const ctx = strategyLibrary.claim.contexts[key];
+    if (!ctx) return 0;
+    const total = (ctx.accepted || 0) + (ctx.rejected || 0);
+    if (total < 5) return 0;  // 樣本太少不使用
+    // 真人在此情境下吃碰的比例，轉換為加分（比例高 → 正分，低 → 負分）
+    const acceptRate = (ctx.accepted || 0) / total;
+    return Math.max(-8, Math.min(8, (acceptRate - 0.5) * 16 * Math.min(1, Math.log1p(total) / 4)));
+  }
   function strategyTileGroup(code) {
     const text = String(code || '');
     if (!text) return 'unknown';
@@ -14344,7 +14625,8 @@ html body .app.perspective3d .discardSeat .tile::before {
 
   function strategyLibraryDiscardBonus(seat, handLike, tileObj) {
     if (!strategyLibrary || !strategyLibrary.discard || !strategyLibrary.discard.contexts || !tileObj || !tileObj.code) return 0;
-    const key = strategyDiscardContextKey(seat, handLike);
+    // ② 使用快取的 context key（chooseDiscardTile 期間只算一次）
+    const key = tw16StrategyContextKeyCache || strategyDiscardContextKey(seat, handLike);
     const ctx = strategyLibrary.discard.contexts[key];
     if (!ctx) return 0;
     const exact = normalizeStrategyLibraryCounter(ctx.exact && ctx.exact[tileObj.code]);
