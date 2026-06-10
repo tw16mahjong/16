@@ -11076,8 +11076,29 @@ html body .app.perspective3d .discardSeat .tile::before {
       if (index >= 0) hand.splice(index, 1);
     });
     removePendingDiscardFromPool(pending);
-    const meldTiles = taken.concat([pending.tile]).sort((a, b) => tileOrder(a.code) - tileOrder(b.code));
-    state.melds[candidate.seat].push(meldTiles);
+    // 吃牌：將棄牌標記後放在牌組中央（index 1）
+    if (candidate.type === 'chi') {
+      const claimedTile = Object.assign({}, pending.tile, { claimedFromDiscard: true });
+      const handTiles = taken.slice().sort((a, b) => tileOrder(a.code) - tileOrder(b.code));
+      // 三張按順序排，找出棄牌應在哪個位置，把它放中間
+      const allThree = taken.concat([claimedTile]).sort((a, b) => tileOrder(a.code) - tileOrder(b.code));
+      const claimedIdx = allThree.findIndex(t => t.claimedFromDiscard);
+      let meldTiles;
+      if (claimedIdx === 0) {
+        // 棄牌最小：放中間 → [1, claimed, 2]
+        meldTiles = [allThree[1], allThree[0], allThree[2]];
+      } else if (claimedIdx === 2) {
+        // 棄牌最大：放中間 → [0, claimed, 1]
+        meldTiles = [allThree[0], allThree[2], allThree[1]];
+      } else {
+        // 棄牌已在中間
+        meldTiles = allThree;
+      }
+      state.melds[candidate.seat].push(meldTiles);
+    } else {
+      const meldTiles = taken.concat([pending.tile]).sort((a, b) => tileOrder(a.code) - tileOrder(b.code));
+      state.melds[candidate.seat].push(meldTiles);
+    }
     state.pending = null;
     clearTimeout(claimTimer);
     state.turn = candidate.seat;
