@@ -3528,7 +3528,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     nextRoundPlan: null,
     lastSettlement: null,
     continuousRun: { enabled: false, remaining: 0, delayMs: 700 },
-    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 180, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: true, voiceEventEnabled: false, scoreBaseChip: 100, scoreTaiChip: 30 },
+    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 300, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: true, voiceEventEnabled: false, scoreBaseChip: 100, scoreTaiChip: 30 },
     handVisualColors: null,
     locked: false,
     lockedAt: 0,
@@ -6752,7 +6752,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     const tileRadiusPct = Number(state.uiSettings.tileRadiusPct);
     state.uiSettings.tileScalePct = clampNumber(70, Number.isFinite(tileScalePct) ? tileScalePct : 110, 135);
     state.uiSettings.tableScalePct = clampNumber(76, Number.isFinite(tableScalePct) ? tableScalePct : 100, 122);
-    state.uiSettings.animSpeedPct = clampNumber(0, Number.isFinite(animSpeedPct) ? animSpeedPct : 100, 180);
+    state.uiSettings.animSpeedPct = clampNumber(0, Number.isFinite(animSpeedPct) ? animSpeedPct : 100, 400);
     state.uiSettings.tileRadiusPct = clampNumber(0, Number.isFinite(tileRadiusPct) ? tileRadiusPct : 18, 38);
     const allowed = ['blue','green','purple','brown','dark'];
     if (!allowed.includes(state.uiSettings.theme)) state.uiSettings.theme = 'blue';
@@ -6773,7 +6773,7 @@ html body .app.perspective3d .discardSeat .tile::before {
 
 
   function defaultUiSettingsObject() {
-    return { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 180, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, voiceEventEnabled: false, scoreBaseChip: GAME_RULES.scoreBaseChip, scoreTaiChip: GAME_RULES.scoreTaiChip };
+    return { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 300, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, voiceEventEnabled: false, scoreBaseChip: GAME_RULES.scoreBaseChip, scoreTaiChip: GAME_RULES.scoreTaiChip };
   }
 
   function applyGuestJoinDefaultSettings(reason) {
@@ -10831,14 +10831,41 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (!hand.length) return false;
     const tileObj = drawnId ? hand.find(t => t.id === drawnId) : hand[hand.length - 1];
     if (!tileObj) return false;
-    addLog(SEAT_NAME[seat] + '聽牌自動摸打 ' + tileText(tileObj.code));
+    // ② 摸到廢牌時評估是否切換聽法
+    // 若摸到的牌不是進張，且存在張數更多或台數更高的其他聽法，考慮切換
+    let discardId = tileObj.id;
+    try {
+      const currentWaits = (state.tingWaits && state.tingWaits[seat]) || [];
+      const isCurrentWait = currentWaits.includes(tileObj.code) || canWinSeat(seat);
+      if (!isCurrentWait && isSeatAutoDrivenBySystem(seat)) {
+        // 重新計算所有聽牌選項，找有無更好的選擇
+        const newOptions = getTingOptions(seat);
+        if (newOptions.length > 0) {
+          const best = bestTingOption(seat, newOptions);
+          if (best && best.discardId) {
+            const bestDrawable = best.drawableRemaining || 0;
+            const currentOpt = newOptions.find(o => String(o.discardId) === String(tileObj.id));
+            const currentDrawable = currentOpt ? (currentOpt.drawableRemaining || 0) : 0;
+            // 若新聽法張數明顯更多（+3張以上）或台數差異顯著，切換
+            const bestTai = smartAiTingTaiScore(seat, best);
+            const currentTai = currentOpt ? smartAiTingTaiScore(seat, currentOpt) : 0;
+            if (bestDrawable >= currentDrawable + 3 || bestTai > currentTai + 2) {
+              discardId = best.discardId;
+              // 更新聽牌宣告（靜默切換）
+              state.declaredTing[seat] = true;
+            }
+          }
+        }
+      }
+    } catch (e) { discardId = tileObj.id; }
+    addLog(SEAT_NAME[seat] + '聽牌自動摸打 ' + tileText((hand.find(t => t.id === discardId) || tileObj).code));
     clearTimeout(autoplayTimer);
     autoplayTimer = setTimeout(async () => {
       await waitForGameVoiceBeforeAutoplay('ting-auto-discard:' + (reason || ''));
       const ready = await waitForHostReliableAckBeforeGameStep('ting-auto-discard:' + (reason || ''), () => !state.ended && state.turn === seat && state.phase === 'discard');
       if (!ready) return;
       if (!state.declaredTing[seat] || state.ended || state.pending || state.locked || state.turn !== seat || state.phase !== 'discard') return;
-      submitDiscard(seat, tileObj.id, reason || 'ting-auto');
+      submitDiscard(seat, discardId, reason || 'ting-auto');
     }, 30);
     return true;
   }
@@ -11129,6 +11156,11 @@ html body .app.perspective3d .discardSeat .tile::before {
     clearTimeout(claimTimer);
     state.turn = candidate.seat;
     state.phase = 'discard';
+    // ⑥ 副露後清空向聽計算快取（shape cache 和 win check cache 可能因副露改變而失效）
+    tw16SmartShapeCache = new Map();
+    tw16WinCheckCache = new Map();
+    tw16SmartDiscardCache = { key: '', tileId: '', detail: null };
+    tw16MonteCarloPoolCache = { key: '', pool: [] };
     if (candidate.type === 'kong') {
       const supplement = drawSupplementTile(candidate.seat);
       sortHand(candidate.seat, supplement && supplement.id);
@@ -11678,6 +11710,11 @@ html body .app.perspective3d .discardSeat .tile::before {
     const supplement = drawSupplementTile(option.seat);
     sortHand(option.seat, supplement && supplement.id);
     state.phase = 'discard';
+    // ⑥ 槓後清空向聽計算快取
+    tw16SmartShapeCache = new Map();
+    tw16WinCheckCache = new Map();
+    tw16SmartDiscardCache = { key: '', tileId: '', detail: null };
+    tw16MonteCarloPoolCache = { key: '', pool: [] };
     if (openSelfWinWindow(option.seat, supplement, 'kong-supplement')) {
       renderAll();
       schedulePendingResolution('own-kong-selfwin');
@@ -11701,6 +11738,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
   const TW16_SMART_AI_MONTE_CARLO_SAMPLES = 3;
+  let tw16MonteCarloPoolCache = { key: '', pool: [] };  // pool 快取，同一局面只建一次
   /* isWinningCodeList 快取：key = sorted codes + "|" + need，避免重複遞迴 */
   let tw16WinCheckCache = new Map();
   function isWinningCodeListCached(codes, concealedSetsNeeded) {
@@ -11834,22 +11872,24 @@ html body .app.perspective3d .discardSeat .tile::before {
       return best;
     }
     const counts = smartAiCountsFromCodes(clean);
-    // 對每個可能的將牌（雙張）都試一次，取最低向聽數（原本只試順/刻兩種順序，會漏最優配對）
-    const pairCandidates = Object.keys(counts).filter(c => (counts[c] || 0) >= 2 && !isFlower(c));
     const passVariants = [
       smartAiApproxPass(counts, need, true),
       smartAiApproxPass(counts, need, false),
     ];
-    pairCandidates.forEach(pairCode => {
-      const c2 = smartAiCloneCounts(counts);
-      c2[pairCode] -= 2;
-      const v1 = smartAiApproxPassNoPair(c2, need, true);
-      const v2 = smartAiApproxPassNoPair(c2, need, false);
-      [v1, v2].forEach(v => {
-        const sh = Math.max(0, need * 2 - v.melds * 2 - v.blocks - 1);
-        passVariants.push({ melds: v.melds, blocks: v.blocks, pair: 1, shanten: sh });
+    // pair 枚舉：只在對子數 ≤ 4 時才逐一試，對子多時兩次 pass 結果已夠準確
+    const pairCandidates = Object.keys(counts).filter(c => (counts[c] || 0) >= 2 && !isFlower(c));
+    if (pairCandidates.length <= 4) {
+      pairCandidates.forEach(pairCode => {
+        const c2 = smartAiCloneCounts(counts);
+        c2[pairCode] -= 2;
+        const v1 = smartAiApproxPassNoPair(c2, need, true);
+        const v2 = smartAiApproxPassNoPair(c2, need, false);
+        [v1, v2].forEach(v => {
+          const sh = Math.max(0, need * 2 - v.melds * 2 - v.blocks - 1);
+          passVariants.push({ melds: v.melds, blocks: v.blocks, pair: 1, shanten: sh });
+        });
       });
-    });
+    }
     passVariants.sort((a, b) => a.shanten - b.shanten || b.melds - a.melds || b.blocks - a.blocks || b.pair - a.pair);
     const chosen = passVariants[0];
     let connected = 0;
@@ -11880,7 +11920,6 @@ html body .app.perspective3d .discardSeat .tile::before {
       const uniquePairs = Object.keys(counts).filter(c => (counts[c] || 0) >= 2).length;
       const sevenShanten = Math.max(0, 6 - uniquePairs);
       best.sevenPairsShanten = sevenShanten;
-      // 若七對子方向更快，採用七對子向聽數
       if (sevenShanten < best.shanten) {
         best.shanten = sevenShanten;
         best.isSevenPairsPath = true;
@@ -11959,21 +11998,37 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (!dangerous.length) return 0;
     const visible = smartAiVisibleCount(code, seat);
     score += visible * 8;
+    // ④ 放銃對象選擇：估算對每位聽牌對手放槍的台數成本，優先避開高台對手
+    const taiCostByOther = {};
     dangerous.forEach(other => {
+      try {
+        // 用一張虛擬牌估算對手若胡此牌的台數
+        const fakeWinTile = { code, id: 'fake' };
+        const estDetail = evaluateWinDetails(other, 'ron', seat, fakeWinTile, {});
+        taiCostByOther[other] = estDetail.tai || 1;
+      } catch (e) { taiCostByOther[other] = 1; }
+    });
+    dangerous.forEach(other => {
+      const tai = taiCostByOther[other] || 1;
       if (smartAiDiscardedBySeat(code, other)) score += 28;
       if (isHonorCode(code) && visible >= 3) score += 18;
-      // 中張依危險程度分級懲罰（原本一律 -10）
-      if (/^[mps][4-6]$/.test(code) && visible <= 1) score -= 16;   // 正中張最危險
-      else if (/^[mps][3-7]$/.test(code) && visible <= 1) score -= 10;
+      // 中張依危險程度分級懲罰
+      if (/^[mps][4-6]$/.test(code) && visible <= 1) score -= 16 + tai * 3;   // 台數越高懲罰越重
+      else if (/^[mps][3-7]$/.test(code) && visible <= 1) score -= 10 + tai * 2;
       if (/^[mps][1-9]$/.test(code) && visible >= 3) score += 9;
       // 對手已副露同花色 → 此花色牌更危險
       const otherMeldSuits = new Set((state.melds[other] || []).flatMap(m => m.map(t => t.code && t.code[0])).filter(Boolean));
-      if (/^[mps]/.test(code) && otherMeldSuits.has(code[0])) score -= 8;
+      if (/^[mps]/.test(code) && otherMeldSuits.has(code[0])) score -= 8 + tai * 2;
       // 字牌：對手打過 → 大幅安全；否則稍危險
       if (isHonorCode(code)) {
         if (!smartAiDiscardedBySeat(code, other) && visible <= 1) score -= 6;
       }
     });
+    // ④ 若有多個聽牌對手，對高台對手的危險牌懲罰額外加強
+    if (dangerous.length >= 2) {
+      const maxTai = Math.max(...dangerous.map(o => taiCostByOther[o] || 1));
+      if ((taiCostByOther[dangerous[0]] || 1) === maxTai) score -= maxTai * 4;
+    }
     return score;
   }
 
@@ -12030,13 +12085,19 @@ html body .app.perspective3d .discardSeat .tile::before {
         waitRemaining += drawable;
         liveRemaining += Math.max(0, countLiveWaitTiles(code, seat));
       }
+      // shanten 高時（≥3）跳過完整 shape 計算，改用快速估算是否值得算進張
+      // 這樣可以大幅減少 O(relevantCodes) × O(pairs) 的計算量
+      if (shape.shanten >= 3) {
+        // 快速估算：只看這張牌是否能形成新搭子
+        const drawable = Math.max(0, countDrawableWaitTiles(code));
+        if (drawable > 0) { effectiveRemaining += drawable; effectiveKinds += 1; }
+        return;
+      }
       const drawShape = smartAiApproxShape(withDraw, concealedSetsNeeded);
       const shantenDrop = shape.shanten - drawShape.shanten;
       const improves = shantenDrop > 0 || (shantenDrop === 0 && drawShape.value > shape.value + 14);
       if (improves) {
         const drawable = Math.max(0, countDrawableWaitTiles(code));
-        // 加權：向聽降低越多（越靠近聽牌）進張權重越高
-        // shanten 0→-1（直接聽牌）= 3x，1→0（達到聽牌前一步）= 2x，其他 = 1x
         const weight = drawShape.shanten <= 0 ? 3 : (shantenDrop >= 2 ? 2 : 1);
         effectiveRemaining += drawable * weight;
         if (drawable > 0) effectiveKinds += 1;
@@ -12101,7 +12162,6 @@ html body .app.perspective3d .discardSeat .tile::before {
     const counts = smartAiCountsFromCodes(clean);
     let best = null;
     Array.from(new Set(clean)).forEach(code => {
-      const removed = false;
       let used = false;
       const after = [];
       clean.forEach(c => {
@@ -12109,41 +12169,42 @@ html body .app.perspective3d .discardSeat .tile::before {
         after.push(c);
       });
       const potential = smartAiWaitingPotential(seat, after, concealedSetsNeeded);
-      const score = potential.value + smartAiTileRoughDiscardValue(code, counts[code] || 1, counts) + smartAiSafetyDiscardScore(seat, code);
+      // ① 加入安全牌意識：模擬中的最佳棄牌也要考慮對手聽牌危險
+      const safetyAdj = smartAiSafetyDiscardScore(seat, code) * 0.5;
+      const score = potential.value + smartAiTileRoughDiscardValue(code, counts[code] || 1, counts) + safetyAdj;
       if (!best || score > best.score) best = { code, score, potential };
     });
     return best;
   }
 
   function smartAiMonteCarloDiscardValue(seat, afterDiscardCodes, concealedSetsNeeded, basePotential, discardCode) {
-    // 從牌牆扣除「已知在對手手牌中的牌」，讓抽牌模擬更準確
-    const opponentHandCodes = new Set();
-    SEATS.forEach(other => {
-      if (other === seat) return;
-      (state.hands[other] || []).forEach(t => { if (t && t.code && !isFlower(t.code)) opponentHandCodes.add(t.id || ''); });
-    });
-    const pool = (state.wall || []).map(t => t && t.code).filter(code => code && !isFlower(code));
-    // 額外把對手副露中的牌也當作不可能摸到（已消耗）— wall 本就不含這些，但手牌中的我們不知道
-    // 用加權取樣：牌牆才是真實可摸的 pool，已知對手手牌降低其出現機率
-    if (!pool.length) return 0;
-    const sampleCount = Math.min(TW16_SMART_AI_MONTE_CARLO_SAMPLES, pool.length);
+    // pool 快取：同一局面（wall 長度 + lastActionId）只建一次 adjustedPool
+    const poolCacheKey = String(state.lastActionId || 0) + ':' + String((state.wall || []).length) + ':' + seat;
+    let effectivePool;
+    if (tw16MonteCarloPoolCache.key === poolCacheKey && tw16MonteCarloPoolCache.pool.length > 0) {
+      effectivePool = tw16MonteCarloPoolCache.pool;
+    } else {
+      const pool = (state.wall || []).map(t => t && t.code).filter(code => code && !isFlower(code));
+      if (!pool.length) return 0;
+      const knownOpponentCounts = Object.create(null);
+      SEATS.forEach(other => {
+        if (other === seat) return;
+        (state.hands[other] || []).forEach(t => {
+          if (t && t.code && !isFlower(t.code)) knownOpponentCounts[t.code] = (knownOpponentCounts[t.code] || 0) + 1;
+        });
+      });
+      const rand0 = smartAiSeededRandom('pool:' + poolCacheKey);
+      const adjustedPool = pool.filter(code => {
+        const opponentHas = knownOpponentCounts[code] || 0;
+        return opponentHas === 0 || rand0() > opponentHas / 4;
+      });
+      effectivePool = adjustedPool.length > 0 ? adjustedPool : pool;
+      tw16MonteCarloPoolCache = { key: poolCacheKey, pool: effectivePool };
+    }
+    if (!effectivePool.length) return 0;
+    const sampleCount = Math.min(TW16_SMART_AI_MONTE_CARLO_SAMPLES, effectivePool.length);
     const rand = smartAiSeededRandom([state.handId || 0, state.lastActionId || 0, seat, discardCode, afterDiscardCodes.join(',')].join('|'));
     const baseValue = basePotential && Number.isFinite(basePotential.value) ? basePotential.value : 0;
-    // 建立修正後的 pool：對手手牌中出現次數多的牌，在 pool 中降低比例
-    const knownOpponentCounts = Object.create(null);
-    SEATS.forEach(other => {
-      if (other === seat) return;
-      (state.hands[other] || []).forEach(t => {
-        if (t && t.code && !isFlower(t.code)) knownOpponentCounts[t.code] = (knownOpponentCounts[t.code] || 0) + 1;
-      });
-    });
-    const adjustedPool = [];
-    pool.forEach(code => {
-      // 若對手手牌已有此牌，降低其在抽牌模擬中的機率（從 pool 中部分移除）
-      const opponentHas = knownOpponentCounts[code] || 0;
-      if (opponentHas === 0 || rand() > opponentHas / 4) adjustedPool.push(code);
-    });
-    const effectivePool = adjustedPool.length > 0 ? adjustedPool : pool;
     let total = 0;
     for (let i = 0; i < sampleCount; i += 1) {
       const drawCode = effectivePool[Math.floor(rand() * effectivePool.length)] || effectivePool[i % effectivePool.length];
@@ -12276,6 +12337,24 @@ html body .app.perspective3d .discardSeat .tile::before {
     score += smartAiScorePressure(seat).claimBonus;
     // ② 莊家意識：莊家自摸三倍收益，對於能縮短向聽的副露更積極
     if (seat === state.dealer && after.shanten < before.shanten) score += 18;
+    // ⑤ 吃碰切斷意識：
+    // a) 下家快聽牌時，主動吃碰打亂下家的吃牌機會（吃碰後輪到自己打，改變牌序）
+    // b) 碰/槓特別有效（改變打牌順序讓下家跳過）
+    const downstreamSeat = nextSeat(discardSeat);
+    const downstreamTing = state.declaredTing && state.declaredTing[downstreamSeat];
+    const downstreamMelds = (state.melds[downstreamSeat] || []).length;
+    const downstreamDiscards = (state.discards || []).filter(d => d && d.seat === downstreamSeat).length;
+    const downstreamThreat = downstreamTing ? 3 : (downstreamMelds >= 2 ? 2 : (downstreamDiscards >= 7 ? 1 : 0));
+    if (downstreamThreat >= 2 && seat !== downstreamSeat) {
+      // 對手威脅高時，吃碰可以打亂其節奏，給予加分
+      if (candidate.type === 'pong' || candidate.type === 'kong') score += downstreamThreat * 6;
+      if (candidate.type === 'chi') score += downstreamThreat * 3;
+    }
+    // c) 若自己是被切斷的那家（discardSeat 的下下家要吃），不應因為 score 低就不吃
+    //    — 這種情況吃牌可以讓危險玩家少摸一張
+    const threatFromDiscard = SEATS.filter(o => o !== seat && o !== discardSeat)
+      .some(o => (state.declaredTing && state.declaredTing[o]) || (state.melds[o] || []).length >= 2);
+    if (threatFromDiscard && after.shanten <= before.shanten && candidate.type === 'chi') score += 8;
     const accept = after.shanten < before.shanten || score >= 12 || after.waitRemaining > before.waitRemaining;
     return { accept, score, before, after };
   }
@@ -13035,8 +13114,12 @@ html body .app.perspective3d .discardSeat .tile::before {
 
   function showBigTileAnimation(tileObj, options = {}) {
     if (!dom.bigDiscard || !tileObj) return false;
-    const holdMs = Math.max(160, Number(options.holdMs) || 620);
-    const fadeMs = Math.max(80, Number(options.fadeMs) || 180);
+    // 托管席位動畫下限更低，真人席位保留足夠視覺反饋
+    const isAutoSeat = options.autoSeat || false;
+    const holdFloor = isAutoSeat ? 60 : 160;
+    const fadeFloor = isAutoSeat ? 30 : 80;
+    const holdMs = Math.max(holdFloor, Number(options.holdMs) || 620);
+    const fadeMs = Math.max(fadeFloor, Number(options.fadeMs) || 180);
     const token = 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2);
     dom.bigDiscard.dataset.token = token;
     dom.bigDiscard.dataset.tileId = tileObj.id || '';
@@ -13061,23 +13144,32 @@ html body .app.perspective3d .discardSeat .tile::before {
   function playDrawAnimation(seat, tileObj) {
     if (!tileObj || state.phase === 'opening') return false;
     if (isNetworked() && isSeatAssignedHuman(seat) && !isSeatLocalHuman(seat)) return false;
+    const isAuto = isSeatAutoDrivenBySystem(seat) || !!(state.seatAutoPlay && state.seatAutoPlay[seat]);
     positionDrawAnimationAtSeat(seat, tileObj);
-    return showBigTileAnimation(tileObj, { holdMs: 520, fadeMs: 150, className: 'drawing' });
+    return showBigTileAnimation(tileObj, { holdMs: isAuto ? 80 : 520, fadeMs: isAuto ? 40 : 150, className: 'drawing', autoSeat: isAuto });
   }
 
   function playDiscardAnimation(seat, tileObj, done) {
     const ms = discardAnimationMs();
+    const isAuto = isSeatAutoDrivenBySystem(seat) || !!(state.seatAutoPlay && state.seatAutoPlay[seat]);
     positionDiscardAnimationAtSeat(seat);
     if (ms <= 0) {
       clearBigTileAnimation();
       done();
       return;
     }
-    showBigTileAnimation(tileObj, { holdMs: Math.max(320, Math.round(ms * 1.55)), fadeMs: Math.max(90, Math.round(ms * 0.24)), className: 'discarding' });
+    const doneFloor = isAuto ? 80 : 360;
+    const holdFloor = isAuto ? 60 : 320;
+    showBigTileAnimation(tileObj, {
+      holdMs: Math.max(holdFloor, Math.round(ms * 1.55)),
+      fadeMs: Math.max(isAuto ? 30 : 90, Math.round(ms * 0.24)),
+      className: 'discarding',
+      autoSeat: isAuto,
+    });
     setTimeout(() => {
       clearBigTileAnimation();
       done();
-    }, Math.max(360, Math.round(ms * 1.85)));
+    }, Math.max(doneFloor, Math.round(ms * 1.85)));
   }
 
   function advanceTurn() {
@@ -13118,7 +13210,10 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (!isSeatAutoDrivenBySystem(state.turn)) return false;
     const lockedAt = Number(state.lockedAt || 0);
     if (!lockedAt) return false;
-    const maxLockMs = Math.max(2400, discardAnimationMs() * 4);
+    const isAutoSeat = isSeatAutoDrivenBySystem(state.turn);
+    const maxLockMs = isAutoSeat
+      ? Math.max(800, discardAnimationMs() * 2)
+      : Math.max(2400, discardAnimationMs() * 4);
     if (Date.now() - lockedAt < maxLockMs) return false;
     state.locked = false;
     state.lockedAt = 0;
@@ -13981,7 +14076,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     dom.resultTitle.textContent = '設定';
     dom.resultText.innerHTML = '<div class="settingsGrid">'
       + '<label class="settingsRow"><span>玩家名稱</span><input id="setPlayerName" type="text" value="' + escapeHtml(net.name || '') + '"><b></b></label>'
-      + '<label class="settingsRow"><span>動畫速度</span><input id="setAnimSpeed" type="range" min="0" max="180" value="' + state.uiSettings.animSpeedPct + '"><b id="setAnimSpeedValue">' + (state.uiSettings.animSpeedPct ? state.uiSettings.animSpeedPct + '%' : '關') + '</b></label>'
+      + '<label class="settingsRow"><span>動畫速度</span><input id="setAnimSpeed" type="range" min="0" max="400" value="' + state.uiSettings.animSpeedPct + '"><b id="setAnimSpeedValue">' + (state.uiSettings.animSpeedPct ? state.uiSettings.animSpeedPct + '%' : '關') + '</b></label>'
       + '<label class="settingsRow"><span>牌圓角</span><input id="setTileRadius" type="range" min="0" max="38" value="' + state.uiSettings.tileRadiusPct + '"><b id="setTileRadiusValue">' + state.uiSettings.tileRadiusPct + '%</b></label>'
       + '<label class="settingsRow"><span>每底籌碼</span><input id="setScoreBaseChip" type="number" min="0" max="999999" step="10" value="' + state.uiSettings.scoreBaseChip + '" ' + (isOnlineGuest() ? 'disabled' : '') + '><b></b></label>'
       + '<label class="settingsRow"><span>每台籌碼</span><input id="setScoreTaiChip" type="number" min="0" max="999999" step="10" value="' + state.uiSettings.scoreTaiChip + '" ' + (isOnlineGuest() ? 'disabled' : '') + '><b></b></label>'
