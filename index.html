@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="mobile-web-app-capable" content="yes"/>
-<title>台灣麻將｜Clean Core g250</title>
+<title>台灣麻將｜Self Check g256</title>
 <link rel="preconnect" href="https://cdn.ably.com" crossorigin/>
 <link rel="dns-prefetch" href="https://realtime.ably.io"/>
 <style>
@@ -6762,6 +6762,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     state.uiSettings.turnHandFrameEnabled = state.uiSettings.turnHandFrameEnabled !== false;
     state.uiSettings.tingAssistEnabled = state.uiSettings.tingAssistEnabled !== false;
     state.uiSettings.miniDashboardEnabled = state.uiSettings.miniDashboardEnabled !== false;
+    state.uiSettings.avatarEnabled = !!state.uiSettings.avatarEnabled;
     state.uiSettings.voiceEventEnabled = !!state.uiSettings.voiceEventEnabled;
     state.uiSettings.perspective3d = !!state.uiSettings.perspective3d;
     const scoreBaseChip = Number(state.uiSettings.scoreBaseChip);
@@ -6838,7 +6839,24 @@ html body .app.perspective3d .discardSeat .tile::before {
     return changed;
   }
 
-  function loadUiSettings() {
+  
+
+  const TW16_SETTINGS_DEFAULTS_MIGRATION_KEY = 'tw16_settings_defaults_g256_applied';
+
+  function applySettingsDefaultsMigration() {
+    let alreadyApplied = false;
+    try { alreadyApplied = localStorage.getItem(TW16_SETTINGS_DEFAULTS_MIGRATION_KEY) === '1'; } catch (e) { alreadyApplied = false; }
+    if (alreadyApplied) return false;
+    if (!state.uiSettings || typeof state.uiSettings !== 'object') state.uiSettings = {};
+    state.uiSettings.animSpeedPct = 400;
+    state.uiSettings.scoreTaiChip = GAME_RULES.scoreTaiChip;
+    state.uiSettings.avatarEnabled = false;
+    state.uiSettings.perspective3d = false;
+    try { localStorage.setItem(TW16_SETTINGS_DEFAULTS_MIGRATION_KEY, '1'); } catch (e) {}
+    return true;
+  }
+function loadUiSettings() {
+    let migratedDefaults = false;
     try {
       const raw = localStorage.getItem('tw16_clean_037_ui');
       if (raw) {
@@ -6853,8 +6871,12 @@ html body .app.perspective3d .discardSeat .tile::before {
         if (savedScore && savedScore.scoreBaseChip !== undefined) state.uiSettings.scoreBaseChip = savedScore.scoreBaseChip;
         if (savedScore && savedScore.scoreTaiChip !== undefined) state.uiSettings.scoreTaiChip = savedScore.scoreTaiChip;
       }
-    } catch (e) {}
+      migratedDefaults = applySettingsDefaultsMigration();
+    } catch (e) {
+      migratedDefaults = applySettingsDefaultsMigration();
+    }
     ensureUiSettings();
+    if (migratedDefaults) saveUiSettings();
     applyUiTheme();
   }
 
@@ -11054,7 +11076,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
   function getChiCandidates(seat, code) {
-    if (!/^[mps][1-9]$/.test(code)) return [];
+    if (!isSuitTile(code)) return [];
     const suit = code[0];
     const n = Number(code.slice(1));
     const hand = state.hands[seat] || [];
@@ -11523,7 +11545,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     let tai = 0;
     const extra = info || {};
     const allCodes = collectWinCodes(winner, winTile);
-    const suits = new Set(allCodes.filter(c => /^[mps]/.test(c)).map(c => c[0]));
+    const suits = new Set(allCodes.filter(c => c && isSuitPrefix(c[0])).map(c => c[0]));
     const honorCodes = allCodes.filter(c => isHonorCode(c));
     const allHonors = allCodes.length > 0 && allCodes.every(c => isHonorCode(c));
     const closed = isClosedHandLike(winner);
@@ -11564,7 +11586,7 @@ html body .app.perspective3d .discardSeat .tile::before {
 
     if (allHonors) { tai += 16; items.push('字一色 +16'); }
     else if (allCodes.length && allCodes.every(isCleanTerminalCode)) { tai += 16; items.push('清老頭 +16'); }
-    else if (allCodes.length && allCodes.every(isTerminalOrHonorCode) && allCodes.some(c => /^[mps]/.test(c)) && allCodes.some(isHonorCode)) { tai += 8; items.push('混老頭 +8'); }
+    else if (allCodes.length && allCodes.every(isTerminalOrHonorCode) && allCodes.some(c => c && isSuitPrefix(c[0])) && allCodes.some(isHonorCode)) { tai += 8; items.push('混老頭 +8'); }
     else if (suits.size === 1 && honorCodes.length === 0) { tai += 8; items.push('清一色 +8'); }
     else if (suits.size === 1 && honorCodes.length > 0) { tai += 4; items.push('混一色 +4'); }
 
@@ -11603,9 +11625,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
   function countCodes(codes) {
-    const counts = Object.create(null);
-    codes.filter(c => c && !isFlower(c)).forEach(c => { counts[c] = (counts[c] || 0) + 1; });
-    return counts;
+    return smartAiCountsFromCodes(codes);
   }
 
   function hasPairCode(seat, extraTile, code) {
@@ -11849,6 +11869,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   let tw16RonCostToleranceCache = null;    // ⑥ 放槍容忍度快取（回合不變）
   let tw16WallCountCache = null;           // ① 牌牆計數快取 { code → count }
   let tw16SeatDiscardSetCache = null;      // ⑥ 各座位已棄牌 Set 快取 { seat → Set<code> }
+  let tw16SeatDiscardArrayCache = null;    // 各座位棄牌陣列快取 { seat → code[] }（供花色比例計算用）
   let tw16MeldCodesCache = null;           // ④ 各座位副露牌碼快取 { seat → code[] }
   let tw16MeldSuitsCache = null;           // ④ 各座位副露花色快取 { seat → Set<suit> }
   let tw16CurrentShapeCache = null;        // ⑥ 當前手牌 shape 快取（向聽退步用）
@@ -11873,6 +11894,14 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
   let tw16SmartDiscardCache = { key: '', tileId: '', detail: null };
   let tw16SmartShapeCache = new Map();
+
+  const SUIT_TILE_SET = new Set(ALL_NON_FLOWER_CODES.filter(c => /^[mps][1-9]$/.test(c)));
+  const MIDDLE_TILE_SET = new Set(ALL_NON_FLOWER_CODES.filter(c => /^[mps][3-7]$/.test(c)));
+  const SUIT_PREFIX_SET = new Set(['m','p','s']);
+  const SUIT_1TO7_SET = new Set(ALL_NON_FLOWER_CODES.filter(c => /^[mps][1-7]$/.test(c)));
+  function isSuitTile(code) { return SUIT_TILE_SET.has(code); }
+  function isMiddleTile(code) { return MIDDLE_TILE_SET.has(code); }
+  function isSuitPrefix(ch) { return SUIT_PREFIX_SET.has(ch); }
 
   function smartAiCodesFromHand(handLike) {
     return (handLike || [])
@@ -11991,7 +12020,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     Object.keys(counts).forEach(code => {
       const count = counts[code] || 0;
       if (count >= 2) pairs += 1;
-      if (/^[mps][1-9]$/.test(code)) {
+      if (isSuitTile(code)) {
         const suit = code[0];
         const n = Number(code.slice(1));
         if ((counts[suit + (n - 2)] || 0) > 0) connected += .35;
@@ -12087,11 +12116,11 @@ html body .app.perspective3d .discardSeat .tile::before {
       if (isHonorCode(code) && visible >= 3) score += 18;
       // 中張依危險程度分級懲罰
       if (/^[mps][4-6]$/.test(code) && visible <= 1) score -= 16 + tai * 3;   // 台數越高懲罰越重
-      else if (/^[mps][3-7]$/.test(code) && visible <= 1) score -= 10 + tai * 2;
-      if (/^[mps][1-9]$/.test(code) && visible >= 3) score += 9;
+      else if (isMiddleTile(code) && visible <= 1) score -= 10 + tai * 2;
+      if (isSuitTile(code) && visible >= 3) score += 9;
       // 對手已副露同花色 → 此花色牌更危險
       const otherMeldSuits = tw16MeldSuitsCache ? tw16MeldSuitsCache[other] : new Set((state.melds[other] || []).flatMap(m => m.map(t => t.code && t.code[0])).filter(Boolean));
-      if (/^[mps]/.test(code) && otherMeldSuits.has(code[0])) score -= 8 + tai * 2;
+      if (isSuitPrefix(code[0]) && otherMeldSuits.has(code[0])) score -= 8 + tai * 2;
       // 字牌：對手打過 → 大幅安全；否則稍危險
       if (isHonorCode(code)) {
         if (!smartAiDiscardedBySeat(code, other) && visible <= 1) score -= 6;
@@ -12109,7 +12138,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (!code) return 0;
     let score = 0;
     if (isHonorCode(code)) score += count === 1 ? 14 : -16;
-    if (/^[mps][1-9]$/.test(code)) {
+    if (isSuitTile(code)) {
       const suit = code[0];
       const n = Number(code.slice(1));
       const left1 = (handCounts[suit + (n - 1)] || 0) > 0;
@@ -12138,11 +12167,13 @@ html body .app.perspective3d .discardSeat .tile::before {
     let liveRemaining = 0;
     let effectiveRemaining = 0;
     let effectiveKinds = 0;
-    /* 剪枝：只考慮手牌中存在的花色與鄰近牌；字牌全部納入（任何字牌都可能是進張）*/
-    const cleanSet = new Set(clean);
+    const cleanCounts = smartAiCountsFromCodes(clean);
     const relevantCodes = allCodes.filter(code => {
-      if (isHonorCode(code)) return true;  // 字牌全部評估，不過濾
-      if (!/^[mps][1-9]$/.test(code)) return true;
+      if (isHonorCode(code)) {
+        // ⑥ 字牌剪枝：只有手牌裡有同張字牌（可組對/刻）時才評估
+        return (cleanCounts[code] || 0) > 0;
+      }
+      if (!isSuitTile(code)) return true;
       const suit = code[0]; const n = Number(code.slice(1));
       return clean.some(c => {
         if (!c || c[0] !== suit) return false;
@@ -12360,46 +12391,44 @@ html body .app.perspective3d .discardSeat .tile::before {
     score += smartAiRonCostDiscardAdjust(seat, code, endgame);
     // ⑥ 輸分壓力：領先時更保守（中張懲罰），落後時可以冒險
     const pressure = smartAiScorePressure(seat);
-    if (/^[mps][3-7]$/.test(code)) score -= pressure.discardRisk;
+    if (isMiddleTile(code)) score -= pressure.discardRisk;
     // ⑥ 棄牌訊號意識：優先棄「自己不需要、但讓對手以為危險」的牌型花色
     // 若手牌已確定走某花色（清一色/混一色路線），故意先棄其他花色讓對手誤判
     if (!endgame) {
-      const afterSuits = new Set(afterCodes.filter(c => /^[mps]/.test(c)).map(c => c[0]));
+      const afterSuits = new Set(afterCodes.filter(c => c && isSuitPrefix(c[0])).map(c => c[0]));
       const afterHonors = afterCodes.filter(c => isHonorCode(c)).length;
       // 若棄牌後手牌仍只有單一花色（走清/混一色），此棄牌對應的花色是「要丟掉的花色」，正確
-      if (afterSuits.size === 1 && /^[mps]/.test(code) && !afterSuits.has(code[0])) {
+      if (afterSuits.size === 1 && isSuitPrefix(code[0]) && !afterSuits.has(code[0])) {
         // 棄的是不要的花色，加分（加速收窄手牌訊號，混淆對手）
         score += 4;
       }
       // 對手手牌中某花色已副露多張 → 此花色對他們「看起來安全」，策略上先棄
       SEATS.forEach(other => {
         if (other === seat) return;
-        const otherMeldSuits = (state.melds[other] || []).flatMap(m => m.map(t => t.code && t.code[0])).filter(s => s && 'mps'.includes(s));
-        if (/^[mps]/.test(code) && otherMeldSuits.filter(s => s === code[0]).length >= 2) {
-          score += 3;  // 對手已副露此花色，打出去被吃的風險低，且不暴露自己手型
+        const otherMeldSuits = tw16MeldSuitsCache ? tw16MeldSuitsCache[other] :
+          new Set((state.melds[other] || []).flatMap(m => m.map(t => t.code && t.code[0])).filter(s => s && 'mps'.includes(s)));
+        if (isSuitPrefix(code[0]) && otherMeldSuits.has(code[0]) &&
+            Array.from(otherMeldSuits).filter(s => s === code[0]).length >= 2) {
+          score += 3;
         }
       });
     }
     // ④ 吃牌後棄牌優化：筋牌危險感知
-    // 若對手聽牌或向聽低，打出「筋牌」（與對手棄牌構成兩面搭的另一端）風險高
-    if (/^[mps][1-9]$/.test(code)) {
+    if (isSuitTile(code)) {
       const suit = code[0];
       const n = Number(code.slice(1));
       SEATS.forEach(other => {
         if (other === seat) return;
-        const otherDiscards = (state.discards || []).filter(d => d && d.seat === other).map(d => d.tile && d.tile.code).filter(Boolean);
-        // 筋牌：若對手打過 n-3 或 n+3，打 n 可能正好命中對手的嵌張搭子
-        const hasSuji = otherDiscards.some(c => {
-          if (!c || c[0] !== suit) return false;
-          const m = Number(c.slice(1));
-          return Math.abs(m - n) === 3;
-        });
+        // 使用 Set 快取查筋牌（O(1)），不掃整個棄牌陣列
+        const discardSet = tw16SeatDiscardSetCache ? tw16SeatDiscardSetCache[other] : null;
+        const hasSuji = (n >= 4 && (discardSet ? discardSet.has(suit + (n - 3)) : (state.discards || []).some(d => d && d.seat === other && d.tile && d.tile.code === suit + (n - 3))))
+          || (n <= 6 && (discardSet ? discardSet.has(suit + (n + 3)) : (state.discards || []).some(d => d && d.seat === other && d.tile && d.tile.code === suit + (n + 3))));
         if (hasSuji) {
           const otherMelds = (state.melds[other] || []).length;
           const isTing = state.declaredTing && state.declaredTing[other];
-          if (isTing) score -= 12;         // 對手已聽牌，筋牌高危
-          else if (otherMelds >= 1) score -= 6;  // 對手有副露，筋牌中危
-          else score -= 3;                 // 一般情況輕微避開
+          if (isTing) score -= 12;
+          else if (otherMelds >= 1) score -= 6;
+          else score -= 3;
         }
       });
     }
@@ -12447,7 +12476,9 @@ html body .app.perspective3d .discardSeat .tile::before {
     const downstreamSeat = nextSeat(discardSeat);
     const downstreamTing = state.declaredTing && state.declaredTing[downstreamSeat];
     const downstreamMelds = (state.melds[downstreamSeat] || []).length;
-    const downstreamDiscards = (state.discards || []).filter(d => d && d.seat === downstreamSeat).length;
+    const downstreamDiscards = tw16SeatDiscardArrayCache
+      ? tw16SeatDiscardArrayCache[downstreamSeat].length
+      : (state.discards || []).filter(d => d && d.seat === downstreamSeat).length;
     const downstreamThreat = downstreamTing ? 3 : (downstreamMelds >= 2 ? 2 : (downstreamDiscards >= 7 ? 1 : 0));
     if (downstreamThreat >= 2 && seat !== downstreamSeat) {
       // 對手威脅高時，吃碰可以打亂其節奏，給予加分
@@ -12541,7 +12572,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (!clean.length) return 0;
     let bonus = 0;
     const counts = smartAiCountsFromCodes(clean);
-    const suits = new Set(clean.filter(c => /^[mps]/.test(c)).map(c => c[0]));
+    const suits = new Set(clean.filter(c => c && isSuitPrefix(c[0])).map(c => c[0]));
     const honors = clean.filter(c => isHonorCode(c));
     const meldCount = (state.melds[seat] || []).length;
     const needed = requiredConcealedSets(seat);
@@ -12558,7 +12589,7 @@ html body .app.perspective3d .discardSeat .tile::before {
       const dominantSuit = ['m','p','s'].sort((a, b) =>
         clean.filter(c => c[0] === b).length - clean.filter(c => c[0] === a).length
       )[0];
-      const offSuitCount = clean.filter(c => /^[mps]/.test(c) && c[0] !== dominantSuit).length + honors.length;
+      const offSuitCount = clean.filter(c => c && isSuitPrefix(c[0]) && c[0] !== dominantSuit).length + honors.length;
       // 需要丟掉 offSuitCount 張，牌牆夠且向聽數合理才追
       if (offSuitCount <= 3 && shantenNow <= 2 && wall >= offSuitCount * 3) bonus += Math.max(0, 8 - offSuitCount * 2);
     }
@@ -12650,9 +12681,9 @@ html body .app.perspective3d .discardSeat .tile::before {
       else if (meldCount === 1) risk += 3;
       const otherDiscardCount = otherDiscardSet ? otherDiscardSet.size : (state.discards || []).filter(d => d && d.seat === other).length;
       if (otherDiscardCount >= 8) risk += 4;
-      if (/^[mps][3-7]$/.test(code)) risk += 5;
+      if (isMiddleTile(code)) risk += 5;
       const otherMeldCodes = tw16MeldCodesCache ? tw16MeldCodesCache[other] : (state.melds[other] || []).flatMap(m => m.map(t => t.code));
-      if (/^[mps]/.test(code) && otherMeldCodes.some(c => c && c[0] === code[0])) risk += 6;
+      if (isSuitPrefix(code[0]) && otherMeldCodes.some(c => c && c[0] === code[0])) risk += 6;
       if (isHonorCode(code)) {
         const visibleCount = smartAiVisibleCount(code, seat);
         if (visibleCount <= 1) risk += 4;
@@ -12672,7 +12703,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     const meldCodes = (state.melds[seat] || []).flatMap(m => m.map(t => t.code));
     const allCodes = remain.concat(meldCodes);
     let taiBonus = 0;
-    const suits = new Set(allCodes.filter(c => /^[mps]/.test(c)).map(c => c[0]));
+    const suits = new Set(allCodes.filter(c => c && isSuitPrefix(c[0])).map(c => c[0]));
     const honors = allCodes.filter(c => isHonorCode(c));
     if (suits.size === 1 && honors.length === 0) taiBonus += 8;   // 清一色
     else if (suits.size === 1) taiBonus += 4;                      // 混一色
@@ -12721,7 +12752,7 @@ html body .app.perspective3d .discardSeat .tile::before {
       if (/^[mps][4-6]$/.test(code) && visible <= 1) adj -= 12;   // 中張更危險
       if (visible >= 3) adj += 10;                                  // 高可見張更安全
       if (SEATS.some(o => o !== seat && state.declaredTing && state.declaredTing[o])) {
-        adj -= /^[mps][3-7]$/.test(code) ? 18 : 8;                // 有人聽牌時中張重懲
+        adj -= isMiddleTile(code) ? 18 : 8;                // 有人聽牌時中張重懲
       }
     }
     if (endgame >= 2) {
@@ -12770,16 +12801,18 @@ html body .app.perspective3d .discardSeat .tile::before {
     SEATS.forEach(other => {
       if (other === seat) return;
       if (state.declaredTing && state.declaredTing[other]) return;
-      const otherDiscards = (state.discards || []).filter(d => d && d.seat === other).map(d => d.tile && d.tile.code).filter(Boolean);
+      // 使用棄牌陣列快取，避免重掃整個 state.discards
+      const otherDiscards = tw16SeatDiscardArrayCache ? tw16SeatDiscardArrayCache[other] :
+        (state.discards || []).filter(d => d && d.seat === other).map(d => d.tile && d.tile.code).filter(Boolean);
       const otherMelds = state.melds[other] || [];
       if (!otherDiscards.length) return;
       const honorOrTerminal = otherDiscards.filter(c => isHonorCode(c) || /^[mps][19]$/.test(c)).length;
       const honorRatio = honorOrTerminal / otherDiscards.length;
-      if (honorRatio >= 0.5 && /^[mps][3-7]$/.test(code)) riskAdj += 8;
+      if (honorRatio >= 0.5 && isMiddleTile(code)) riskAdj += 8;
       const suitCounts = { m: 0, p: 0, s: 0 };
-      otherDiscards.forEach(c => { if (/^[mps]/.test(c)) suitCounts[c[0]] = (suitCounts[c[0]] || 0) + 1; });
+      otherDiscards.forEach(c => { if (c && isSuitPrefix(c[0])) suitCounts[c[0]] = (suitCounts[c[0]] || 0) + 1; });
       const discardedSuits = Object.keys(suitCounts).filter(s => suitCounts[s] >= 3);
-      if (/^[mps]/.test(code) && !discardedSuits.includes(code[0])) {
+      if (isSuitPrefix(code[0]) && !discardedSuits.includes(code[0])) {
         // ④ 使用副露花色快取
         const meldSuits = tw16MeldSuitsCache ? tw16MeldSuitsCache[other] : new Set(otherMelds.flatMap(m => m.map(t => t.code && t.code[0])).filter(s => s && 'mps'.includes(s)));
         if (meldSuits.has(code[0])) riskAdj += 10;
@@ -12822,7 +12855,7 @@ html body .app.perspective3d .discardSeat .tile::before {
       if (!(state.declaredTing && state.declaredTing[other])) return;
       const tol = tolerance[other] || 0;
       // 對容忍度低的對手，危險牌加大懲罰；對容忍度高的，稍微放寬
-      if (/^[mps][3-7]$/.test(code)) adj += tol * 3;
+      if (isMiddleTile(code)) adj += tol * 3;
     });
     return adj;
   }
@@ -12844,7 +12877,7 @@ html body .app.perspective3d .discardSeat .tile::before {
       const drawable = Math.max(0, countDrawableWaitTiles(code));
       const live = Math.max(0, countLiveWaitTiles(code, seat));
       score += drawable * 12 + live * 4;
-      if (/^[mps][1-9]$/.test(code)) {
+      if (isSuitTile(code)) {
         const suit = code[0];
         const n = Number(code.slice(1));
         // ④ 正確判斷聽牌形態：從「摸進此牌後能組哪種順子」的角度判斷
@@ -13677,7 +13710,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     SEATS.forEach(s => {
       const codes = (state.melds[s] || []).flatMap(m => m.map(t => t && t.code).filter(Boolean));
       tw16MeldCodesCache[s] = codes;
-      tw16MeldSuitsCache[s] = new Set(codes.filter(c => /^[mps]/.test(c)).map(c => c[0]));
+      tw16MeldSuitsCache[s] = new Set(codes.filter(c => c && isSuitPrefix(c[0])).map(c => c[0]));
     });
     // ⑥ 預算當前手牌 shape（向聽退步容忍計算用，14 張共用一次）
     const fullHandCodesForShape = hand.map(t => t && t.code).filter(c => c && !isFlower(c));
@@ -13692,9 +13725,16 @@ html body .app.perspective3d .discardSeat .tile::before {
     });
     // ⑥ 建立各座位已棄牌 Set 快取
     tw16SeatDiscardSetCache = Object.create(null);
-    SEATS.forEach(s => { tw16SeatDiscardSetCache[s] = new Set(); });
+    tw16SeatDiscardArrayCache = Object.create(null);
+    SEATS.forEach(s => {
+      tw16SeatDiscardSetCache[s] = new Set();
+      tw16SeatDiscardArrayCache[s] = [];
+    });
     (state.discards || []).forEach(d => {
-      if (d && d.seat && d.tile && d.tile.code) tw16SeatDiscardSetCache[d.seat].add(d.tile.code);
+      if (d && d.seat && d.tile && d.tile.code) {
+        tw16SeatDiscardSetCache[d.seat].add(d.tile.code);
+        tw16SeatDiscardArrayCache[d.seat].push(d.tile.code);
+      }
     });
     const candidates = hand.map((t, idx) => smartAiDiscardCandidateScore(seat, t, idx, hand));
     tw16VisibleCountCache = null;
@@ -13706,6 +13746,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     tw16RonCostToleranceCache = null;
     tw16WallCountCache = null;
     tw16SeatDiscardSetCache = null;
+    tw16SeatDiscardArrayCache = null;
     tw16MeldCodesCache = null;
     tw16MeldSuitsCache = null;
     tw16CurrentShapeCache = null;
@@ -15773,16 +15814,71 @@ html body .app.perspective3d .discardSeat .tile::before {
     return { ok: warnings.length === 0, total: entries.length, expectedTotal, missingId, duplicates, seatRows, warnings };
   }
 
-  function showIntegrityReport(precomputed) {
+  
+  function builtInSelfCheckRows(tileReport) {
+    ensureUiSettings();
+    const rows = [];
+    const add = (name, ok, detail) => rows.push({ name, ok: !!ok, detail: detail || '' });
+    add('每台籌碼預設', GAME_RULES.scoreTaiChip === 10 && Number(state.uiSettings.scoreTaiChip) === 10, '規則=' + GAME_RULES.scoreTaiChip + '，目前設定=' + state.uiSettings.scoreTaiChip);
+    add('動畫速度預設', Number(state.uiSettings.animSpeedPct) === 400, '目前=' + state.uiSettings.animSpeedPct + '%');
+    add('顯示座位頭像預設', state.uiSettings.avatarEnabled === false, state.uiSettings.avatarEnabled ? '目前=開' : '目前=關');
+    add('3D立體視角預設', state.uiSettings.perspective3d === false, state.uiSettings.perspective3d ? '目前=開' : '目前=關');
+    const oldRepeat = state.dealerRepeat;
+    let repeatOk = false;
+    try {
+      state.dealerRepeat = 0; const r0 = dealerRepeatTaiValue();
+      state.dealerRepeat = 1; const r1 = dealerRepeatTaiValue();
+      state.dealerRepeat = 2; const r2 = dealerRepeatTaiValue();
+      state.dealerRepeat = 3; const r3 = dealerRepeatTaiValue();
+      repeatOk = r0 === 1 && r1 === 3 && r2 === 5 && r3 === 7;
+      add('連莊 2N+1 計台', repeatOk, 'N=0/1/2/3 → ' + [r0, r1, r2, r3].join('/'));
+    } catch (e) {
+      add('連莊 2N+1 計台', false, '檢查失敗');
+    } finally {
+      state.dealerRepeat = oldRepeat;
+    }
+    const winText = String(typeof winShapeWaitDetail === 'function' ? winShapeWaitDetail : '');
+    const evalText = String(typeof evaluateWinDetails === 'function' ? evaluateWinDetails : '');
+    add('中洞/邊張計台函數', winText.indexOf('中洞') >= 0 && winText.indexOf('邊張') >= 0 && evalText.indexOf('waitShape') >= 0, 'winShapeWaitDetail + evaluateWinDetails');
+    const allCodes = (typeof allNonFlowerCodes === 'function' ? allNonFlowerCodes().slice() : ALL_NON_FLOWER_CODES.slice()).concat(['H1','H2','H3','H4','H5','H6','H7','H8']);
+    const missingImages = allCodes.filter(code => !tileImageSrc(code));
+    add('1索牌圖圖源', !!tileImageSrc('s1'), 'key=' + tileImageKey('s1'));
+    add('全部內建牌圖圖源', missingImages.length === 0, missingImages.length ? missingImages.join('、') : '全部 ' + allCodes.length + ' 種都有圖源');
+    let pageText = '';
+    try { pageText = String(document.documentElement && document.documentElement.outerHTML || '').toLowerCase(); } catch (e) { pageText = ''; }
+    add('AdGuard 殘留', pageText.indexOf('adguard') < 0 && pageText.indexOf('local.adguard.org') < 0, pageText.indexOf('adguard') < 0 ? '未偵測到' : '偵測到 adguard 字樣');
+    add('牌局實體牌完整性', tileReport && tileReport.ok, tileReport ? ('總牌數 ' + tileReport.total + ' / ' + tileReport.expectedTotal) : '未產生牌局報告');
+    let migrationMarked = false;
+    try { migrationMarked = localStorage.getItem(TW16_SETTINGS_DEFAULTS_MIGRATION_KEY) === '1'; } catch (e) { migrationMarked = true; }
+    add('舊設定一次性遷移', migrationMarked, migrationMarked ? '已標記' : '尚未標記');
+    return rows;
+  }
+
+  function selfCheckRowsHtml(rows) {
+    return '<table class="integrityTable"><thead><tr><th>項目</th><th>狀態</th><th>細節</th></tr></thead><tbody>'
+      + rows.map(row => '<tr><td>' + escapeHtml(row.name) + '</td><td class="' + (row.ok ? 'integrityOk' : 'integrityBad') + '">' + (row.ok ? '通過' : '需檢查') + '</td><td>' + escapeHtml(row.detail) + '</td></tr>').join('')
+      + '</tbody></table>';
+  }
+
+  function builtInSelfCheckOk(rows) {
+    return Array.isArray(rows) && rows.every(row => row && row.ok);
+  }
+
+function showIntegrityReport(precomputed) {
     const report = precomputed || validateTileIntegrity();
+    const checkRows = builtInSelfCheckRows(report);
+    const selfCheckOk = builtInSelfCheckOk(checkRows);
     const duplicateHtml = report.duplicates.length ? '<table class="integrityTable"><thead><tr><th>牌</th><th>ID</th><th>位置</th></tr></thead><tbody>'
       + report.duplicates.map(item => '<tr><td>' + escapeHtml(item.code || '?') + '</td><td>' + escapeHtml(item.id) + '</td><td>' + escapeHtml(item.places.join(' / ')) + '</td></tr>').join('')
       + '</tbody></table>' : '<div class="integrityOk">沒有重複牌 ID。</div>';
     const seatHtml = '<table class="integrityTable"><thead><tr><th>座位</th><th>手牌</th><th>花牌</th><th>副露組</th><th>副露牌</th></tr></thead><tbody>'
       + report.seatRows.map(row => '<tr><td>' + SEAT_NAME[row.seat] + '</td><td>' + row.hand + '</td><td>' + row.flowers + '</td><td>' + row.melds + '</td><td>' + row.meldTileCount + '</td></tr>').join('')
       + '</tbody></table>';
-    dom.resultTitle.textContent = '牌局完整性檢查';
+    dom.resultTitle.textContent = '內建自檢';
     dom.resultText.innerHTML = '<div style="text-align:left;line-height:1.55">'
+      + '<div class="' + (selfCheckOk ? 'integrityOk' : 'integrityBad') + '">' + (selfCheckOk ? '自檢通過' : '自檢有項目需檢查') + '</div>'
+      + '<h3 style="color:#fde68a">規則 / 設定 / 牌圖檢查</h3>' + selfCheckRowsHtml(checkRows)
+      + '<h3 style="color:#fde68a">目前牌局牌數</h3>'
       + '<div class="' + (report.ok ? 'integrityOk' : 'integrityBad') + '">' + (report.ok ? '狀態正常' : '發現問題') + '</div>'
       + '<div>總牌數：' + report.total + ' / ' + report.expectedTotal + '</div>'
       + (report.warnings.length ? '<ul>' + report.warnings.map(w => '<li>' + escapeHtml(w) + '</li>').join('') + '</ul>' : '')
@@ -31230,7 +31326,7 @@ function concealedKongOwnerOfMeld(meld) {
   }
 
   function tileImageKey(code) {
-    if (/^[mps][1-9]$/.test(code)) return code.slice(1) + code.charAt(0);
+    if (isSuitTile(code)) return code.slice(1) + code.charAt(0);
     if (/^H[1-8]$/.test(code)) return 'F' + code.slice(1);
     return code;
   }
@@ -31238,7 +31334,7 @@ function concealedKongOwnerOfMeld(meld) {
   function canonicalCustomTileImportCode(key) {
     const code = String(key || '');
     if (/^[1-9][mps]$/.test(code)) return code;
-    if (/^[mps][1-9]$/.test(code)) return code.charAt(1) + code.charAt(0);
+    if (isSuitTile(code)) return code.charAt(1) + code.charAt(0);
     if (/^H[1-8]$/.test(code)) return 'F' + code.slice(1);
     if (/^F[1-8]$/.test(code)) return code;
     if (['E','S','W','N','P','F','C'].includes(code)) return code;
@@ -31279,7 +31375,7 @@ function concealedKongOwnerOfMeld(meld) {
   }
 
   function tileText(code) {
-    if (/^[mps][1-9]$/.test(code)) return code.slice(1);
+    if (isSuitTile(code)) return code.slice(1);
     const map = { E:'東', S:'南', W:'西', N:'北', C:'中', F:'發', P:'□', H1:'春', H2:'夏', H3:'秋', H4:'冬', H5:'梅', H6:'蘭', H7:'竹', H8:'菊' };
     return map[code] || code;
   }
