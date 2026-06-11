@@ -6386,7 +6386,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     lobby.id = 'tw16Lobby';
     lobby.className = 'tw16-lobby';
     lobby.innerHTML = '<div class="tw16-lobby-card">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.9 00：46 改版）</span><span style="margin-left:auto;font-size:11px;font-weight:900;color:#4ade80;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);border-radius:999px;padding:2px 10px;white-space:nowrap;">精確DP向聽</span></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.11 18：17 改版）</span><span style="margin-left:auto;font-size:11px;font-weight:900;color:#4ade80;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);border-radius:999px;padding:2px 10px;white-space:nowrap;">精確動態規劃向聽</span></div>'
       + '<div class="tw16-lobby-title">台灣麻將 Ably 連線 / 單機</div>'
       + '<div class="tw16-lobby-sub">★連線對戰：<br><span style="color:#ef4444">每人都要設同房名</span>，設好房名後<br>1人先按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">建立房間</span><br>其餘人按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">加入房間</span><br>★單人：按<span style="background:#15803d;color:#fff;border-radius:3px;padding:0 3px;">直接離線開始</span></div>'
       + '<div class="tw16-lobby-grid">'
@@ -11399,7 +11399,7 @@ function loadUiSettings() {
     function rec(i, m, p, pair) {
       while (i <= 8 && c9[i] === 0) i++;
       if (i > 8) {
-        const key = m * 100 + p * 10 + pair;
+        const key = m * 1000 + p * 10 + pair;
         const prev = seen.get(key);
         if (!prev || m > prev.m || p > prev.p) seen.set(key, { m, p, pair });
         return;
@@ -11480,12 +11480,24 @@ function loadUiSettings() {
       for (const k of Object.keys(counts)) { if (counts[k]) return false; }
       return true;
     }
-    const tempCodes = [];
-    Object.keys(counts).forEach(code => { for (let i = 0; i < (counts[code] || 0); i++) tempCodes.push(code); });
-    if (tempCodes.length !== setsLeft * 3) return false;
-    const c = Object.create(null);
-    tempCodes.forEach(code => { c[code] = (c[code] || 0) + 1; });
-    return tw16ExactShanten(c, setsLeft) === -1;
+    const total = Object.keys(counts).reduce((s, k) => s + (counts[k] || 0), 0);
+    if (total !== setsLeft * 3) return false;
+    // 純面子判斷（無將牌）：用 setsLeft 組 + 虛擬將牌的方式繞過 DP 的長度限制
+    // 直接用遞迴驗證：第一個非零牌必須能組成順子或刻子
+    function canForm(c, left) {
+      if (left === 0) { for (const k of Object.keys(c)) { if (c[k]) return false; } return true; }
+      const keys = Object.keys(c).filter(k => c[k] > 0).sort((a, b) => (a > b ? 1 : -1));
+      if (!keys.length) return false;
+      const code = keys[0];
+      if ((c[code] || 0) >= 3) { c[code] -= 3; if (canForm(c, left-1)) { c[code] += 3; return true; } c[code] += 3; }
+      if (/^[mps][1-7]$/.test(code)) {
+        const s = code[0], n = Number(code.slice(1)), b = s+(n+1), cc = s+(n+2);
+        if ((c[b]||0)>0 && (c[cc]||0)>0) { c[code]--; c[b]--; c[cc]--; if(canForm(c,left-1)){c[code]++;c[b]++;c[cc]++;return true;} c[code]++;c[b]++;c[cc]++; }
+      }
+      return false;
+    }
+    const c = Object.assign(Object.create(null), counts);
+    return canForm(c, setsLeft);
   }
 
   function openSelfWinWindow(seat, winTile, reason) {
@@ -11995,11 +12007,14 @@ function loadUiSettings() {
   function smartAiApproxPass(baseCounts, concealedSetsNeeded) {
     const need = Math.max(0, Number(concealedSetsNeeded) || 0);
     const shanten = tw16ExactShanten(baseCounts, need);
-    const pairCodes = Object.keys(baseCounts).filter(c => (baseCounts[c] || 0) >= 2 && !isFlower(c));
-    const hasPair = pairCodes.length > 0 ? 1 : 0;
-    const equivMelds = Math.max(0, need - Math.ceil(Math.max(0, shanten + 1) / 2));
+    // ③ 從精確DP推算等效面子數：shanten=-1已胡=need面子，每多1向聽少1面子
+    const sh = Math.max(0, shanten);
+    const hasPair = Object.keys(baseCounts).some(c => (baseCounts[c] || 0) >= 2 && !isFlower(c)) ? 1 : 0;
+    // 向聽公式逆推：sh = need*2 - melds*2 - blocks - pair → melds = (need*2 - sh - blocks - pair) / 2
+    // 保守估算：blocks=1（至少一個搭子），逆推 melds
+    const equivMelds = shanten < 0 ? need : Math.max(0, Math.floor((need * 2 - sh - 1 - hasPair) / 2));
     const equivBlocks = Math.max(0, need - equivMelds - hasPair);
-    return { melds: equivMelds, blocks: equivBlocks, pair: hasPair, shanten: Math.max(0, shanten) };
+    return { melds: equivMelds, blocks: equivBlocks, pair: hasPair, shanten: sh };
   }
 
   function smartAiApproxShape(codes, concealedSetsNeeded) {
@@ -12008,6 +12023,12 @@ function loadUiSettings() {
     if (tw16SmartShapeCache.has(key)) return tw16SmartShapeCache.get(key);
     if (tw16SmartShapeCache.size > 1200) tw16SmartShapeCache = new Map();
     const need = Math.max(0, Number(concealedSetsNeeded) || 0);
+    // ⑤ 先用快取版胡牌判斷，命中率高且避免重跑完整DP
+    if (isWinningCodeListCached(clean, need)) {
+      const best = { shanten: -1, melds: need, blocks: 0, pair: 1, value: 999, connected: 0, pairs: 0, sevenPairsShanten: 99, isSevenPairsPath: false };
+      tw16SmartShapeCache.set(key, best);
+      return best;
+    }
     const counts = smartAiCountsFromCodes(clean);
     const shanten = tw16ExactShanten(counts, need);
     let connected = 0;
