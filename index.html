@@ -6386,7 +6386,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     lobby.id = 'tw16Lobby';
     lobby.className = 'tw16-lobby';
     lobby.innerHTML = '<div class="tw16-lobby-card">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.11 18：17 改版）</span><span style="margin-left:auto;font-size:11px;font-weight:900;color:#4ade80;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);border-radius:999px;padding:2px 10px;white-space:nowrap;">精確動態規劃向聽</span></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.11 18：30 改版）</span><span style="margin-left:auto;font-size:11px;font-weight:900;color:#fbbf24;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.4);border-radius:999px;padding:2px 10px;white-space:nowrap;">貪心向聽</span></div>'
       + '<div class="tw16-lobby-title">台灣麻將 Ably 連線 / 單機</div>'
       + '<div class="tw16-lobby-sub">★連線對戰：<br><span style="color:#ef4444">每人都要設同房名</span>，設好房名後<br>1人先按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">建立房間</span><br>其餘人按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">加入房間</span><br>★單人：按<span style="background:#15803d;color:#fff;border-radius:3px;padding:0 3px;">直接離線開始</span></div>'
       + '<div class="tw16-lobby-grid">'
@@ -8494,22 +8494,23 @@ function loadUiSettings() {
     );
   }
 
-  function buildLeanSnapshotState() {
-    const guestSeat = isOnlineHost() ? null : (NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : null);
+  function buildLeanSnapshotState(forSeat) {
+    // forSeat: 指定收件來賓的座位，該座位手牌不遮蔽；未指定則全遮蔽（廣播用）
     function maskedHands() {
       const result = Object.create(null);
       SEATS.forEach(seat => {
         const hand = state.hands[seat];
         if (!hand) { result[seat] = hand; return; }
-        if (!guestSeat || seat === guestSeat) { result[seat] = hand; return; }
+        if (forSeat && seat === forSeat) { result[seat] = hand; return; } // 收件人自己的手牌完整
         result[seat] = hand.map(t => t ? Object.assign({}, t, { code: '?' }) : t);
       });
       return result;
     }
     function maskedActiveDrawnTileIds() {
-      if (!guestSeat) return state.activeDrawnTileIds;
       const result = Object.create(null);
-      SEATS.forEach(seat => { result[seat] = seat === guestSeat ? ((state.activeDrawnTileIds || {})[seat] || '') : ''; });
+      SEATS.forEach(seat => {
+        result[seat] = (forSeat && seat === forSeat) ? ((state.activeDrawnTileIds || {})[seat] || '') : '';
+      });
       return result;
     }
     return clonePlain({
@@ -8640,7 +8641,7 @@ function loadUiSettings() {
     return out;
   }
 
-  function buildSnapshotPayload(reason) {
+  function buildSnapshotPayload(reason, forSeat) {
     return {
       protocol: 'tw16-clean-ably-v1',
       kind: 'snapshot',
@@ -8653,7 +8654,7 @@ function loadUiSettings() {
       hostClientId: net.clientId,
       players: clonePlain(net.players),
       scoreChipSettings: currentScoreChipSettings(),
-      state: buildLeanSnapshotState(),
+      state: buildLeanSnapshotState(forSeat || null),
       settlement: state.lastSettlement ? clonePlain(state.lastSettlement) : null,
       animation: consumeNetworkAnimationHint(reason || ''),
       snapshotAt: Date.now()
@@ -8719,32 +8720,41 @@ function loadUiSettings() {
       }
       net.lastSnapshotSignature = signature;
       net.lastStatePublishAt = now;
-      const payload = buildSnapshotPayload(snapshotReason);
-      payload.hostSeq = payload.seq;
-      payload.stateHash = stateHash;
-      payload.handId = state.handId || 0;
-      payload.turnId = state.turn || '';
-      payload.actionSeq = state.lastActionId || '';
-      const messagePayload = {
-        seq: payload.seq,
-        hostSeq: payload.hostSeq,
-        snapshotAt: payload.snapshotAt,
-        handId: payload.handId,
-        turnId: payload.turnId,
-        actionSeq: payload.actionSeq,
-        hostClientId: payload.hostClientId,
-        players: clonePlain(payload.players || {}),
-        state: packNetworkState(payload.state || {}),
-        settlement: payload.settlement || null,
-        animation: payload.animation || null,
-        stateHash: stateHash,
-        targetSessionId: targetOptions && targetOptions.targetSessionId || undefined,
-        targetSeat: targetOptions && targetOptions.targetSeat || undefined
-      };
-      const stateMessage = publishNetworkRoomMessage('state', messagePayload, snapshotReason, networkReliableOptionsForSnapshot(snapshotReason, targetOptions || {}));
-      if (stateMessage && stateMessage.messageId) payload._messageId = stateMessage.messageId;
+      // 對每個在線來賓分別發送量身定制的快照（各自座位手牌完整，其他遮蔽）
+      const guestTargets = activeReliableGuestTargetInfos();
+      let lastPayload = null;
+      const seatsToSend = guestTargets.length > 0 ? guestTargets : [{ sessionId: null, seat: null }];
+      seatsToSend.forEach(({ sessionId, seat: guestSeat }) => {
+        const payload = buildSnapshotPayload(snapshotReason, guestSeat);
+        payload.hostSeq = payload.seq;
+        payload.stateHash = stateHash;
+        payload.handId = state.handId || 0;
+        payload.turnId = state.turn || '';
+        payload.actionSeq = state.lastActionId || '';
+        const perSeatTargetOptions = sessionId ? Object.assign({}, targetOptions || {}, { targetSessionId: sessionId }) : (targetOptions || {});
+        const messagePayload = {
+          seq: payload.seq,
+          hostSeq: payload.hostSeq,
+          snapshotAt: payload.snapshotAt,
+          handId: payload.handId,
+          turnId: payload.turnId,
+          actionSeq: payload.actionSeq,
+          hostClientId: payload.hostClientId,
+          players: clonePlain(payload.players || {}),
+          state: packNetworkState(payload.state || {}),
+          settlement: payload.settlement || null,
+          animation: payload.animation || null,
+          stateHash: stateHash,
+          targetSessionId: perSeatTargetOptions.targetSessionId || undefined,
+          targetSeat: guestSeat || (targetOptions && targetOptions.targetSeat) || undefined
+        };
+        const stateMessage = publishNetworkRoomMessage('state', messagePayload, snapshotReason, networkReliableOptionsForSnapshot(snapshotReason, perSeatTargetOptions));
+        if (stateMessage && stateMessage.messageId) payload._messageId = stateMessage.messageId;
+        lastPayload = payload;
+      });
+      const payload = lastPayload || buildSnapshotPayload(snapshotReason, null);
       writeLatestHostSnapshotToLocalStorage(payload, snapshotReason);
-      recordNetworkEvent('state-out', '送出房主狀態 #' + payload.seq + '｜' + snapshotReason, { seq: payload.seq, reason: snapshotReason, turn: state.turn, phase: state.phase, handId: state.handId || 0, messageId: payload._messageId || '', mirrored: stateMessage ? shouldMirrorNetworkMessageToControl(stateMessage) : false });
+      recordNetworkEvent('state-out', '送出房主狀態 #' + payload.seq + '｜' + snapshotReason, { seq: payload.seq, reason: snapshotReason, turn: state.turn, phase: state.phase, handId: state.handId || 0, messageId: payload._messageId || '', seats: seatsToSend.map(s=>s.seat).join(',') });
       return payload;
     } catch (e) {
       addLog('Ably狀態送出失敗');
@@ -8929,8 +8939,10 @@ function loadUiSettings() {
     }
     if (animation.type === 'draw') {
       if (!tileInHand || tileIsLatestDiscard || isOtherSeat) return false;
-      positionDrawAnimationAtSeat(animation.seat, animation.tile);
-      return showBigTileAnimation(animation.tile, { holdMs: 520, fadeMs: 150, className: 'drawing' });
+      // 從 state.hands 取得真實牌碼（hint 的 code 可能被遮蔽為 '?'）
+      const realTile = (state.hands[animation.seat] || []).find(t => t && t.id === animation.tile.id) || animation.tile;
+      positionDrawAnimationAtSeat(animation.seat, realTile);
+      return showBigTileAnimation(realTile, { holdMs: 520, fadeMs: 150, className: 'drawing' });
     }
     return false;
   }
