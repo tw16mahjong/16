@@ -8720,10 +8720,12 @@ function loadUiSettings() {
       }
       net.lastSnapshotSignature = signature;
       net.lastStatePublishAt = now;
-      // 對每個在線來賓分別發送量身定制的快照（各自座位手牌完整，其他遮蔽）
-      const guestTargets = activeReliableGuestTargetInfos();
+      // 對每個有人類來賓的座位分別發送量身定制的快照（各自座位手牌完整，其他遮蔽）
+      const guestSeats = NETWORK_SEAT_ORDER.filter(s => s !== 'east' && isSeatAssignedHuman(s));
+      const seatsToSend = guestSeats.length > 0
+        ? guestSeats.map(s => ({ seat: s, sessionId: null }))
+        : [{ sessionId: null, seat: null }];
       let lastPayload = null;
-      const seatsToSend = guestTargets.length > 0 ? guestTargets : [{ sessionId: null, seat: null }];
       seatsToSend.forEach(({ sessionId, seat: guestSeat }) => {
         const payload = buildSnapshotPayload(snapshotReason, guestSeat);
         payload.hostSeq = payload.seq;
