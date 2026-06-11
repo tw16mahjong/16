@@ -6386,7 +6386,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     lobby.id = 'tw16Lobby';
     lobby.className = 'tw16-lobby';
     lobby.innerHTML = '<div class="tw16-lobby-card">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.9 00：46 改版）</span></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.9 00：46 改版）</span><span style="margin-left:auto;font-size:11px;font-weight:900;color:#4ade80;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);border-radius:999px;padding:2px 10px;white-space:nowrap;">精確DP向聽</span></div>'
       + '<div class="tw16-lobby-title">台灣麻將 Ably 連線 / 單機</div>'
       + '<div class="tw16-lobby-sub">★連線對戰：<br><span style="color:#ef4444">每人都要設同房名</span>，設好房名後<br>1人先按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">建立房間</span><br>其餘人按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">加入房間</span><br>★單人：按<span style="background:#15803d;color:#fff;border-radius:3px;padding:0 3px;">直接離線開始</span></div>'
       + '<div class="tw16-lobby-grid">'
@@ -11393,49 +11393,99 @@ function loadUiSettings() {
     return isWinningCodeList(codes, requiredConcealedSets(seat));
   }
 
+  /* 精確向聽計算核心：花色分組 DP + 字牌枚舉 */
+  function tw16SuitShantenDP(c9) {
+    const seen = new Map();
+    function rec(i, m, p, pair) {
+      while (i <= 8 && c9[i] === 0) i++;
+      if (i > 8) {
+        const key = m * 100 + p * 10 + pair;
+        const prev = seen.get(key);
+        if (!prev || m > prev.m || p > prev.p) seen.set(key, { m, p, pair });
+        return;
+      }
+      const n = c9[i];
+      if (!pair && n >= 2) { c9[i] -= 2; rec(i, m, p, 1); c9[i] += 2; }
+      if (n >= 3) { c9[i] -= 3; rec(i, m + 1, p, pair); c9[i] += 3; }
+      if (i <= 6 && c9[i+1] > 0 && c9[i+2] > 0) { c9[i]--; c9[i+1]--; c9[i+2]--; rec(i, m+1, p, pair); c9[i]++; c9[i+1]++; c9[i+2]++; }
+      if (n >= 2) { c9[i] -= 2; rec(i+1, m, p+1, pair); c9[i] += 2; }
+      if (i <= 7 && c9[i+1] > 0) { c9[i]--; c9[i+1]--; rec(i+1, m, p+1, pair); c9[i]++; c9[i+1]++; }
+      if (i <= 6 && c9[i+2] > 0) { c9[i]--; c9[i+2]--; rec(i+1, m, p+1, pair); c9[i]++; c9[i+2]++; }
+      rec(i+1, m, p, pair);
+    }
+    rec(0, 0, 0, 0);
+    const arr = Array.from(seen.values());
+    return arr.filter((a, ai) => !arr.some((b, bi) => bi !== ai && b.m >= a.m && b.p >= a.p && b.pair >= a.pair && (b.m > a.m || b.p > a.p || b.pair > a.pair)));
+  }
+
+  function tw16HonorShantenOpts(counts) {
+    const honors = ['E','S','W','N','C','F','P'];
+    let combined = [{ m: 0, p: 0, pair: 0 }];
+    for (const h of honors) {
+      const n = counts[h] || 0;
+      const opts = [{ m: 0, p: 0, pair: 0 }];
+      if (n >= 3) opts.push({ m: 1, p: 0, pair: 0 });
+      if (n >= 2) { opts.push({ m: 0, p: 1, pair: 0 }); opts.push({ m: 0, p: 0, pair: 1 }); }
+      const map = new Map();
+      for (const cur of combined) for (const opt of opts) {
+        const r = { m: cur.m + opt.m, p: cur.p + opt.p, pair: cur.pair + opt.pair };
+        const k = r.m * 100 + r.p * 10 + r.pair;
+        if (!map.has(k)) map.set(k, r);
+      }
+      combined = Array.from(map.values());
+    }
+    return combined;
+  }
+
+  function tw16ExactShanten(counts, need) {
+    if (need < 0) return -1;
+    const groups = ['m','p','s'].map(suit => {
+      const c9 = Array.from({ length: 9 }, (_, i) => counts[suit + (i + 1)] || 0);
+      return tw16SuitShantenDP(c9);
+    });
+    groups.push(tw16HonorShantenOpts(counts));
+    let sevenSh = 99;
+    if (need === 5) {
+      const pairs = Object.keys(counts).filter(k => (counts[k] || 0) >= 2).length;
+      sevenSh = Math.max(0, 6 - pairs);
+    }
+    let best = need * 2 + 1;
+    function dp(idx, m, p, usedPair) {
+      if (idx === 4) {
+        const adjP = Math.min(p, need - m + (usedPair ? 0 : 1));
+        const sh = Math.max(-1, need * 2 - m * 2 - adjP - usedPair);
+        if (sh < best) best = sh;
+        return;
+      }
+      for (const r of groups[idx]) {
+        if (r.pair > 1 || (r.pair && usedPair)) continue;
+        dp(idx + 1, m + r.m, p + r.p, usedPair || r.pair);
+      }
+    }
+    dp(0, 0, 0, 0);
+    return Math.min(best, sevenSh);
+  }
+
   function isWinningCodeList(codes, concealedSetsNeeded) {
     if (!Array.isArray(codes)) return false;
     const need = concealedSetsNeeded * 3 + 2;
     if (codes.length !== need) return false;
     const counts = Object.create(null);
-    codes.forEach(code => { counts[code] = (counts[code] || 0) + 1; });
-    const keys = Object.keys(counts).sort((a, b) => tileOrder(a) - tileOrder(b));
-    for (const pair of keys) {
-      if ((counts[pair] || 0) < 2) continue;
-      counts[pair] -= 2;
-      if (canFormConcealedSets(counts, concealedSetsNeeded, keys)) {
-        counts[pair] += 2;
-        return true;
-      }
-      counts[pair] += 2;
-    }
-    return false;
+    codes.forEach(code => { if (code && !isFlower(code)) counts[code] = (counts[code] || 0) + 1; });
+    return tw16ExactShanten(counts, concealedSetsNeeded) === -1;
   }
 
-  function canFormConcealedSets(counts, setsLeft, sortedKeys) {
-    if (setsLeft === 0) return Object.keys(counts).every(code => !counts[code]);
-    // ① 使用傳入的預排序 keys，避免遞迴中重複 sort
-    const keys = sortedKeys || Object.keys(counts).sort((a, b) => tileOrder(a) - tileOrder(b));
-    const code = keys.find(k => counts[k] > 0);
-    if (!code) return setsLeft === 0;
-    const cnt = counts[code] || 0;
-    if (cnt >= 3) {
-      counts[code] -= 3;
-      if (canFormConcealedSets(counts, setsLeft - 1, keys)) { counts[code] += 3; return true; }
-      counts[code] += 3;
+  function canFormConcealedSets(counts, setsLeft) {
+    if (setsLeft === 0) {
+      for (const k of Object.keys(counts)) { if (counts[k]) return false; }
+      return true;
     }
-    if (/^[mps][1-7]$/.test(code)) {
-      const suit = code[0];
-      const n = Number(code.slice(1));
-      const b = suit + (n + 1);
-      const c = suit + (n + 2);
-      if ((counts[b] || 0) > 0 && (counts[c] || 0) > 0) {
-        counts[code] -= 1; counts[b] -= 1; counts[c] -= 1;
-        if (canFormConcealedSets(counts, setsLeft - 1, keys)) { counts[code] += 1; counts[b] += 1; counts[c] += 1; return true; }
-        counts[code] += 1; counts[b] += 1; counts[c] += 1;
-      }
-    }
-    return false;
+    const tempCodes = [];
+    Object.keys(counts).forEach(code => { for (let i = 0; i < (counts[code] || 0); i++) tempCodes.push(code); });
+    if (tempCodes.length !== setsLeft * 3) return false;
+    const c = Object.create(null);
+    tempCodes.forEach(code => { c[code] = (c[code] || 0) + 1; });
+    return tw16ExactShanten(c, setsLeft) === -1;
   }
 
   function openSelfWinWindow(seat, winTile, reason) {
@@ -11942,57 +11992,14 @@ function loadUiSettings() {
     return true;
   }
 
-  function smartAiApproxPass(baseCounts, concealedSetsNeeded, preferTripletFirst) {
+  function smartAiApproxPass(baseCounts, concealedSetsNeeded) {
     const need = Math.max(0, Number(concealedSetsNeeded) || 0);
-    const counts0 = smartAiCloneCounts(baseCounts);
-    const pairCandidates = Object.keys(counts0).filter(c => (counts0[c] || 0) >= 2 && !isFlower(c));
-    let best = null;
-    const variants = [null, ...pairCandidates];
-    // ④ takeTriplets/takeSequences 提到外層，避免每次枚舉都建立新函式物件
-    function takeTriplets(counts, melds) {
-      ALL_NON_FLOWER_CODES.forEach(code => {
-        while (melds.v < need && (counts[code] || 0) >= 3) { counts[code] -= 3; melds.v += 1; }
-      });
-    }
-    function takeSequences(counts, melds) {
-      ['m','p','s'].forEach(suit => {
-        for (let n = 1; n <= 7; n += 1) {
-          const a = suit+n, b = suit+(n+1), c = suit+(n+2);
-          while (melds.v < need && (counts[a]||0) > 0 && (counts[b]||0) > 0 && (counts[c]||0) > 0) {
-            counts[a] -= 1; counts[b] -= 1; counts[c] -= 1; melds.v += 1;
-          }
-        }
-      });
-    }
-    variants.forEach(pairCode => {
-      const counts = smartAiCloneCounts(baseCounts);
-      let pair = 0;
-      if (pairCode) { counts[pairCode] -= 2; pair = 1; }
-      const melds = { v: 0 };
-      let blocks = 0;
-      if (preferTripletFirst) { takeTriplets(counts, melds); takeSequences(counts, melds); }
-      else { takeSequences(counts, melds); takeTriplets(counts, melds); }
-      const m = melds.v;
-      ALL_NON_FLOWER_CODES.forEach(code => {
-        while ((counts[code]||0) >= 2 && blocks < Math.max(0, need-m)) { counts[code] -= 2; blocks += 1; }
-      });
-      ['m','p','s'].forEach(suit => {
-        for (let n = 1; n <= 8; n++) {
-          const a = suit+n, b = suit+(n+1);
-          while (blocks < Math.max(0,need-m) && (counts[a]||0) > 0 && (counts[b]||0) > 0) { counts[a]-=1; counts[b]-=1; blocks+=1; }
-        }
-        for (let n = 1; n <= 7; n++) {
-          const a = suit+n, c = suit+(n+2);
-          while (blocks < Math.max(0,need-m) && (counts[a]||0) > 0 && (counts[c]||0) > 0) { counts[a]-=1; counts[c]-=1; blocks+=1; }
-        }
-      });
-      const cappedBlocks = Math.min(blocks, Math.max(0, need-m));
-      const shanten = Math.max(0, need*2 - m*2 - cappedBlocks - pair);
-      if (!best || shanten < best.shanten || (shanten === best.shanten && m > best.melds)) {
-        best = { melds: m, blocks: cappedBlocks, pair, shanten };
-      }
-    });
-    return best || { melds: 0, blocks: 0, pair: 0, shanten: need * 2 };
+    const shanten = tw16ExactShanten(baseCounts, need);
+    const pairCodes = Object.keys(baseCounts).filter(c => (baseCounts[c] || 0) >= 2 && !isFlower(c));
+    const hasPair = pairCodes.length > 0 ? 1 : 0;
+    const equivMelds = Math.max(0, need - Math.ceil(Math.max(0, shanten + 1) / 2));
+    const equivBlocks = Math.max(0, need - equivMelds - hasPair);
+    return { melds: equivMelds, blocks: equivBlocks, pair: hasPair, shanten: Math.max(0, shanten) };
   }
 
   function smartAiApproxShape(codes, concealedSetsNeeded) {
@@ -12001,55 +12008,42 @@ function loadUiSettings() {
     if (tw16SmartShapeCache.has(key)) return tw16SmartShapeCache.get(key);
     if (tw16SmartShapeCache.size > 1200) tw16SmartShapeCache = new Map();
     const need = Math.max(0, Number(concealedSetsNeeded) || 0);
-    let best;
-    if (isWinningCodeListCached(clean, need)) {
-      best = { shanten: -1, melds: need, blocks: 0, pair: 1, value: 999, connected: 0, pairs: 0 };
-      tw16SmartShapeCache.set(key, best);
-      return best;
-    }
     const counts = smartAiCountsFromCodes(clean);
-    // smartAiApproxPass 已在內部枚舉所有 pair 候選，直接取兩次 pass 的最優結果
-    const passVariants = [
-      smartAiApproxPass(counts, need, true),
-      smartAiApproxPass(counts, need, false),
-    ];
-    passVariants.sort((a, b) => a.shanten - b.shanten || b.melds - a.melds || b.blocks - a.blocks || b.pair - a.pair);
-    const chosen = passVariants[0];
+    const shanten = tw16ExactShanten(counts, need);
     let connected = 0;
     let pairs = 0;
-    Object.keys(counts).forEach(code => {
+    for (const code of Object.keys(counts)) {
       const count = counts[code] || 0;
       if (count >= 2) pairs += 1;
       if (isSuitTile(code)) {
-        const suit = code[0];
-        const n = Number(code.slice(1));
-        if ((counts[suit + (n - 2)] || 0) > 0) connected += .35;
-        if ((counts[suit + (n - 1)] || 0) > 0) connected += .85;
-        if ((counts[suit + (n + 1)] || 0) > 0) connected += .85;
-        if ((counts[suit + (n + 2)] || 0) > 0) connected += .35;
+        const suit = code[0]; const n = Number(code.slice(1));
+        if ((counts[suit+(n-2)]||0)>0) connected += .35;
+        if ((counts[suit+(n-1)]||0)>0) connected += .85;
+        if ((counts[suit+(n+1)]||0)>0) connected += .85;
+        if ((counts[suit+(n+2)]||0)>0) connected += .35;
       }
-    });
-    best = {
-      shanten: chosen.shanten,
-      melds: chosen.melds,
-      blocks: chosen.blocks,
-      pair: chosen.pair,
+    }
+    const equivMelds = shanten < 0 ? need : Math.max(0, need - Math.ceil((shanten + 1) / 2));
+    const equivBlocks = Math.max(0, need - equivMelds - (pairs > 0 ? 1 : 0));
+    const best = {
+      shanten,
+      melds: equivMelds,
+      blocks: equivBlocks,
+      pair: pairs > 0 ? 1 : 0,
       pairs,
       connected,
-      value: (need - chosen.shanten) * 120 + chosen.melds * 70 + chosen.blocks * 26 + chosen.pair * 32 + pairs * 6 + connected * 4
+      value: (need - shanten) * 120 + equivMelds * 70 + equivBlocks * 26 + (pairs > 0 ? 32 : 0) + pairs * 6 + connected * 4,
+      sevenPairsShanten: 99,
+      isSevenPairsPath: false,
     };
-    // ③ 七對子向聽（6 - 不重複對子數；需要完整 5 組牌即 need===5 且無副露）
     if (need === 5 && clean.length === 13) {
-      const uniquePairs = Object.keys(counts).filter(c => (counts[c] || 0) >= 2).length;
-      const sevenShanten = Math.max(0, 6 - uniquePairs);
+      const sevenShanten = Math.max(0, 6 - pairs);
       best.sevenPairsShanten = sevenShanten;
-      if (sevenShanten < best.shanten) {
+      if (sevenShanten < shanten) {
         best.shanten = sevenShanten;
         best.isSevenPairsPath = true;
-        best.value = Math.max(best.value, (need - sevenShanten) * 100 + uniquePairs * 40);
+        best.value = Math.max(best.value, (need - sevenShanten) * 100 + pairs * 40);
       }
-    } else {
-      best.sevenPairsShanten = 99;
     }
     tw16SmartShapeCache.set(key, best);
     return best;
