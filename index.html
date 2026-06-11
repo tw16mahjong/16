@@ -8428,7 +8428,9 @@ function loadUiSettings() {
     if (!isOnlineHost() || !SEATS.includes(seat) || !tileObj) return false;
     const safeType = String(type || '').trim();
     if (safeType !== 'draw' && safeType !== 'discard') return false;
-    net.pendingAnimation = { type: safeType, seat, tile: clonePlain(tileObj), reason: String(reason || safeType), at: Date.now(), handId: state.handId || 0, actionId: state.lastActionId || 0 };
+    // draw 動畫的牌碼對非本座位來賓遮蔽（discard 是公開資訊，不遮蔽）
+    const safeTile = safeType === 'draw' ? Object.assign({}, clonePlain(tileObj), { code: '?' }) : clonePlain(tileObj);
+    net.pendingAnimation = { type: safeType, seat, tile: safeTile, reason: String(reason || safeType), at: Date.now(), handId: state.handId || 0, actionId: state.lastActionId || 0 };
     return true;
   }
 
@@ -8493,29 +8495,21 @@ function loadUiSettings() {
   }
 
   function buildLeanSnapshotState() {
-    // 對來賓遮蔽非本人座位的手牌（只保留張數/排列，code 換成 '?'）
     const guestSeat = isOnlineHost() ? null : (NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : null);
     function maskedHands() {
       const result = Object.create(null);
       SEATS.forEach(seat => {
         const hand = state.hands[seat];
         if (!hand) { result[seat] = hand; return; }
-        if (!guestSeat || seat === guestSeat) {
-          result[seat] = hand; // 本人或房主：完整資料
-        } else {
-          // 其他座位：code 換成 '?' 防止來賓讀取
-          result[seat] = hand.map(t => t ? Object.assign({}, t, { code: '?' }) : t);
-        }
+        if (!guestSeat || seat === guestSeat) { result[seat] = hand; return; }
+        result[seat] = hand.map(t => t ? Object.assign({}, t, { code: '?' }) : t);
       });
       return result;
     }
     function maskedActiveDrawnTileIds() {
-      if (!guestSeat) return state.activeDrawnTileIds; // 房主：完整資料
+      if (!guestSeat) return state.activeDrawnTileIds;
       const result = Object.create(null);
-      SEATS.forEach(seat => {
-        // 只告訴來賓自己座位的摸牌 id，其他座位給空字串
-        result[seat] = seat === guestSeat ? ((state.activeDrawnTileIds || {})[seat] || '') : '';
-      });
+      SEATS.forEach(seat => { result[seat] = seat === guestSeat ? ((state.activeDrawnTileIds || {})[seat] || '') : ''; });
       return result;
     }
     return clonePlain({
@@ -8920,10 +8914,11 @@ function loadUiSettings() {
     if (!animation || !animation.tile || !SEATS.includes(animation.seat)) return false;
     const tileInHand = tileIsInSeatHand(animation.seat, animation.tile);
     const tileIsLatestDiscard = latestDiscardIsSeatTile(animation.seat, animation.tile);
-    const remoteHumanDraw = isNetworked() && isSeatAssignedHuman(animation.seat) && !isSeatLocalHuman(animation.seat);
+    // 來賓端：非本人座位的所有摸牌動畫一律不播（不管真人或電腦托管）
+    const isOtherSeat = isNetworked() && !isSeatLocalHuman(animation.seat);
     if (animation.type === 'discard') {
       if (tileInHand && !tileIsLatestDiscard) {
-        if (remoteHumanDraw) return false;
+        if (isOtherSeat) return false;
         positionDrawAnimationAtSeat(animation.seat, animation.tile);
         return showBigTileAnimation(animation.tile, { holdMs: 520, fadeMs: 150, className: 'drawing' });
       }
@@ -8933,7 +8928,7 @@ function loadUiSettings() {
       return showBigTileAnimation(animation.tile, { holdMs: Math.max(360, Math.round(discardAnimationMs() * 1.55)), fadeMs: 120, className: 'discarding' });
     }
     if (animation.type === 'draw') {
-      if (!tileInHand || tileIsLatestDiscard || remoteHumanDraw) return false;
+      if (!tileInHand || tileIsLatestDiscard || isOtherSeat) return false;
       positionDrawAnimationAtSeat(animation.seat, animation.tile);
       return showBigTileAnimation(animation.tile, { holdMs: 520, fadeMs: 150, className: 'drawing' });
     }
@@ -13435,10 +13430,7 @@ function loadUiSettings() {
 
   function playDrawAnimation(seat, tileObj) {
     if (!tileObj || state.phase === 'opening') return false;
-    // 連線時：只播放本人座位的摸牌動畫，其他座位（含電腦托管）一律不顯示
-    if (isNetworked()) {
-      if (!isSeatLocalHuman(seat)) return false;
-    }
+    if (isNetworked() && isSeatAssignedHuman(seat) && !isSeatLocalHuman(seat)) return false;
     const isAuto = isSeatAutoDrivenBySystem(seat) || !!(state.seatAutoPlay && state.seatAutoPlay[seat]);
     positionDrawAnimationAtSeat(seat, tileObj);
     return showBigTileAnimation(tileObj, { holdMs: isAuto ? 80 : 520, fadeMs: isAuto ? 40 : 150, className: 'drawing', autoSeat: isAuto });
