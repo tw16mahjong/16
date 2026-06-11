@@ -11256,7 +11256,7 @@ function loadUiSettings() {
       const supplement = drawSupplementTile(candidate.seat);
       sortHand(candidate.seat, supplement && supplement.id);
       addLog(SEAT_NAME[candidate.seat] + candidate.label + ' ' + tileText(pending.tile.code));
-      emitGameVoiceEvent(candidate.label, 'claim:' + state.handId + ':' + pending.actionId + ':' + candidate.seat + ':' + candidate.type, { kind: 'claim', seat: candidate.seat });
+      emitGameVoiceEvent(SEAT_NAME[candidate.seat] + candidate.label, 'claim:' + state.handId + ':' + pending.actionId + ':' + candidate.seat + ':' + candidate.type, { kind: 'claim', seat: candidate.seat });
       if (openSelfWinWindow(candidate.seat, supplement, 'kong-supplement')) {
         renderAll();
         schedulePendingResolution('claim-kong-selfwin');
@@ -11266,7 +11266,7 @@ function loadUiSettings() {
       clearActiveDrawnTile(candidate.seat);
       sortHand(candidate.seat);
       addLog(SEAT_NAME[candidate.seat] + candidate.label + ' ' + tileText(pending.tile.code));
-      emitGameVoiceEvent(candidate.label, 'claim:' + state.handId + ':' + pending.actionId + ':' + candidate.seat + ':' + candidate.type, { kind: 'claim', seat: candidate.seat });
+      emitGameVoiceEvent(SEAT_NAME[candidate.seat] + candidate.label, 'claim:' + state.handId + ':' + pending.actionId + ':' + candidate.seat + ':' + candidate.type, { kind: 'claim', seat: candidate.seat });
       ensureStatsObject();
       state.stats.claims += 1;
       recordHandEvent('claim', candidate.seat, SEAT_NAME[candidate.seat] + candidate.label + ' ' + tileText(pending.tile.code), { type: candidate.type, tile: pending.tile.code });
@@ -11547,7 +11547,7 @@ function loadUiSettings() {
     const scoreUnitsAfter = cloneScoreUnitTotals();
     planNextRoundAfterWin(winner);
     const title = kind === 'self' ? SEAT_NAME[winner] + '自摸' : SEAT_NAME[winner] + '胡 ' + SEAT_NAME[fromSeat];
-    const voiceTitle = kind === 'self' ? '自摸' : '胡';
+    const voiceTitle = kind === 'self' ? SEAT_NAME[winner] + '自摸' : SEAT_NAME[winner] + '胡';
     state.lastSettlement = buildWinSettlementPayload({ winner, kind, fromSeat, winTile, detail, chipsBefore, chipsAfter, scoreUnitsBefore, scoreUnitsAfter, info: info || {} });
     ensureWinHistoryFromSettlementPayload(state.lastSettlement, 'host-win');
     renderSettlementPanel(state.lastSettlement, 'host-win');
@@ -11870,7 +11870,7 @@ function loadUiSettings() {
       taken.forEach(tileObj => { tileObj.concealedKongOwner = option.seat; });
       state.melds[option.seat].push(taken);
       addLog(SEAT_NAME[option.seat] + '暗槓 ' + tileText(option.code));
-      emitGameVoiceEvent('槓', 'own-kong:' + state.handId + ':' + state.lastActionId + ':' + option.seat + ':' + option.code + ':concealed', { kind: 'kong', seat: option.seat });
+      emitGameVoiceEvent(SEAT_NAME[option.seat] + '槓', 'own-kong:' + state.handId + ':' + state.lastActionId + ':' + option.seat + ':' + option.code + ':concealed', { kind: 'kong', seat: option.seat });
       ensureStatsObject();
       state.stats.kongs += 1;
       recordHandEvent('kong', option.seat, SEAT_NAME[option.seat] + '暗槓 ' + tileText(option.code), { type: option.type, tile: option.code });
@@ -11882,7 +11882,7 @@ function loadUiSettings() {
       const [taken] = hand.splice(index, 1);
       meld.push(taken);
       addLog(SEAT_NAME[option.seat] + '加槓 ' + tileText(option.code));
-      emitGameVoiceEvent('槓', 'own-kong:' + state.handId + ':' + state.lastActionId + ':' + option.seat + ':' + option.code + ':add', { kind: 'kong', seat: option.seat });
+      emitGameVoiceEvent(SEAT_NAME[option.seat] + '槓', 'own-kong:' + state.handId + ':' + state.lastActionId + ':' + option.seat + ':' + option.code + ':add', { kind: 'kong', seat: option.seat });
       ensureStatsObject();
       state.stats.kongs += 1;
       recordHandEvent('kong', option.seat, SEAT_NAME[option.seat] + '加槓 ' + tileText(option.code), { type: option.type, tile: option.code });
@@ -13257,7 +13257,7 @@ function loadUiSettings() {
     }
     state.declaredTing[seat] = true;
     addLog(SEAT_NAME[seat] + '宣告聽牌，打出 ' + tileText(selected.discardCode));
-    emitGameVoiceEvent('聽', 'ting:' + state.handId + ':' + seat + ':' + selected.discardId, { kind: 'ting', seat });
+    emitGameVoiceEvent(SEAT_NAME[seat] + '聽', 'ting:' + state.handId + ':' + seat + ':' + selected.discardId, { kind: 'ting', seat });
     recordHandEvent('ting', seat, SEAT_NAME[seat] + '宣告聽牌，打出 ' + tileText(selected.discardCode), { discard: selected.discardCode });
     clearTingChoicePanelState();
     tingChoiceDismissKey = '';
