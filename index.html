@@ -8493,6 +8493,31 @@ function loadUiSettings() {
   }
 
   function buildLeanSnapshotState() {
+    // 對來賓遮蔽非本人座位的手牌（只保留張數/排列，code 換成 '?'）
+    const guestSeat = isOnlineHost() ? null : (NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : null);
+    function maskedHands() {
+      const result = Object.create(null);
+      SEATS.forEach(seat => {
+        const hand = state.hands[seat];
+        if (!hand) { result[seat] = hand; return; }
+        if (!guestSeat || seat === guestSeat) {
+          result[seat] = hand; // 本人或房主：完整資料
+        } else {
+          // 其他座位：code 換成 '?' 防止來賓讀取
+          result[seat] = hand.map(t => t ? Object.assign({}, t, { code: '?' }) : t);
+        }
+      });
+      return result;
+    }
+    function maskedActiveDrawnTileIds() {
+      if (!guestSeat) return state.activeDrawnTileIds; // 房主：完整資料
+      const result = Object.create(null);
+      SEATS.forEach(seat => {
+        // 只告訴來賓自己座位的摸牌 id，其他座位給空字串
+        result[seat] = seat === guestSeat ? ((state.activeDrawnTileIds || {})[seat] || '') : '';
+      });
+      return result;
+    }
     return clonePlain({
       handId: state.handId,
       windRound: state.windRound,
@@ -8509,7 +8534,7 @@ function loadUiSettings() {
       openingDeal: state.openingDeal,
       fixedSeatLabelStyles: state.fixedSeatLabelStyles,
       labelPositionsLocked: state.labelPositionsLocked,
-      hands: state.hands,
+      hands: maskedHands(),
       melds: state.melds,
       flowers: state.flowers,
       discards: state.discards,
@@ -8519,7 +8544,7 @@ function loadUiSettings() {
       handVisualColors: state.handVisualColors,
       seatAutoPlay: state.seatAutoPlay,
       declaredTing: state.declaredTing,
-      activeDrawnTileIds: state.activeDrawnTileIds,
+      activeDrawnTileIds: maskedActiveDrawnTileIds(),
       voiceEvents: state.voiceEvents,
       nextRoundPlan: state.nextRoundPlan,
       lastSettlement: state.lastSettlement,
@@ -13410,7 +13435,10 @@ function loadUiSettings() {
 
   function playDrawAnimation(seat, tileObj) {
     if (!tileObj || state.phase === 'opening') return false;
-    if (isNetworked() && isSeatAssignedHuman(seat) && !isSeatLocalHuman(seat)) return false;
+    // 連線時：只播放本人座位的摸牌動畫，其他座位（含電腦托管）一律不顯示
+    if (isNetworked()) {
+      if (!isSeatLocalHuman(seat)) return false;
+    }
     const isAuto = isSeatAutoDrivenBySystem(seat) || !!(state.seatAutoPlay && state.seatAutoPlay[seat]);
     positionDrawAnimationAtSeat(seat, tileObj);
     return showBigTileAnimation(tileObj, { holdMs: isAuto ? 80 : 520, fadeMs: isAuto ? 40 : 150, className: 'drawing', autoSeat: isAuto });
