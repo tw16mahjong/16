@@ -2910,43 +2910,38 @@ body, .app {
 /* tw16_g104: visible non-autoplay strategy discard suggestion.
    The suggested hand tile is slightly enlarged, framed in red, and marked with a small red label. */
 .hand .hand-tile-row .tile.strategy-discard-suggestion{
-  outline:1px solid #ff2020!important;
+  outline:2px solid #ff2020!important;
   outline-offset:-1px!important;
   box-shadow:inset 0 0 0 1px rgba(255,32,32,.86)!important;
   transform:scale(1.055)!important;
   transform-origin:center bottom!important;
   z-index:92!important;
-  overflow:visible!important;
 }
 .hand .hand-tile-row .tile.strategy-discard-suggestion::before,
 .hand .hand-tile-row .tile.face-image.strategy-discard-suggestion::before,
 .hand .hand-tile-row .tile.face-image.custom-tile-image.strategy-discard-suggestion::before{
-  content:"建議"!important;
-  display:block!important;
-  position:absolute!important;
-  left:-1px!important;
-  top:auto!important;
-  bottom:calc(100% + 1px)!important;
-  width:max-content!important;
-  height:auto!important;
-  min-width:0!important;
-  min-height:0!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
-  border-radius:0!important;
-  outline:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-  color:#ff2020!important;
-  font-size:clamp(5px,calc(var(--tw-tile-w) * .28),7px)!important;
-  font-weight:1000!important;
-  line-height:.95!important;
-  letter-spacing:0!important;
-  white-space:nowrap!important;
-  text-shadow:0 1px 2px rgba(0,0,0,.70)!important;
-  pointer-events:none!important;
-  z-index:5!important;
+  content:none!important;
+  display:none!important;
+}
+.ai-suggest-label{
+  display:block;
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:auto;
+  width:max-content;
+  height:auto;
+  padding:1px 2px;
+  margin:0;
+  border-radius:0 0 2px 0;
+  background:rgba(220,0,0,.92);
+  color:#fff;
+  font-size:clamp(5px,calc(var(--tw-tile-w,28px) * .24),6px);
+  font-weight:900;
+  line-height:1.2;
+  white-space:nowrap;
+  pointer-events:none;
+  z-index:99;
 }
 .hand-bottom .hand-tile-row .tile.strategy-discard-suggestion:hover{
   transform:translateY(-6px) scale(1.085)!important;
@@ -3455,6 +3450,26 @@ html body .app.perspective3d .discardSeat .tile::before {
     left: { hand: 'handLeft', label: 'labelLeft', wall: 'wallLeft', arrowClass: 'arrow-left' },
     right: { hand: 'handRight', label: 'labelRight', wall: 'wallRight', arrowClass: 'arrow-right' }
   };
+  const PLAYER_MODE = { four: '四人模式', two: '雙人模式' };
+  function normalizedPlayerMode(value) {
+    return value === 'two' ? 'two' : 'four';
+  }
+  function activeSeats() {
+    const mode = normalizedPlayerMode(state && state.uiSettings && state.uiSettings.playerMode);
+    return mode === 'two' ? ['east', 'west'] : SEATS.slice();
+  }
+  function isActiveSeat(seat) {
+    return activeSeats().includes(seat);
+  }
+  function activeSeatCount() {
+    return activeSeats().length;
+  }
+  function normalizeActiveDealerAndViewSeat() {
+    const seats = activeSeats();
+    if (!seats.includes(state.dealer)) state.dealer = seats[0];
+    if (!seats.includes(state.turn)) state.turn = state.dealer;
+    if (!seats.includes(state.viewSeat)) state.viewSeat = seats[0];
+  }
   const GAME_RULES = {
     profile: 'taiwan16-standard',
     tilesPerPlayer: 16,
@@ -3528,7 +3543,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     nextRoundPlan: null,
     lastSettlement: null,
     continuousRun: { enabled: false, remaining: 0, delayMs: 700 },
-    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: 100, scoreTaiChip: 10 },
+    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: 100, scoreTaiChip: 10, playerMode: 'four' },
     handVisualColors: null,
     locked: false,
     lockedAt: 0,
@@ -6386,7 +6401,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     lobby.id = 'tw16Lobby';
     lobby.className = 'tw16-lobby';
     lobby.innerHTML = '<div class="tw16-lobby-card">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.11 18：30 改版）</span><span style="margin-left:auto;font-size:11px;font-weight:900;color:#4ade80;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);border-radius:999px;padding:2px 10px;white-space:nowrap;">精確動態規劃向聽</span></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.12 08：25 改版）</span><span style="margin-left:auto;font-size:11px;font-weight:900;color:#4ade80;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);border-radius:999px;padding:2px 10px;white-space:nowrap;">精確動態規劃向聽</span></div>'
       + '<div class="tw16-lobby-title">台灣麻將 Ably 連線 / 單機</div>'
       + '<div class="tw16-lobby-sub">★連線對戰：<br><span style="color:#ef4444">每人都要設同房名</span>，設好房名後<br>1人先按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">建立房間</span><br>其餘人按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">加入房間</span><br>★單人：按<span style="background:#15803d;color:#fff;border-radius:3px;padding:0 3px;">直接離線開始</span></div>'
       + '<div class="tw16-lobby-grid">'
@@ -6769,12 +6784,14 @@ html body .app.perspective3d .discardSeat .tile::before {
     const scoreTaiChip = Number(state.uiSettings.scoreTaiChip);
     state.uiSettings.scoreBaseChip = Number.isFinite(scoreBaseChip) ? Math.round(clampNumber(0, scoreBaseChip, 999999)) : GAME_RULES.scoreBaseChip;
     state.uiSettings.scoreTaiChip = Number.isFinite(scoreTaiChip) ? Math.round(clampNumber(0, scoreTaiChip, 999999)) : GAME_RULES.scoreTaiChip;
+    state.uiSettings.playerMode = normalizedPlayerMode(state.uiSettings.playerMode);
+    normalizeActiveDealerAndViewSeat();
     return state.uiSettings;
   }
 
 
   function defaultUiSettingsObject() {
-    return { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: GAME_RULES.scoreBaseChip, scoreTaiChip: GAME_RULES.scoreTaiChip };
+    return { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: GAME_RULES.scoreBaseChip, scoreTaiChip: GAME_RULES.scoreTaiChip, playerMode: 'four' };
   }
 
   function applyGuestJoinDefaultSettings(reason) {
@@ -10077,19 +10094,30 @@ function loadUiSettings() {
 
 
   function nextSeat(seat) {
-    const index = SEATS.indexOf(seat);
-    return SEATS[(index + 1 + SEATS.length) % SEATS.length];
+    const seats = activeSeats();
+    const index = seats.indexOf(seat);
+    return seats[(index + 1 + seats.length) % seats.length] || seats[0] || 'east';
   }
 
   function seatDistance(from, to) {
-    const a = SEATS.indexOf(from);
-    const b = SEATS.indexOf(to);
-    return (b - a + 4) % 4;
+    const seats = activeSeats();
+    const a = seats.indexOf(from);
+    const b = seats.indexOf(to);
+    if (a >= 0 && b >= 0) return (b - a + seats.length) % seats.length;
+    const fa = SEATS.indexOf(from);
+    const tb = SEATS.indexOf(to);
+    return (tb - fa + 4) % 4;
   }
 
   function displayMap() {
-    const map = {};
-    SEATS.forEach(seat => {
+    const map = { east: 'bottom', south: 'right', west: 'top', north: 'left' };
+    const seats = activeSeats();
+    if (seats.length === 2) {
+      map[seats[0]] = 'bottom';
+      map[seats[1]] = 'top';
+      return map;
+    }
+    seats.forEach(seat => {
       map[seat] = DISPLAY_POSITIONS[seatDistance(state.viewSeat, seat)];
     });
     return map;
@@ -10161,7 +10189,7 @@ function loadUiSettings() {
       state.flowers[seat] = [];
       state.chips[seat] = state.chips[seat] ?? 5000;
       ensureScoreUnitTotals();
-      state.seatAutoPlay[seat] = previousSeatAutoPlay[seat] !== null ? previousSeatAutoPlay[seat] : seatAutoplayDefault(seat);
+      state.seatAutoPlay[seat] = isActiveSeat(seat) ? (previousSeatAutoPlay[seat] !== null ? previousSeatAutoPlay[seat] : seatAutoplayDefault(seat)) : false;
       state.declaredTing[seat] = false;
     });
     state.activeDrawnTileIds = {};
@@ -10207,6 +10235,7 @@ function loadUiSettings() {
     ensureContinuousRunObject();
     tileSerial = 1;
     applyNextRoundPlanIfNeeded();
+    normalizeActiveDealerAndViewSeat();
     state.handId += 1;
     randomizeHandVisualColors('new-game');
     state.turn = state.dealer;
@@ -10244,7 +10273,7 @@ function loadUiSettings() {
     net.closedSettlementId = '';
     resetSeatObjects();
     syncSeatAutoplayDefaults('new-game');
-    if (state.continuousRun.enabled) SEATS.forEach(seat => state.seatAutoPlay[seat] = true);
+    if (state.continuousRun.enabled) activeSeats().forEach(seat => state.seatAutoPlay[seat] = true);
     dom.resultPanel.classList.remove('show');
     setOpeningPrompt('');
     stallMonitorState.lastSignature = gameProgressSignature();
@@ -10273,16 +10302,18 @@ function loadUiSettings() {
   }
 
   function orderedSeatsFrom(seat) {
-    const start = SEATS.indexOf(seat);
-    if (start < 0) return SEATS.slice();
-    return SEATS.map((_, offset) => SEATS[(start + offset) % SEATS.length]);
+    const seats = activeSeats();
+    const start = seats.indexOf(seat);
+    if (start < 0) return seats.slice();
+    return seats.map((_, offset) => seats[(start + offset) % seats.length]);
   }
 
   function counterClockwiseSeat(seat, steps) {
-    const start = SEATS.indexOf(seat);
-    if (start < 0) return SEATS[0];
-    const normalized = ((Number(steps) || 0) % SEATS.length + SEATS.length) % SEATS.length;
-    return SEATS[(start - normalized + SEATS.length) % SEATS.length];
+    const seats = activeSeats();
+    const start = seats.indexOf(seat);
+    if (start < 0) return seats[0] || 'east';
+    const normalized = ((Number(steps) || 0) % seats.length + seats.length) % seats.length;
+    return seats[(start - normalized + seats.length) % seats.length];
   }
 
   function buildPhysicalWallFromTiles(tiles) {
@@ -10724,7 +10755,7 @@ function loadUiSettings() {
     await replaceOpeningFlowers(dealOrder, stillCurrent);
     if (!stillCurrent()) return;
     stopManualHumanAutoplayAfterOpening();
-    SEATS.forEach(seat => sortHand(seat));
+    activeSeats().forEach(seat => sortHand(seat));
     renderAll();
     if (isOnlineHost()) publishOpeningStepSnapshot('opening-flower-complete');
     if (isOnlineHost()) publishNetworkSnapshot('opening-guest-ready-after-flower', true);
@@ -11055,7 +11086,7 @@ function loadUiSettings() {
     const code = discarded.code;
     if (!code || isFlower(code)) return [];
     const winCandidates = [];
-    SEATS.forEach(seat => {
+    activeSeats().forEach(seat => {
       if (seat === discardSeat) return;
       if (canWinWithTile(seat, discarded)) {
         winCandidates.push({ seat, type: 'win', tiles: [], label: '胡', detail: '胡 ' + tileText(code) });
@@ -11063,7 +11094,7 @@ function loadUiSettings() {
     });
     if (winCandidates.length) return winCandidates;
     const result = [];
-    SEATS.forEach(seat => {
+    activeSeats().forEach(seat => {
       if (seat === discardSeat) return;
       if (state.declaredTing[seat]) return;
       const hand = state.hands[seat] || [];
@@ -11072,7 +11103,7 @@ function loadUiSettings() {
       if (same.length >= 2) result.push({ seat, type: 'pong', tiles: same.slice(0, 2).map(t => t.id), label: '碰' });
     });
     const chiSeat = nextSeat(discardSeat);
-    if (!state.declaredTing[chiSeat]) getChiCandidates(chiSeat, code).forEach(c => result.push(c));
+    if (isActiveSeat(chiSeat) && !state.declaredTing[chiSeat]) getChiCandidates(chiSeat, code).forEach(c => result.push(c));
     return result;
   }
 
@@ -11920,7 +11951,7 @@ function loadUiSettings() {
     return completeOwnKong(option, source);
   }
 
-  const TW16_SMART_AI_MONTE_CARLO_SAMPLES = 3;
+  const TW16_SMART_AI_MONTE_CARLO_SAMPLES = 5;  // 精確DP向聽更快，樣本數從3提升至5
   let tw16MonteCarloPoolCache = { key: '', pool: [] };  // pool 快取，同一局面只建一次
   let tw16VisibleCountCache = null;        // ① 每回合 visibleCount 快取
   let tw16StrategyContextKeyCache = null;  // ② 每回合 strategy context key 快取
@@ -13444,6 +13475,7 @@ function loadUiSettings() {
     clearTimeout(claimTimer);
     state.pending = null;
     state.turn = nextSeat(state.turn);
+    if (!isActiveSeat(state.turn)) state.turn = activeSeats()[0] || 'east';
     state.phase = 'draw';
     clearTurnDeadline();
     if (state.wall.length <= GAME_RULES.minLiveWallTiles) {
@@ -14405,7 +14437,7 @@ function loadUiSettings() {
   function nextRoundPlanWithDealer(newDealer) {
     let windRound = state.windRound;
     let handNo = state.handNo + 1;
-    if (handNo > 4) { handNo = 1; windRound = (windRound + 1) % 4; }
+    if (handNo > activeSeatCount()) { handNo = 1; windRound = (windRound + 1) % 4; }
     return { dealer: newDealer, windRound, handNo, dealerRepeat: 0 };
   }
 
@@ -14419,6 +14451,7 @@ function loadUiSettings() {
     dom.resultTitle.textContent = '設定';
     dom.resultText.innerHTML = '<div class="settingsGrid">'
       + '<label class="settingsRow"><span>玩家名稱</span><input id="setPlayerName" type="text" value="' + escapeHtml(net.name || '') + '"><b></b></label>'
+      + '<label class="settingsRow"><span>遊戲模式</span><select id="setPlayerMode" ' + (isOnlineGuest() ? 'disabled' : '') + '><option value="four" ' + (normalizedPlayerMode(state.uiSettings.playerMode) === 'four' ? 'selected' : '') + '>四人模式</option><option value="two" ' + (normalizedPlayerMode(state.uiSettings.playerMode) === 'two' ? 'selected' : '') + '>雙人模式（東西對坐）</option></select><b></b></label>'
       + '<label class="settingsRow"><span>動畫速度</span><input id="setAnimSpeed" type="range" min="0" max="400" value="' + state.uiSettings.animSpeedPct + '"><b id="setAnimSpeedValue">' + (state.uiSettings.animSpeedPct ? state.uiSettings.animSpeedPct + '%' : '關') + '</b></label>'
       + '<label class="settingsRow"><span>牌圓角</span><input id="setTileRadius" type="range" min="0" max="38" value="' + state.uiSettings.tileRadiusPct + '"><b id="setTileRadiusValue">' + state.uiSettings.tileRadiusPct + '%</b></label>'
       + '<label class="settingsRow"><span>每底籌碼</span><input id="setScoreBaseChip" type="number" min="0" max="999999" step="10" value="' + state.uiSettings.scoreBaseChip + '" ' + (isOnlineGuest() ? 'disabled' : '') + '><b></b></label>'
@@ -14430,7 +14463,7 @@ function loadUiSettings() {
       + '<label class="settingsRow"><span>顯示迷你儀表板</span><input id="setMiniDashboardEnabled" type="checkbox" ' + (state.uiSettings.miniDashboardEnabled ? 'checked' : '') + '><b></b></label>'
       + '<label class="settingsRow"><span>顯示座位頭像</span><input id="setAvatarEnabled" type="checkbox" ' + (state.uiSettings.avatarEnabled !== false ? 'checked' : '') + '><b></b></label>'
       + '<div class="menuGrid"><button class="btn" id="settingsApplyBtn">套用</button><button class="btn red" id="settingsDefaultBtn">恢復預設</button></div>'
-      + '<div style="font-size:13px;color:#cbd5e1;line-height:1.55">每底 / 每台籌碼只由房主或單機端調整；來賓由房主快照同步設定。</div>'
+      + '<div style="font-size:13px;color:#cbd5e1;line-height:1.55">雙人模式只啟用東家與西家，輪流摸打；南家、北家不發牌、不行動、不結算。每底 / 每台籌碼只由房主或單機端調整；來賓由房主快照同步設定。</div>'
       + '</div>';
     dom.resultNewBtn.style.display = 'none';
     dom.resultCloseBtn.textContent = '關閉';
@@ -14461,6 +14494,7 @@ function loadUiSettings() {
       if (!isOnlineGuest()) {
         state.uiSettings.scoreBaseChip = Math.round(clampNumber(0, Number(byId('setScoreBaseChip').value) || 0, 999999));
         state.uiSettings.scoreTaiChip = Math.round(clampNumber(0, Number(byId('setScoreTaiChip').value) || 0, 999999));
+        state.uiSettings.playerMode = normalizedPlayerMode(byId('setPlayerMode') ? byId('setPlayerMode').value : state.uiSettings.playerMode);
       }
       state.uiSettings.layoutMode = 'clean';
       state.uiSettings.wallVisible = !!byId('setWallVisible').checked;
@@ -14472,6 +14506,7 @@ function loadUiSettings() {
       const nameInput = byId('setPlayerName');
       if (nameInput) applyLocalPlayerName(nameInput.value, 'settings-apply');
       ensureUiSettings();
+      normalizeActiveDealerAndViewSeat();
       saveUiSettings();
       addLog('設定已套用');
       closeUtilityPanel();
@@ -17085,7 +17120,7 @@ function showIntegrityReport(precomputed) {
     const serial = renderSerial;
     if (serial !== renderSerial) return;
     const map = displayMap();
-    dom.roundStatus.textContent = WIND_NAME[state.windRound] + state.handNo + '局／剩餘' + state.wall.length + '張／莊' + SEAT_NAME[state.dealer].replace('家','') + (isNetworked() ? '／' + networkStatusText() : '') + (state.continuousRun.enabled ? '／連跑' + state.continuousRun.remaining : '');
+    dom.roundStatus.textContent = WIND_NAME[state.windRound] + state.handNo + '局／' + PLAYER_MODE[normalizedPlayerMode(state.uiSettings && state.uiSettings.playerMode)] + '／剩餘' + state.wall.length + '張／莊' + SEAT_NAME[state.dealer].replace('家','') + (isNetworked() ? '／' + networkStatusText() : '') + (state.continuousRun.enabled ? '／連跑' + state.continuousRun.remaining : '');
     updateScoreChipLine();
     if (dom.autoBtn) {
       dom.autoBtn.textContent = state.seatAutoPlay[state.viewSeat] ? '停止托管' : '電腦托管';
@@ -17136,7 +17171,8 @@ function showIntegrityReport(precomputed) {
       miniDashboardRenderKey = '';
       return;
     }
-    const renderKey = SEATS.map(seat => [
+    const dashboardSeats = activeSeats();
+    const renderKey = dashboardSeats.map(seat => [
       seat,
       seat === state.turn ? 'active' : '',
       dealerDashboardPrefixText(seat),
@@ -17153,7 +17189,7 @@ function showIntegrityReport(precomputed) {
         }).map(c => c.dataset.seat)
       );
       grid.replaceChildren();
-      SEATS.forEach(seat => {
+      dashboardSeats.forEach(seat => {
         const card = document.createElement('div');
         card.className = 'tw16-mini-dashboard-card' + (seat === state.turn ? ' active' : '');
         const name = document.createElement('div');
@@ -18265,6 +18301,7 @@ function showIntegrityReport(precomputed) {
       return;
     }
     SEATS.forEach(seat => {
+      if (!isActiveSeat(seat)) return;
       const pos = map[seat];
       const wall = dom[DISPLAY_ELEMENT[pos].wall];
       wall.dataset.seat = seat;
@@ -18362,6 +18399,7 @@ function showIntegrityReport(precomputed) {
       if (rows.meldRow) rows.meldRow.replaceChildren();
     });
     SEATS.forEach(seat => {
+      if (!isActiveSeat(seat)) return;
       const pos = map[seat];
       const rows = ensureHandRows(pos);
       const handRow = rows.handRow;
@@ -18374,7 +18412,13 @@ function showIntegrityReport(precomputed) {
           node.classList.toggle('drawn', shouldRenderActiveDrawnTile(seat, tileObj));
           const isStrategySuggested = !!(strategySuggestedTileId && tileObj && String(tileObj.id) === String(strategySuggestedTileId));
           node.classList.toggle('strategy-discard-suggestion', isStrategySuggested);
-          if (isStrategySuggested) node.title = '策略建議打出：' + tileText(tileObj.code);
+          if (isStrategySuggested) {
+            node.title = '策略建議打出：' + tileText(tileObj.code);
+            const lbl = document.createElement('span');
+            lbl.className = 'ai-suggest-label';
+            lbl.textContent = 'AI建議';
+            node.appendChild(lbl);
+          }
           const ting = state.uiSettings && state.uiSettings.tingAssistEnabled ? getTingOptions(seat).find(opt => opt.discardId === tileObj.id) : null;
           if (ting) node.title = (node.title ? node.title + '；' : '') + '打出後聽：' + ting.waits.map(tileText).join('、');
           bindBottomHandSwipeDiscard(node, seat, tileObj, pos);
@@ -18411,6 +18455,7 @@ function showIntegrityReport(precomputed) {
       rows.meldRow.classList.toggle('hand-meld-row-horizontal', pos === 'bottom' || pos === 'top');
     });
     SEATS.forEach(seat => {
+      if (!isActiveSeat(seat)) return;
       const pos = map[seat];
       const rows = ensureHandRows(pos);
       const meldEl = rows.meldRow;
@@ -18502,6 +18547,7 @@ function concealedKongOwnerOfMeld(meld) {
     });
     const lastRecord = state.discards && state.discards.length ? state.discards[state.discards.length - 1] : null;
     state.discards.forEach(record => {
+      if (!record || !isActiveSeat(record.seat)) return;
       const pos = map[record.seat] || 'bottom';
       const node = createTileElement(record.tile, false);
       node.title = SEAT_NAME[record.seat];
@@ -19216,10 +19262,17 @@ function concealedKongOwnerOfMeld(meld) {
   
 
   function renderLabels(map) {
-    DISPLAY_POSITIONS.forEach(pos => dom[DISPLAY_ELEMENT[pos].label].classList.remove('active','ting'));
+    DISPLAY_POSITIONS.forEach(pos => {
+      const label = dom[DISPLAY_ELEMENT[pos].label];
+      if (label) { label.classList.remove('active','ting'); label.style.display = 'none'; label.innerHTML = ''; }
+      const wm = dom[{bottom:'wmBottom',top:'wmTop',left:'wmLeft',right:'wmRight'}[pos]];
+      if (wm) wm.style.display = 'none';
+    });
     SEATS.forEach(seat => {
+      if (!isActiveSeat(seat)) return;
       const pos = map[seat];
       const labelEl = dom[DISPLAY_ELEMENT[pos].label];
+      if (labelEl) labelEl.style.display = '';
       let meta = formatSeatScoreUnitMeta(seat);
       if (state.declaredTing[seat]) {
         let tingText = '聽牌';
@@ -19988,25 +20041,60 @@ function concealedKongOwnerOfMeld(meld) {
 
   function openCustomTileSkinSqlDatabase() {
     if (customTileSkinDbPromise) return customTileSkinDbPromise;
-    customTileSkinDbPromise = new Promise((resolve, reject) => {
-      if (!window.indexedDB) { reject(new Error('此瀏覽器不支援 IndexedDB，無法建立多套牌圖資料庫。')); return; }
-      const req = indexedDB.open(CUSTOM_TILE_SKIN_DB_NAME, CUSTOM_TILE_SKIN_DB_VERSION);
-      req.onupgradeneeded = ev => {
-        const db = ev.target.result;
-        let store;
-        if (!db.objectStoreNames.contains(CUSTOM_TILE_SKIN_STORE_NAME)) {
-          store = db.createObjectStore(CUSTOM_TILE_SKIN_STORE_NAME, { keyPath: 'id' });
-        } else {
-          store = ev.target.transaction.objectStore(CUSTOM_TILE_SKIN_STORE_NAME);
-        }
-        if (store && !store.indexNames.contains('updatedAt')) store.createIndex('updatedAt', 'updatedAt', { unique: false });
-        if (store && !store.indexNames.contains('name')) store.createIndex('name', 'name', { unique: false });
-      };
-      req.onsuccess = ev => resolve(ev.target.result);
-      req.onerror = () => { customTileSkinDbPromise = null; reject(req.error || new Error('開啟牌圖資料庫失敗')); };
-      req.onblocked = () => { customTileSkinDbPromise = null; reject(new Error('牌圖資料庫被其它分頁占用，請關閉其它遊戲分頁後再試。')); };
-    });
+    function attemptOpen(allowRepair) {
+      return new Promise((resolve, reject) => {
+        if (!window.indexedDB) { reject(new Error('此瀏覽器不支援 IndexedDB，無法建立多套牌圖資料庫。')); return; }
+        const req = indexedDB.open(CUSTOM_TILE_SKIN_DB_NAME, CUSTOM_TILE_SKIN_DB_VERSION);
+        req.onupgradeneeded = ev => {
+          const db = ev.target.result;
+          let store;
+          if (!db.objectStoreNames.contains(CUSTOM_TILE_SKIN_STORE_NAME)) {
+            store = db.createObjectStore(CUSTOM_TILE_SKIN_STORE_NAME, { keyPath: 'id' });
+          } else {
+            store = ev.target.transaction.objectStore(CUSTOM_TILE_SKIN_STORE_NAME);
+          }
+          if (store && !store.indexNames.contains('updatedAt')) store.createIndex('updatedAt', 'updatedAt', { unique: false });
+          if (store && !store.indexNames.contains('name')) store.createIndex('name', 'name', { unique: false });
+        };
+        req.onsuccess = ev => {
+          const db = ev.target.result;
+          // 開啟成功後檢查 store 是否存在；若不存在（資料庫損壞或結構異常），視為錯誤觸發修復
+          if (!db.objectStoreNames.contains(CUSTOM_TILE_SKIN_STORE_NAME)) {
+            db.close();
+            if (allowRepair) {
+              recreateCustomTileSkinDatabase().then(() => attemptOpen(false).then(resolve, reject), reject);
+            } else {
+              reject(new Error('牌圖資料庫結構異常且修復失敗'));
+            }
+            return;
+          }
+          resolve(db);
+        };
+        req.onerror = () => {
+          const err = req.error || new Error('開啟牌圖資料庫失敗');
+          if (allowRepair) {
+            // ④ 自動修復：刪除損壞的資料庫後重新建立一次
+            recreateCustomTileSkinDatabase().then(() => attemptOpen(false).then(resolve, reject), () => reject(err));
+          } else {
+            reject(err);
+          }
+        };
+        req.onblocked = () => { reject(new Error('牌圖資料庫被其它分頁占用，請關閉其它遊戲分頁後再試。')); };
+      });
+    }
+    customTileSkinDbPromise = attemptOpen(true).catch(err => { customTileSkinDbPromise = null; throw err; });
     return customTileSkinDbPromise;
+  }
+
+  // ④ 刪除損壞的牌圖資料庫，供 openCustomTileSkinSqlDatabase 自動修復時使用
+  function recreateCustomTileSkinDatabase() {
+    return new Promise((resolve, reject) => {
+      if (!window.indexedDB) { reject(new Error('此瀏覽器不支援 IndexedDB')); return; }
+      const req = indexedDB.deleteDatabase(CUSTOM_TILE_SKIN_DB_NAME);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error || new Error('刪除損壞的牌圖資料庫失敗'));
+      req.onblocked = () => reject(new Error('牌圖資料庫被其它分頁占用，無法自動修復'));
+    });
   }
 
   function customTileSkinSqlRequest(mode, action) {
