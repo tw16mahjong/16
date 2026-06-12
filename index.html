@@ -350,10 +350,10 @@
 .wall{z-index:4!important;overflow:visible!important;}
 .wall .piece{width:var(--tw-wall-piece-w)!important;height:var(--tw-wall-piece-h)!important;border-radius:calc(var(--tw-wall-piece-w) * .24)!important;margin:0!important;}
 .wall-left .piece,.wall-right .piece{width:var(--tw-wall-side-piece-w)!important;height:var(--tw-wall-side-piece-h)!important;border-radius:calc(var(--tw-wall-side-piece-h) * .28)!important;}
-.wall-top{left:50%!important;top:calc(var(--tw-table-center-y) - (var(--tw-wall-frame-h) / 2))!important;bottom:auto!important;transform:translateX(-50%)!important;}
-.wall-bottom{left:50%!important;top:calc(var(--tw-table-center-y) + (var(--tw-wall-frame-h) / 2) - var(--tw-wall-stack-h))!important;bottom:auto!important;transform:translateX(-50%)!important;}
-.wall-left{left:calc(50% - (var(--tw-wall-frame-w) / 2))!important;top:var(--tw-table-center-y)!important;right:auto!important;transform:translateY(-50%)!important;flex-direction:column!important;}
-.wall-right{left:calc(50% + (var(--tw-wall-frame-w) / 2) - var(--tw-wall-side-stack-w))!important;top:var(--tw-table-center-y)!important;right:auto!important;transform:translateY(-50%)!important;flex-direction:column!important;}
+.wall-top{left:50%!important;top:calc(var(--tw-table-center-y) - (var(--tw-wall-frame-h) / 2) - var(--tw-wall-gap) - var(--tw-wall-piece-h))!important;bottom:auto!important;transform:translateX(-50%)!important;}
+.wall-bottom{left:50%!important;top:calc(var(--tw-table-center-y) + (var(--tw-wall-frame-h) / 2) + var(--tw-wall-gap))!important;bottom:auto!important;transform:translateX(-50%)!important;}
+.wall-left{left:calc(50% - (var(--tw-wall-frame-w) / 2) - var(--tw-wall-gap) - var(--tw-wall-side-piece-w))!important;top:var(--tw-table-center-y)!important;right:auto!important;transform:translateY(-50%)!important;flex-direction:column!important;}
+.wall-right{left:calc(50% + (var(--tw-wall-frame-w) / 2) + var(--tw-wall-gap))!important;top:var(--tw-table-center-y)!important;right:auto!important;transform:translateY(-50%)!important;flex-direction:column!important;}
 .tile,.wall .piece{position:relative;}
 .seatLabel,.arrow{z-index:16!important;}
 .bigDiscard{z-index:24!important;}.actionPanel{z-index:27!important;}.topbar,.room{z-index:30!important;}.result{z-index:31!important;}
@@ -601,25 +601,25 @@
 }
 .wall-top{
   left:50%!important;
-  top:calc(var(--tw-table-center-y) - (var(--tw-wall-frame-h) / 2))!important;
+  top:calc(var(--tw-table-center-y) - (var(--tw-wall-frame-h) / 2) - var(--tw-wall-gap) - var(--tw-wall-piece-h))!important;
   bottom:auto!important;
   transform:translateX(-50%)!important;
 }
 .wall-bottom{
   left:50%!important;
-  top:calc(var(--tw-table-center-y) + (var(--tw-wall-frame-h) / 2) - var(--tw-wall-stack-h))!important;
+  top:calc(var(--tw-table-center-y) + (var(--tw-wall-frame-h) / 2) + var(--tw-wall-gap))!important;
   bottom:auto!important;
   transform:translateX(-50%)!important;
 }
 .wall-left{
-  left:calc(50% - (var(--tw-wall-frame-w) / 2))!important;
+  left:calc(50% - (var(--tw-wall-frame-w) / 2) - var(--tw-wall-gap) - var(--tw-wall-piece-h))!important;
   top:var(--tw-table-center-y)!important;
   right:auto!important;
   transform:translateY(-50%)!important;
   flex-direction:column!important;
 }
 .wall-right{
-  left:calc(50% + (var(--tw-wall-frame-w) / 2) - var(--tw-wall-side-stack-w))!important;
+  left:calc(50% + (var(--tw-wall-frame-w) / 2) + var(--tw-wall-gap))!important;
   top:var(--tw-table-center-y)!important;
   right:auto!important;
   transform:translateY(-50%)!important;
@@ -1296,6 +1296,9 @@
 .tw16-lobby[hidden]{display:none!important;}
 .tw16-lobby-card{width:min(520px,94vw);max-width:100%;margin:0 auto;border-radius:22px;padding:18px;background:linear-gradient(180deg,rgba(19,28,48,.98),rgba(8,12,20,.98));border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 50px rgba(0,0,0,.40);color:#f8fafc;}
 .tw16-lobby-chip{display:inline-flex;align-items:center;justify-content:center;min-width:82px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.08);color:#bfdbfe;font-size:12px;font-weight:900;margin-bottom:10px;}
+.tw16-mini-dashboard-card.tw16-mini-dashboard-inactive{background:rgba(120,120,120,.32)!important;opacity:.55;filter:grayscale(.6);}
+.tw16-mini-dashboard-card.tw16-mini-dashboard-inactive *{visibility:hidden!important;}
+.tile.tw16-empty-seat-placeholder{visibility:hidden!important;}
 .tw16-lobby-title{font-size:24px;font-weight:900;color:#fde68a;margin-bottom:6px;}
 .tw16-lobby-sub{font-size:13px;color:#cbd5e1;line-height:1.55;margin-bottom:14px;}
 .tw16-lobby-grid{display:grid;gap:10px;}
@@ -2923,22 +2926,28 @@ body, .app {
   content:none!important;
   display:none!important;
 }
+.ai-suggest-wrapper{
+  position:relative;
+  display:inline-flex;
+  flex:0 0 auto;
+  overflow:visible;
+}
 .ai-suggest-label{
   display:block;
   position:absolute;
   left:0;
-  top:0;
-  bottom:auto;
+  bottom:calc(100% + 1px);
+  top:auto;
   width:max-content;
   height:auto;
-  padding:1px 2px;
+  padding:1px 3px;
   margin:0;
-  border-radius:0 0 2px 0;
+  border-radius:2px 2px 0 0;
   background:rgba(220,0,0,.92);
   color:#fff;
-  font-size:clamp(5px,calc(var(--tw-tile-w,28px) * .24),6px);
+  font-size:clamp(5px,calc(var(--tw-tile-w,28px) * .26),7px);
   font-weight:900;
-  line-height:1.2;
+  line-height:1.15;
   white-space:nowrap;
   pointer-events:none;
   z-index:99;
@@ -3372,43 +3381,6 @@ html body .app.perspective3d .discardSeat .tile::before {
 .app.perspective3d .tw16-mini-dashboard {
   transform-style: flat !important;
 }
-
-
-/* 修正：牌牆視覺固定在棄牌池內側四邊，與座位人數無關；只調整牌牆顯示位置，不影響發牌、摸牌、結算或設定。 */
-.wall-top{
-  left:50%!important;
-  top:calc(var(--tw-table-center-y) - var(--tw-center-h) / 2 + 6px)!important;
-  right:auto!important;
-  bottom:auto!important;
-  transform:translateX(-50%)!important;
-  justify-content:center!important;
-}
-.wall-bottom{
-  left:50%!important;
-  top:calc(var(--tw-table-center-y) + var(--tw-center-h) / 2 - var(--tw-wall-stack-h) - 6px)!important;
-  right:auto!important;
-  bottom:auto!important;
-  transform:translateX(-50%)!important;
-  justify-content:center!important;
-}
-.wall-left{
-  left:calc(50% - var(--tw-center-w) / 2 + 6px)!important;
-  top:var(--tw-table-center-y)!important;
-  right:auto!important;
-  bottom:auto!important;
-  transform:translateY(-50%)!important;
-  align-items:flex-start!important;
-  justify-content:center!important;
-}
-.wall-right{
-  left:calc(50% + var(--tw-center-w) / 2 - var(--tw-wall-side-stack-w) - 6px)!important;
-  top:var(--tw-table-center-y)!important;
-  right:auto!important;
-  bottom:auto!important;
-  transform:translateY(-50%)!important;
-  align-items:flex-start!important;
-  justify-content:center!important;
-}
 </style>
 </head>
 <body>
@@ -3477,6 +3449,19 @@ html body .app.perspective3d .discardSeat .tile::before {
   'use strict';
 
   const SEATS = ['east', 'south', 'west', 'north'];
+  /* tw16_tablemode: 桌面人數模式(4/3/2)輔助函式。
+     2人：只啟用 east/west；3人：停用 north；4人(預設)：全啟用。
+     僅影響發牌對象、輪轉跳過、吃牌限制與顯示/結算，牌牆設定與顯示完全不變。 */
+  function isSeatActiveInTable(seat) {
+    const tm = Number(state.tableMode) || 4;
+    if (tm >= 4) return true;
+    if (tm === 3) return seat !== 'north';
+    if (tm === 2) return seat === 'east' || seat === 'west';
+    return true;
+  }
+  function activeSeats() {
+    return SEATS.filter(isSeatActiveInTable);
+  }
   const WALL_CIRCLE_SEATS = ['east', 'north', 'west', 'south'];
   const SEAT_NAME = { east: '東家', south: '南家', west: '西家', north: '北家' };
   const WIND_NAME = ['東', '南', '西', '北'];
@@ -3487,58 +3472,6 @@ html body .app.perspective3d .discardSeat .tile::before {
     left: { hand: 'handLeft', label: 'labelLeft', wall: 'wallLeft', arrowClass: 'arrow-left' },
     right: { hand: 'handRight', label: 'labelRight', wall: 'wallRight', arrowClass: 'arrow-right' }
   };
-  const PLAYER_MODE = { four: '四人模式', three: '三人模式', two: '雙人模式' };
-  function normalizedPlayerMode(value) {
-    return value === 'two' ? 'two' : (value === 'three' ? 'three' : 'four');
-  }
-  function playerModeLabel(value) {
-    return PLAYER_MODE[normalizedPlayerMode(value)] || PLAYER_MODE.four;
-  }
-  function syncLobbyPlayerModeControl() {
-    const select = byId('tw16LobbyPlayerMode');
-    if (select) {
-      select.value = normalizedPlayerMode(state && state.uiSettings && state.uiSettings.playerMode);
-      select.disabled = isOnlineGuest();
-      select.title = isOnlineGuest() ? '來賓不可變更人數模式，實際規則以房主設定為準。' : '人數模式只在大廳設定，開局後如要變更請退回大廳。';
-    }
-    const note = byId('tw16LobbyPlayerModeNote');
-    if (note) note.textContent = isOnlineGuest() ? '來賓此選項無效，實際人數模式以房主設定為準。' : '人數模式只在大廳設定；開局後如要變更，請退回大廳重選。';
-  }
-  function applyLobbyPlayerModeSelection(reason) {
-    if (isOnlineGuest()) return normalizedPlayerMode(state && state.uiSettings && state.uiSettings.playerMode);
-    ensureUiSettings();
-    const select = byId('tw16LobbyPlayerMode');
-    const mode = normalizedPlayerMode(select && select.value || state.uiSettings.playerMode);
-    if (state.uiSettings.playerMode !== mode) {
-      state.uiSettings.playerMode = mode;
-      normalizeActiveDealerAndViewSeat();
-      saveUiSettings();
-      recordNetworkEvent('player-mode-lobby', '大廳設定人數模式｜' + playerModeLabel(mode), { reason: reason || '' });
-    }
-    syncLobbyPlayerModeControl();
-    return mode;
-  }
-  function activeSeats() {
-    const mode = normalizedPlayerMode(state && state.uiSettings && state.uiSettings.playerMode);
-    if (mode === 'two') return ['east', 'west'];
-    if (mode === 'three') return ['east', 'south', 'west'];
-    return SEATS.slice();
-  }
-  function isThreePlayerNoChiMode() {
-    return normalizedPlayerMode(state && state.uiSettings && state.uiSettings.playerMode) === 'three';
-  }
-  function isActiveSeat(seat) {
-    return activeSeats().includes(seat);
-  }
-  function activeSeatCount() {
-    return activeSeats().length;
-  }
-  function normalizeActiveDealerAndViewSeat() {
-    const seats = activeSeats();
-    if (!seats.includes(state.dealer)) state.dealer = seats[0];
-    if (!seats.includes(state.turn)) state.turn = state.dealer;
-    if (!seats.includes(state.viewSeat)) state.viewSeat = seats[0];
-  }
   const GAME_RULES = {
     profile: 'taiwan16-standard',
     tilesPerPlayer: 16,
@@ -3612,13 +3545,14 @@ html body .app.perspective3d .discardSeat .tile::before {
     nextRoundPlan: null,
     lastSettlement: null,
     continuousRun: { enabled: false, remaining: 0, delayMs: 700 },
-    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: 100, scoreTaiChip: 10, playerMode: 'four' },
+    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: 100, scoreTaiChip: 10 },
     handVisualColors: null,
     locked: false,
     lockedAt: 0,
     lastActionId: 0,
     ended: false,
-    log: []
+    log: [],
+    tableMode: 4
   };
 
 
@@ -3767,15 +3701,6 @@ html body .app.perspective3d .discardSeat .tile::before {
   let lobbyAblyKeyServerRecordsCache = [];
   let lobbyAblyKeyDisplayState = { key: '', usable: false };
   const NETWORK_SEAT_ORDER = ['south', 'west', 'north'];
-  function networkGuestSeatOrder() {
-    const mode = normalizedPlayerMode(state && state.uiSettings && state.uiSettings.playerMode);
-    if (mode === 'two') return ['west'];
-    if (mode === 'three') return ['south', 'west'];
-    return NETWORK_SEAT_ORDER.slice();
-  }
-  function isNetworkGuestSeat(seat) {
-    return networkGuestSeatOrder().includes(seat);
-  }
   const NETWORK_PLAYER_STALE_MS = 120000;
   const NETWORK_GUEST_ALIVE_MS = 5000;
 
@@ -3808,6 +3733,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   const NETWORK_GUEST_SYNC_STALE_MS = 1200;
   const NETWORK_GUEST_SYNC_MIN_INTERVAL_MS = 650;
   const NETWORK_GUEST_SYNC_SEQ_GAP_THRESHOLD = 2;
+  const NETWORK_GUEST_SNAPSHOT_STALE_MS = 30000; // 30 秒內未收到host snapshot才視為失聯，避免3.6秒誤判導致來賓AI建議被永久關閉
   const NETWORK_GUEST_SYNC_BACKOFF_STEPS_MS = [650, 1000, 1500, 2200];
   const NETWORK_GUEST_ENTRY_RETRY_MS = 2800;
   const NETWORK_GUEST_KEY_RETRY_MAX_ATTEMPTS = 30;
@@ -3887,7 +3813,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
   function keepGuestPlayerRecordHuman(seat, msg, reason) {
-    if (!networkGuestSeatOrder().includes(seat)) return '';
+    if (!NETWORK_SEAT_ORDER.includes(seat)) return '';
     net.players = net.players || {};
     const player = net.players[seat] || {};
     player.clientId = normalizeNetworkId((msg && msg.clientId) || player.clientId);
@@ -3907,8 +3833,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   function touchGuestPlayerFromMessage(msg, reason) {
     if (!isOnlineHost() || !msg) return '';
     if ((msg.role && msg.role !== 'guest') || (msg.senderRole && msg.senderRole !== 'guest')) return '';
-    const guestOrder = networkGuestSeatOrder();
-    const preferredSeat = guestOrder.includes(msg.seat) ? msg.seat : '';
+    const preferredSeat = NETWORK_SEAT_ORDER.includes(msg.seat) ? msg.seat : '';
     let assigned = findAssignedGuestSeatForPlayer(msg.clientId, msg.playerKey, preferredSeat, msg.senderInstanceId || msg.sessionId || msg.instanceId || '');
     if (!assigned) assigned = assignGuestSeat(msg.clientId, msg.name || '來賓', msg.playerKey || '', preferredSeat, msg.senderInstanceId || msg.sessionId || msg.instanceId || '');
     if (assigned) {
@@ -3925,7 +3850,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
   function nextNetworkReceiptTag(seat) {
-    const safeSeat = SEATS.includes(seat) ? seat : (isNetworkGuestSeat(net.assignedSeat) ? net.assignedSeat : state.viewSeat || 'east');
+    const safeSeat = SEATS.includes(seat) ? seat : (NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : state.viewSeat || 'east');
     if (!net.reliableSeatCounters || typeof net.reliableSeatCounters !== 'object') net.reliableSeatCounters = {};
     const next = ((Number(net.reliableSeatCounters[safeSeat]) || 0) % 999) + 1;
     net.reliableSeatCounters[safeSeat] = next;
@@ -3957,7 +3882,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     const now = Date.now();
     const seen = new Set();
     const out = [];
-    networkGuestSeatOrder().forEach(seat => {
+    NETWORK_SEAT_ORDER.forEach(seat => {
       const p = net.players && net.players[seat];
       const sessionId = networkPlayerSessionId(p);
       if (sessionId && isActiveNetworkHumanPlayer(p, now) && !seen.has(sessionId)) {
@@ -3974,9 +3899,7 @@ html body .app.perspective3d .discardSeat .tile::before {
 
   function networkGuestTargetInfoFromMessage(msg, assignedSeat) {
     const sessionId = normalizeNetworkId(msg && (msg.sessionId || msg.senderInstanceId || msg.instanceId));
-    const guestOrder = networkGuestSeatOrder();
-    let seat = guestOrder.includes(assignedSeat) ? assignedSeat : (guestOrder.includes(msg && msg.seat) ? msg.seat : networkSeatFromSessionId(sessionId));
-    if (!guestOrder.includes(seat)) seat = guestOrder[0] || '';
+    const seat = NETWORK_SEAT_ORDER.includes(assignedSeat) ? assignedSeat : (NETWORK_SEAT_ORDER.includes(msg && msg.seat) ? msg.seat : networkSeatFromSessionId(sessionId));
     if (!sessionId) return null;
     return { sessionId, seat: seat || 'south' };
   }
@@ -4181,7 +4104,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     const targetSeat = String(incoming.targetSeat || '').trim();
     if (targetSessionId && targetSessionId !== String(net.instanceId || '').trim()) return false;
     if (targetClientId && targetClientId !== String(net.clientId || '').trim()) return false;
-    if (targetSeat && isNetworkGuestSeat(net.assignedSeat) && targetSeat !== net.assignedSeat) return false;
+    if (targetSeat && NETWORK_SEAT_ORDER.includes(net.assignedSeat) && targetSeat !== net.assignedSeat) return false;
     return true;
   }
 
@@ -4323,7 +4246,7 @@ html body .app.perspective3d .discardSeat .tile::before {
 
 
   const NETWORK_WIRE_KEY_TO_SHORT = Object.freeze({
-    protocol: 'pr', type: 'ty', kind: 'kd', room: 'r', sessionId: 'sid', senderInstanceId: 'si', instanceId: 'iid', role: 'ro', senderRole: 'sr', clientId: 'cid', playerKey: 'pk', seat: 'se', name: 'nm', sentAt: 'ta', messageId: 'mid', reason: 'rs', seq: 'q', payload: 'pld', state: 'st', players: 'pls', settlement: 'set', scoreChipSettings: 'scs', ruleSettings: 'ruls', handStarted: 'hst', hostSessionId: 'hsid', hostClientId: 'hcid', assignedSeat: 'as', lastAppliedSnapshotSeq: 'las', lastAppliedSnapshotHash: 'lah', syncDemand: 'sd', syncReason: 'sdr', targetSessionId: 'tsid', targetSeat: 'tse', stateHash: 'sh', snapshotAt: 'sat', forceLatest: 'fl', requiresAck: 'ra', ackTag: 'at', ackTags: 'ats', ackTargets: 'atg', ackCode: 'ac', wireHead: 'whd', ackResendMs: 'arm', ackMaxAttempts: 'ama', ackFor: 'af', ackForType: 'aft', receiptTag: 'rt', ackAnswer: 'aa', reliableReceipt: 'rr', originalType: 'oty', originalMessageId: 'omid', rawBytes: 'rb', zipBytes: 'zb', zipAlg: 'za', __tw16zip: 'z', action: 'ax', intentId: 'ii', intentSeq: 'isq', enabled: 'en', activityReason: 'ar', stopTimeoutTakeover: 'stt', localAutoplay: 'lap', autoplay: 'ap', accepted: 'ok', rejectReason: 'rej', winner: 'wn', discard: 'dc', tile: 'tl', fromSeat: 'fs', claimType: 'ct', claim: 'cl', message: 'msg', code: 'cd', text: 'txt', voice: 'vc', duration: 'du', payloadType: 'pt', networkHint: 'nh', stateSeq: 'sq'
+    protocol: 'pr', type: 'ty', kind: 'kd', room: 'r', sessionId: 'sid', senderInstanceId: 'si', instanceId: 'iid', role: 'ro', senderRole: 'sr', clientId: 'cid', playerKey: 'pk', seat: 'se', name: 'nm', sentAt: 'ta', messageId: 'mid', reason: 'rs', seq: 'q', payload: 'pld', state: 'st', players: 'pls', settlement: 'set', scoreChipSettings: 'scs', handStarted: 'hst', hostSessionId: 'hsid', hostClientId: 'hcid', assignedSeat: 'as', lastAppliedSnapshotSeq: 'las', lastAppliedSnapshotHash: 'lah', syncDemand: 'sd', syncReason: 'sdr', targetSessionId: 'tsid', targetSeat: 'tse', stateHash: 'sh', snapshotAt: 'sat', forceLatest: 'fl', requiresAck: 'ra', ackTag: 'at', ackTags: 'ats', ackTargets: 'atg', ackCode: 'ac', wireHead: 'whd', ackResendMs: 'arm', ackMaxAttempts: 'ama', ackFor: 'af', ackForType: 'aft', receiptTag: 'rt', ackAnswer: 'aa', reliableReceipt: 'rr', originalType: 'oty', originalMessageId: 'omid', rawBytes: 'rb', zipBytes: 'zb', zipAlg: 'za', __tw16zip: 'z', action: 'ax', intentId: 'ii', intentSeq: 'isq', enabled: 'en', activityReason: 'ar', stopTimeoutTakeover: 'stt', localAutoplay: 'lap', autoplay: 'ap', accepted: 'ok', rejectReason: 'rej', winner: 'wn', discard: 'dc', tile: 'tl', fromSeat: 'fs', claimType: 'ct', claim: 'cl', message: 'msg', code: 'cd', text: 'txt', voice: 'vc', duration: 'du', payloadType: 'pt', networkHint: 'nh', stateSeq: 'sq'
   });
 
   const NETWORK_WIRE_SHORT_TO_KEY = Object.freeze(Object.keys(NETWORK_WIRE_KEY_TO_SHORT).reduce((out, key) => {
@@ -4649,7 +4572,7 @@ html body .app.perspective3d .discardSeat .tile::before {
       });
     }
     const singleAckTag = reliable && net.role !== 'host'
-      ? nextNetworkReceiptTag(isNetworkGuestSeat(net.assignedSeat) ? net.assignedSeat : (SEATS.includes(state.viewSeat) ? state.viewSeat : 'south'))
+      ? nextNetworkReceiptTag(NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : (SEATS.includes(state.viewSeat) ? state.viewSeat : 'south'))
       : '';
     const ackCode = reliable ? makeNetworkPayloadCode() : '';
     const firstTag = singleAckTag || (Object.keys(ackTags).length ? ackTags[Object.keys(ackTags)[0]] : '');
@@ -4699,7 +4622,6 @@ html body .app.perspective3d .discardSeat .tile::before {
       seq: net.seq,
       players: clonePlain(net.players || {}),
       scoreChipSettings: currentScoreChipSettings(),
-      ruleSettings: currentNetworkRuleSettings(),
       handStarted: hasStartedNetworkHand(state),
       hostSessionId: net.instanceId,
       hostClientId: net.clientId
@@ -4715,9 +4637,8 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (net.role !== 'guest' || !data) return false;
     if (Number(data.seq || 0) > 0) net.hostAdvertisedSeq = Math.max(Number(net.hostAdvertisedSeq || 0), Number(data.seq || 0));
     net.players = data.players ? clonePlain(data.players) : (net.players || {});
-    if (data.ruleSettings) applyHostNetworkRuleSettings(data.ruleSettings, source || 'players');
-    else if (data.scoreChipSettings) applyHostScoreChipSettings(data.scoreChipSettings, source || 'players');
-    const assigned = findAssignedGuestSeatForPlayer(net.clientId, net.playerKey, net.assignedSeat || '', net.instanceId);
+    if (data.scoreChipSettings) applyHostScoreChipSettings(data.scoreChipSettings, source || 'players');
+    const assigned = findAssignedGuestSeatForPlayer(net.clientId, net.playerKey, net.assignedSeat || state.viewSeat, net.instanceId);
     if (assigned) {
       net.assignedSeat = assigned;
       state.viewSeat = assigned;
@@ -4726,10 +4647,9 @@ html body .app.perspective3d .discardSeat .tile::before {
       clearGuestJoinRetry();
       clearGuestApiKeyRetry('guest-seat-assigned');
       updateLobbyStatus('已入座 ' + SEAT_NAME[assigned] + '，等待房主牌局狀態。');
-    } else if (!isNetworkGuestSeat(net.assignedSeat)) {
+    } else if (!NETWORK_SEAT_ORDER.includes(net.assignedSeat)) {
       net.assignedSeat = '';
-      const order = networkGuestSeatOrder();
-      if (!order.includes(state.viewSeat)) state.viewSeat = order[0] || 'south';
+      if (!NETWORK_SEAT_ORDER.includes(state.viewSeat)) state.viewSeat = 'south';
     }
     syncSeatAutoplayDefaults('players');
     if (assigned) {
@@ -6478,6 +6398,12 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
 
+  function applyLobbyTableModeSelection() {
+    const sel = byId('tw16LobbyTableMode');
+    const v = sel ? Number(sel.value) : 4;
+    state.tableMode = (v === 2 || v === 3) ? v : 4;
+  }
+
   function createInterface329Lobby() {
     const app = document.querySelector('.app');
     if (!app || byId('tw16Lobby')) return;
@@ -6485,14 +6411,15 @@ html body .app.perspective3d .discardSeat .tile::before {
     lobby.id = 'tw16Lobby';
     lobby.className = 'tw16-lobby';
     lobby.innerHTML = '<div class="tw16-lobby-card">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.12 08：25 改版）</span><span style="margin-left:auto;font-size:11px;font-weight:900;color:#4ade80;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);border-radius:999px;padding:2px 10px;white-space:nowrap;">精確動態規劃向聽</span></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.12 22：46 改版）</span><span style="margin-left:auto;font-size:11px;font-weight:900;color:#4ade80;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);border-radius:999px;padding:2px 10px;white-space:nowrap;">精確動態規劃向聽</span></div>'
       + '<div class="tw16-lobby-title">台灣麻將 Ably 連線 / 單機</div>'
       + '<div class="tw16-lobby-sub">★連線對戰：<br><span style="color:#ef4444">每人都要設同房名</span>，設好房名後<br>1人先按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">建立房間</span><br>其餘人按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">加入房間</span><br>★單人：按<span style="background:#15803d;color:#fff;border-radius:3px;padding:0 3px;">直接離線開始</span></div>'
       + '<div class="tw16-lobby-grid">'
       + '<div class="tw16-lobby-row tw16-lobby-inline-row"><label for="tw16LobbyName">玩家名稱</label><input class="tw16-lobby-input" id="tw16LobbyName" value="(請輸入)" onfocus="if(this.value===\'(請輸入)\')this.value=\'\'" onblur="if(!this.value.trim())this.value=\'(請輸入)\'"></div>'
       + '<div class="tw16-lobby-row tw16-lobby-inline-row"><label for="tw16LobbyRoom">房名</label><input class="tw16-lobby-input" id="tw16LobbyRoom" value="(請輸入)" onfocus="if(this.value===\'(請輸入)\')this.value=\'\'" onblur="if(!this.value.trim())this.value=\'(請輸入)\'"></div>'
+      + '<div class="tw16-lobby-row tw16-lobby-inline-row"><label for="tw16LobbyTableMode">人數模式</label><select class="tw16-lobby-input" id="tw16LobbyTableMode"><option value="4" selected>4人</option><option value="3">3人(無北家，禁吃牌)</option><option value="2">2人(僅東/西家)</option></select></div>'
+      + '<div class="tw16-lobby-row" style="margin-top:-6px;"><span style="font-size:11px;color:#94a3b8;font-weight:700;">※人數模式僅「建立房間(房主)」與「直接離線開始」生效；加入房間(來賓)時將自動套用房主設定。</span></div>'
       + '</div>'
-      + '<div class="tw16-lobby-row"><label for="tw16LobbyPlayerMode">人數模式（房主設定）</label><select class="tw16-lobby-input" id="tw16LobbyPlayerMode"><option value="four">四人模式</option><option value="three">三人模式（東南西，北家停用，不可吃）</option><option value="two">雙人模式（東西）</option></select><div id="tw16LobbyPlayerModeNote" style="margin-top:4px;font-size:12px;font-weight:800;color:#fde68a;line-height:1.25;">人數模式只在大廳設定；開局後如要變更，請退回大廳重選。來賓此選項無效。</div></div>'
       + '<div class="tw16-lobby-actions">'
       + '<button class="tw16-lobby-btn blue tw16-lobby-btn-role-break" id="tw16LobbyHost" type="button"><span class="tw16-lobby-btn-main">建立房間</span><span class="tw16-lobby-btn-role">(房主)</span></button>'
       + '<button class="tw16-lobby-btn blue tw16-lobby-btn-role-break" id="tw16LobbyGuest" type="button"><span class="tw16-lobby-btn-main">加入房間</span><span class="tw16-lobby-btn-role">(來賓)</span></button>'
@@ -6518,9 +6445,6 @@ html body .app.perspective3d .discardSeat .tile::before {
     const hostBtn = byId('tw16LobbyHost');
     const guestBtn = byId('tw16LobbyGuest');
     const offlineBtn = byId('tw16LobbyOffline');
-    const playerModeSelect = byId('tw16LobbyPlayerMode');
-    syncLobbyPlayerModeControl();
-    if (playerModeSelect) playerModeSelect.addEventListener('change', () => { if (!isOnlineGuest()) applyLobbyPlayerModeSelection('lobby-select-change'); const note = byId('tw16LobbyPlayerModeNote'); if (note) note.textContent = isOnlineGuest() ? '來賓此選項無效，實際人數模式以房主設定為準。' : '人數模式只在大廳設定；開局後如要變更，請退回大廳重選。'; });
     renderLobbyAblyApiKeyCandidates(false);
     renderLobbyAblyKeyUseStatusBox();
     setLobbyUsableAblyKeyDisplay('', '', '房主建立房間或來賓加入房間首次需要使用 API KEY 時，會先一次取回伺服器表格可查到的所有 key，並把本地 KEY 列表更新成和伺服器一致，再本地逐組測試；來賓若無法入桌約 3 秒會自動換不同 Api key，從頭到尾只試一輪，仍進不了就停止並提示檢查房名。', '');
@@ -6536,8 +6460,8 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (keySheetLoadFile) keySheetLoadFile.addEventListener('change', () => handleLobbyAblyApiKeySheetLocalFile(keySheetLoadFile.files && keySheetLoadFile.files[0]));
     if (hostBtn) hostBtn.addEventListener('click', async () => {
       saveLastInputs();
+      applyLobbyTableModeSelection();
       const room = roomValue();
-      applyLobbyPlayerModeSelection('host-create-room');
       const key = await ensureLobbyAutoUsableAblyApiKey(room, 'host');
       if (!key) return;
       const ok = connectAbly('host', room, nameValue(), key);
@@ -6549,14 +6473,13 @@ html body .app.perspective3d .discardSeat .tile::before {
       const room = roomValue();
       const key = await ensureLobbyAutoUsableAblyApiKey(room, 'guest');
       if (!key) return;
-      syncLobbyPlayerModeControl();
       beginGuestApiKeyEntrySession(room, nameValue(), key);
       connectAbly('guest', room, nameValue(), key);
     });
     if (offlineBtn) offlineBtn.addEventListener('click', () => {
       saveLastInputs();
+      applyLobbyTableModeSelection();
       if (isNetworked()) disconnectAbly(false);
-      applyLobbyPlayerModeSelection('offline-start');
       applyLocalPlayerName(nameValue(), 'lobby-offline');
       hideInterface329Lobby();
       newGame();
@@ -6674,7 +6597,6 @@ html body .app.perspective3d .discardSeat .tile::before {
     const md = dom.tw16MiniDashboard || byId('tw16MiniDashboard'); if (md) md.style.setProperty('display','none','important');
     const cs = document.querySelector('.tw16-mini-dashboard-chip-sum'); if (cs) cs.remove();
     restoreLobbyAblyApiKeyFromStoredValue(false);
-    syncLobbyPlayerModeControl();
     updateRoomText();
     if (reason) updateLobbyStatus(reason);
   }
@@ -6876,14 +6798,12 @@ html body .app.perspective3d .discardSeat .tile::before {
     const scoreTaiChip = Number(state.uiSettings.scoreTaiChip);
     state.uiSettings.scoreBaseChip = Number.isFinite(scoreBaseChip) ? Math.round(clampNumber(0, scoreBaseChip, 999999)) : GAME_RULES.scoreBaseChip;
     state.uiSettings.scoreTaiChip = Number.isFinite(scoreTaiChip) ? Math.round(clampNumber(0, scoreTaiChip, 999999)) : GAME_RULES.scoreTaiChip;
-    state.uiSettings.playerMode = normalizedPlayerMode(state.uiSettings.playerMode);
-    normalizeActiveDealerAndViewSeat();
     return state.uiSettings;
   }
 
 
   function defaultUiSettingsObject() {
-    return { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: GAME_RULES.scoreBaseChip, scoreTaiChip: GAME_RULES.scoreTaiChip, playerMode: 'four' };
+    return { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: GAME_RULES.scoreBaseChip, scoreTaiChip: GAME_RULES.scoreTaiChip };
   }
 
   function applyGuestJoinDefaultSettings(reason) {
@@ -6892,8 +6812,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     let changed = false;
     if (state.uiSettings.turnHandFrameEnabled !== true) { state.uiSettings.turnHandFrameEnabled = true; changed = true; }
     if (state.uiSettings.avatarEnabled === undefined) { state.uiSettings.avatarEnabled = false; changed = true; }
-    const guestOrder = networkGuestSeatOrder();
-    const guestSeat = guestOrder.includes(net.assignedSeat) ? net.assignedSeat : (guestOrder.includes(state.viewSeat) ? state.viewSeat : '');
+    const guestSeat = NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : (NETWORK_SEAT_ORDER.includes(state.viewSeat) ? state.viewSeat : '');
     if (!net.guestAutoplayInitializedSeats || typeof net.guestAutoplayInitializedSeats !== 'object') net.guestAutoplayInitializedSeats = {};
     if (guestSeat && !net.guestAutoplayInitializedSeats[guestSeat]) {
       state.seatAutoPlay[guestSeat] = false;
@@ -6918,51 +6837,6 @@ html body .app.perspective3d .discardSeat .tile::before {
       scoreBaseChip: Math.max(0, Math.round(Number(state.uiSettings.scoreBaseChip) || 0)),
       scoreTaiChip: Math.max(0, Math.round(Number(state.uiSettings.scoreTaiChip) || 0))
     };
-  }
-
-
-  function currentNetworkRuleSettings() {
-    ensureUiSettings();
-    const score = currentScoreChipSettings();
-    return {
-      playerMode: normalizedPlayerMode(state.uiSettings.playerMode),
-      scoreBaseChip: score.scoreBaseChip,
-      scoreTaiChip: score.scoreTaiChip
-    };
-  }
-
-  function applyHostNetworkRuleSettings(settings, reason) {
-    if (!settings || typeof settings !== 'object') return false;
-    if (!state.uiSettings || typeof state.uiSettings !== 'object') state.uiSettings = defaultUiSettingsObject();
-    let changed = false;
-    const mode = normalizedPlayerMode(settings.playerMode);
-    if (state.uiSettings.playerMode !== mode) {
-      state.uiSettings.playerMode = mode;
-      changed = true;
-    }
-    const beforeBase = state.uiSettings.scoreBaseChip;
-    const beforeTai = state.uiSettings.scoreTaiChip;
-    applyHostScoreChipSettings(settings, reason || 'network-rule-settings');
-    changed = changed || beforeBase !== state.uiSettings.scoreBaseChip || beforeTai !== state.uiSettings.scoreTaiChip;
-    ensureUiSettings();
-    normalizeActiveDealerAndViewSeat();
-    if (isOnlineGuest()) {
-      const guestOrder = networkGuestSeatOrder();
-      if (guestOrder.includes(net.assignedSeat)) {
-        state.viewSeat = net.assignedSeat;
-      } else if (guestOrder.includes(state.viewSeat)) {
-        net.assignedSeat = state.viewSeat;
-      } else {
-        net.assignedSeat = '';
-        state.viewSeat = guestOrder[0] || 'south';
-      }
-      syncLobbyPlayerModeControl();
-    }
-    if (changed) {
-      saveUiSettings();
-      recordNetworkEvent('rule-settings-in', '已套用房主規則｜' + PLAYER_MODE[state.uiSettings.playerMode] + '｜每底 ' + state.uiSettings.scoreBaseChip + '／每台 ' + state.uiSettings.scoreTaiChip, { reason: reason || '' });
-    }
-    return changed;
   }
 
   function applyHostScoreChipSettings(settings, reason) {
@@ -6997,7 +6871,6 @@ html body .app.perspective3d .discardSeat .tile::before {
   
 
   const TW16_SETTINGS_DEFAULTS_MIGRATION_KEY = 'tw16_settings_defaults_g256_applied';
-  const TW16_SCORE_BASE_DEFAULT_FIX_KEY = 'tw16_score_base_default_100_fix_applied';
 
   function applySettingsDefaultsMigration() {
     let alreadyApplied = false;
@@ -7005,7 +6878,6 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (alreadyApplied) return false;
     if (!state.uiSettings || typeof state.uiSettings !== 'object') state.uiSettings = {};
     state.uiSettings.animSpeedPct = 400;
-    state.uiSettings.scoreBaseChip = GAME_RULES.scoreBaseChip;
     state.uiSettings.scoreTaiChip = GAME_RULES.scoreTaiChip;
     state.uiSettings.avatarEnabled = false;
     state.uiSettings.perspective3d = false;
@@ -7014,7 +6886,6 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 function loadUiSettings() {
     let migratedDefaults = false;
-    let fixedScoreBaseDefault = false;
     try {
       const raw = localStorage.getItem('tw16_clean_037_ui');
       if (raw) {
@@ -7030,27 +6901,11 @@ function loadUiSettings() {
         if (savedScore && savedScore.scoreTaiChip !== undefined) state.uiSettings.scoreTaiChip = savedScore.scoreTaiChip;
       }
       migratedDefaults = applySettingsDefaultsMigration();
-      try {
-        const alreadyFixedBaseDefault = localStorage.getItem(TW16_SCORE_BASE_DEFAULT_FIX_KEY) === '1';
-        if (!alreadyFixedBaseDefault && Number(state.uiSettings.scoreBaseChip) === 50) {
-          state.uiSettings.scoreBaseChip = GAME_RULES.scoreBaseChip;
-          fixedScoreBaseDefault = true;
-        }
-        if (!alreadyFixedBaseDefault) localStorage.setItem(TW16_SCORE_BASE_DEFAULT_FIX_KEY, '1');
-      } catch (fixError) {}
     } catch (e) {
       migratedDefaults = applySettingsDefaultsMigration();
-      try {
-        const alreadyFixedBaseDefault = localStorage.getItem(TW16_SCORE_BASE_DEFAULT_FIX_KEY) === '1';
-        if (!alreadyFixedBaseDefault && Number(state.uiSettings.scoreBaseChip) === 50) {
-          state.uiSettings.scoreBaseChip = GAME_RULES.scoreBaseChip;
-          fixedScoreBaseDefault = true;
-        }
-        if (!alreadyFixedBaseDefault) localStorage.setItem(TW16_SCORE_BASE_DEFAULT_FIX_KEY, '1');
-      } catch (fixError) {}
     }
     ensureUiSettings();
-    if (migratedDefaults || fixedScoreBaseDefault) saveUiSettings();
+    if (migratedDefaults) saveUiSettings();
     applyUiTheme();
   }
 
@@ -7728,7 +7583,7 @@ function loadUiSettings() {
 
   function guestStillNeedsTableEntry() {
     if (net.role !== 'guest') return false;
-    if (isNetworkGuestSeat(net.assignedSeat) && Number(net.lastAppliedSnapshotSeq || 0) > 0) return false;
+    if (NETWORK_SEAT_ORDER.includes(net.assignedSeat) && Number(net.lastAppliedSnapshotSeq || 0) > 0) return false;
     return true;
   }
 
@@ -7822,7 +7677,7 @@ function loadUiSettings() {
   function isGuestSyncRequired() {
     if (net.role !== 'guest') return false;
     const hasAppliedGameSnapshot = !!net.lastAppliedSnapshotSeq;
-    const snapshotStale = !net.lastSnapshotAt || Date.now() - Number(net.lastSnapshotAt || 0) > 3600;
+    const snapshotStale = !net.lastSnapshotAt || Date.now() - Number(net.lastSnapshotAt || 0) > NETWORK_GUEST_SNAPSHOT_STALE_MS;
     const seqGap = guestHostSeqGap() >= NETWORK_GUEST_SYNC_SEQ_GAP_THRESHOLD;
     return !!net.guestSyncing || !hasAppliedGameSnapshot || snapshotStale || seqGap || state.phase === 'syncing';
   }
@@ -7837,7 +7692,7 @@ function loadUiSettings() {
 
   function updateGuestSyncStatus(reason) {
     if (net.role !== 'guest') return;
-    const assignedText = isNetworkGuestSeat(net.assignedSeat) ? ('已入座 ' + SEAT_NAME[net.assignedSeat] + '，') : '等待房主分配座位，';
+    const assignedText = NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? ('已入座 ' + SEAT_NAME[net.assignedSeat] + '，') : '等待房主分配座位，';
     const elapsed = net.guestSyncStartedAt ? Math.max(0, Math.round((Date.now() - net.guestSyncStartedAt) / 1000)) : 0;
     updateLobbyStatus(assignedText + '正在強制取得房主同步… ' + elapsed + '秒');
     setOpeningPrompt('等待房主同步');
@@ -7948,7 +7803,7 @@ function loadUiSettings() {
     }
     const required = isGuestSyncRequired();
     const now = Date.now();
-    const seatMissing = !isNetworkGuestSeat(net.assignedSeat);
+    const seatMissing = !NETWORK_SEAT_ORDER.includes(net.assignedSeat);
     const stale = !net.lastSnapshotAt || now - Number(net.lastSnapshotAt || 0) > NETWORK_GUEST_SYNC_STALE_MS;
     const seqGap = guestHostSeqGap() >= NETWORK_GUEST_SYNC_SEQ_GAP_THRESHOLD;
     const shouldAskHost = seatMissing || required || stale || seqGap;
@@ -7982,8 +7837,7 @@ function loadUiSettings() {
     const now = Date.now();
     if (reason !== 'autoplay-toggle' && now - Number(net.lastHumanActivityNotifyAt || 0) < 500) return false;
     net.lastHumanActivityNotifyAt = now;
-    const guestOrder = networkGuestSeatOrder();
-    const seat = guestOrder.includes(net.assignedSeat) ? net.assignedSeat : (guestOrder.includes(state.viewSeat) ? state.viewSeat : '');
+    const seat = NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : (NETWORK_SEAT_ORDER.includes(state.viewSeat) ? state.viewSeat : '');
     return !!publishNetworkRoomMessage('human', {
       action: 'humanActivity',
       human: true,
@@ -7996,8 +7850,7 @@ function loadUiSettings() {
 
   function notifyHostGuestInitialAutoplayOff(reason) {
     if (!isOnlineGuest() || !net.room || !net.channel) return false;
-    const guestOrder = networkGuestSeatOrder();
-    const seat = guestOrder.includes(net.assignedSeat) ? net.assignedSeat : (guestOrder.includes(state.viewSeat) ? state.viewSeat : '');
+    const seat = NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : (NETWORK_SEAT_ORDER.includes(state.viewSeat) ? state.viewSeat : '');
     if (!seat) return false;
     if (!net.guestInitialAutoplayOffNotifiedSeats || typeof net.guestInitialAutoplayOffNotifiedSeats !== 'object') net.guestInitialAutoplayOffNotifiedSeats = {};
     const notifyKey = seat + ':' + String(net.instanceId || '');
@@ -8016,7 +7869,7 @@ function loadUiSettings() {
   }
 
   function guestInitialAutoplayOffWindowActive(seat) {
-    if (!isOnlineGuest() || !isNetworkGuestSeat(seat)) return false;
+    if (!isOnlineGuest() || !NETWORK_SEAT_ORDER.includes(seat)) return false;
     const map = net.guestInitialAutoplayOffAtBySeat;
     const at = map && Number(map[seat] || 0);
     return !!(at && Date.now() - at < 10000);
@@ -8068,7 +7921,7 @@ function loadUiSettings() {
 
   function sendGuestJoin(reason) {
     if (!isOnlineGuest()) return false;
-    if (isNetworkGuestSeat(net.assignedSeat)) {
+    if (NETWORK_SEAT_ORDER.includes(net.assignedSeat)) {
       requestNetworkSync('guest-has-seat');
       return true;
     }
@@ -8076,20 +7929,20 @@ function loadUiSettings() {
     const sent = publishNetworkRoomMessage('hello', {
       action: 'join',
       joinReason: reason || 'join',
-      preferredSeat: '',
+      preferredSeat: NETWORK_SEAT_ORDER.includes(state.viewSeat) ? state.viewSeat : '',
       lastAppliedSnapshotSeq: Number(net.lastAppliedSnapshotSeq || 0),
       localAutoplay: false,
       stopTimeoutTakeover: true
     }, reason || 'join');
     updateLobbyStatus(sent ? '已送出入座要求，等待房主分配座位…' : '入座要求送出失敗，正在重試…');
     clearGuestJoinRetry();
-    if (!isNetworkGuestSeat(net.assignedSeat)) {
+    if (!NETWORK_SEAT_ORDER.includes(net.assignedSeat)) {
       net.joinTimer = setTimeout(() => {
-        if (isOnlineGuest() && !isNetworkGuestSeat(net.assignedSeat)) sendGuestJoin('retry-' + net.joinAttempts);
+        if (isOnlineGuest() && !NETWORK_SEAT_ORDER.includes(net.assignedSeat)) sendGuestJoin('retry-' + net.joinAttempts);
       }, Math.min(2500, 360 + net.joinAttempts * 160));
     }
     requestNetworkSync('join-' + (reason || 'join'));
-    if (!isNetworkGuestSeat(net.assignedSeat)) scheduleGuestApiKeyRetry('join-wait-timeout', NETWORK_GUEST_ENTRY_RETRY_MS);
+    if (!NETWORK_SEAT_ORDER.includes(net.assignedSeat)) scheduleGuestApiKeyRetry('join-wait-timeout', NETWORK_GUEST_ENTRY_RETRY_MS);
     return sent;
   }
 
@@ -8114,7 +7967,7 @@ function loadUiSettings() {
 
   function isSeatRemoteHuman(seat) {
     if (!isOnlineHost()) return false;
-    if (!networkGuestSeatOrder().includes(seat)) return false;
+    if (!NETWORK_SEAT_ORDER.includes(seat)) return false;
     const p = net.players && net.players[seat];
     const sessionId = networkPlayerSessionId(p);
     if (!sessionId || !isActiveNetworkHumanPlayer(p, Date.now())) return false;
@@ -8160,7 +8013,7 @@ function loadUiSettings() {
         autoplay: !!state.seatAutoPlay.east,
         lastSeenAt: Date.now()
       });
-    } else if (isOnlineGuest() && isNetworkGuestSeat(net.assignedSeat)) {
+    } else if (isOnlineGuest() && NETWORK_SEAT_ORDER.includes(net.assignedSeat)) {
       net.players = net.players || {};
       const current = net.players[net.assignedSeat] || {};
       net.players[net.assignedSeat] = Object.assign({}, current, {
@@ -8220,14 +8073,9 @@ function loadUiSettings() {
   function findAssignedGuestSeatForPlayer(clientId, playerKey, preferredSeat, instanceId) {
     const players = net.players || {};
     const now = Date.now();
-    const order = networkGuestSeatOrder();
-    const identitySeat = order.find(seat => guestPlayerIdentityMatches(players[seat], clientId, playerKey, instanceId));
+    const identitySeat = NETWORK_SEAT_ORDER.find(seat => guestPlayerIdentityMatches(players[seat], clientId, playerKey, instanceId));
     if (identitySeat) return identitySeat;
-    {
-      const guestOrder = networkGuestSeatOrder();
-      if (!guestOrder.includes(preferredSeat)) preferredSeat = guestOrder[0] || '';
-    }
-    if (order.includes(preferredSeat)) {
+    if (NETWORK_SEAT_ORDER.includes(preferredSeat)) {
       const preferredPlayer = players[preferredSeat];
       if (!preferredPlayer || isPlayerStale(preferredPlayer, now) || !hasNetworkHumanIdentity(preferredPlayer)) return preferredSeat;
       return '';
@@ -8236,14 +8084,14 @@ function loadUiSettings() {
   }
 
   function removeDuplicateGuestPlayerRecords(activeSeat, clientId, playerKey, reason) {
-    if (!isOnlineHost() || !networkGuestSeatOrder().includes(activeSeat)) return false;
+    if (!isOnlineHost() || !NETWORK_SEAT_ORDER.includes(activeSeat)) return false;
     const activePlayer = net.players && net.players[activeSeat];
     const activeInstance = networkPlayerSessionId(activePlayer);
     const activeClient = normalizeNetworkId(clientId || networkPlayerClientId(activePlayer));
     const activeKey = normalizeNetworkId(playerKey || networkPlayerKey(activePlayer));
     let changed = false;
     let currentTurnChangedToComputer = false;
-    networkGuestSeatOrder().forEach(seat => {
+    NETWORK_SEAT_ORDER.forEach(seat => {
       if (seat === activeSeat) return;
       const p = net.players && net.players[seat];
       if (!p || !hasNetworkHumanIdentity(p)) return;
@@ -8325,7 +8173,7 @@ function loadUiSettings() {
   }
 
   function isGuestAutoplayChangeAllowed(seat, enabled, reason) {
-    if (!networkGuestSeatOrder().includes(seat)) return true;
+    if (!NETWORK_SEAT_ORDER.includes(seat)) return true;
     if (isOnlineGuest() && seat === net.assignedSeat) {
       return isGuestOwnedAutoplayReason(reason) || guestShouldAcceptHostAutoplayState(reason, enabled);
     }
@@ -8708,15 +8556,15 @@ function loadUiSettings() {
       lastActionId: state.lastActionId,
       ended: state.ended,
       locked: state.locked,
-      lockedAt: state.lockedAt
+      lockedAt: state.lockedAt,
+      tableMode: Number(state.tableMode) || 4
     });
   }
-
 
   const NETWORK_STATE_KEY_PACK = {
     handId: 'h', windRound: 'wr', handNo: 'hn', dealerRepeat: 'dr', dealer: 'd', viewSeat: 'v', turn: 't', phase: 'p', pending: 'pd', actionDeadlineAt: 'ad',
     wall: 'w', physicalWall: 'pw', openingDeal: 'od', fixedSeatLabelStyles: 'fs', labelPositionsLocked: 'lp', hands: 'hs', melds: 'm', flowers: 'f',
-    discards: 'ds', chips: 'c', scoreUnits: 'su', scoreChipSettings: 'sc', handVisualColors: 'vc', seatAutoPlay: 'ap', declaredTing: 'dt', activeDrawnTileIds: 'di', voiceEvents: 've', nextRoundPlan: 'nr', lastSettlement: 'ls', winHistory: 'wh', lastActionId: 'la', ended: 'e', locked: 'lk', lockedAt: 'lt'
+    discards: 'ds', chips: 'c', scoreUnits: 'su', scoreChipSettings: 'sc', handVisualColors: 'vc', seatAutoPlay: 'ap', declaredTing: 'dt', activeDrawnTileIds: 'di', voiceEvents: 've', nextRoundPlan: 'nr', lastSettlement: 'ls', winHistory: 'wh', lastActionId: 'la', ended: 'e', locked: 'lk', lockedAt: 'lt', tableMode: 'tm'
   };
   const NETWORK_STATE_KEY_UNPACK = Object.keys(NETWORK_STATE_KEY_PACK).reduce((out, key) => { out[NETWORK_STATE_KEY_PACK[key]] = key; return out; }, {});
 
@@ -8815,7 +8663,6 @@ function loadUiSettings() {
       hostClientId: net.clientId,
       players: clonePlain(net.players),
       scoreChipSettings: currentScoreChipSettings(),
-      ruleSettings: currentNetworkRuleSettings(),
       state: buildLeanSnapshotState(),
       settlement: state.lastSettlement ? clonePlain(state.lastSettlement) : null,
       animation: consumeNetworkAnimationHint(reason || ''),
@@ -9121,7 +8968,7 @@ function loadUiSettings() {
     const incomingVoiceEvents = Array.isArray(incoming.voiceEvents) ? incoming.voiceEvents.slice() : [];
     if (net.role === 'guest' && !hasStartedNetworkHand(incoming)) {
       net.players = msg.players ? clonePlain(msg.players) : (net.players || {});
-      const assigned = findAssignedGuestSeatForPlayer(net.clientId, net.playerKey, net.assignedSeat || '', net.instanceId);
+      const assigned = findAssignedGuestSeatForPlayer(net.clientId, net.playerKey, net.assignedSeat || state.viewSeat, net.instanceId);
       if (assigned) {
         net.assignedSeat = assigned;
         state.viewSeat = assigned;
@@ -9129,12 +8976,11 @@ function loadUiSettings() {
         clearGuestApiKeyRetry('pregame-seat-assigned');
         updateLobbyStatus('已取得座位 ' + SEAT_NAME[assigned] + '，等待房主開局快照。');
       } else {
-        { const order = networkGuestSeatOrder(); if (!order.includes(state.viewSeat)) state.viewSeat = order[0] || 'south'; }
+        if (!NETWORK_SEAT_ORDER.includes(state.viewSeat)) state.viewSeat = 'south';
         sendGuestJoin('pregame-snapshot-needs-seat');
         updateLobbyStatus('已收到房主等待狀態，正在要求分配座位與開局快照。');
       }
-      if (msg.ruleSettings) applyHostNetworkRuleSettings(msg.ruleSettings, msg.reason || 'pregame-rules');
-      else if (incoming.scoreChipSettings) applyHostScoreChipSettings(incoming.scoreChipSettings, msg.reason || 'pregame-snapshot');
+      if (incoming.scoreChipSettings) applyHostScoreChipSettings(incoming.scoreChipSettings, msg.reason || 'pregame-snapshot');
       else if (msg.scoreChipSettings) applyHostScoreChipSettings(msg.scoreChipSettings, msg.reason || 'pregame-message');
       if (incoming.handVisualColors) {
         state.handVisualColors = normalizeHandVisualColors(incoming.handVisualColors) || state.handVisualColors;
@@ -9184,20 +9030,18 @@ function loadUiSettings() {
     }
 
     const incomingScoreChipSettings = incoming.scoreChipSettings || msg.scoreChipSettings || null;
-    const incomingRuleSettings = msg.ruleSettings || null;
     if (incomingScoreChipSettings) delete incoming.scoreChipSettings;
     Object.keys(incoming).forEach(key => {
       state[key] = incoming[key];
     });
     trimWinHistory();
-    if (incomingRuleSettings) applyHostNetworkRuleSettings(incomingRuleSettings, msg.reason || 'snapshot-rules');
-    else if (incomingScoreChipSettings) applyHostScoreChipSettings(incomingScoreChipSettings, msg.reason || 'snapshot');
+    if (incomingScoreChipSettings) applyHostScoreChipSettings(incomingScoreChipSettings, msg.reason || 'snapshot');
     net.players = msg.players ? clonePlain(msg.players) : (net.players || {});
     state.handVisualColors = normalizeHandVisualColors(state.handVisualColors) || createRandomHandVisualColors();
     applyHandVisualColors();
 
     if (isOnlineGuest()) {
-      const assigned = findAssignedGuestSeatForPlayer(net.clientId, net.playerKey, localSeatBeforeApply) || (networkGuestSeatOrder().includes(localSeatBeforeApply) ? localSeatBeforeApply : '');
+      const assigned = findAssignedGuestSeatForPlayer(net.clientId, net.playerKey, localSeatBeforeApply) || (NETWORK_SEAT_ORDER.includes(localSeatBeforeApply) ? localSeatBeforeApply : '');
       if (assigned) {
         net.assignedSeat = assigned;
         state.viewSeat = assigned;
@@ -9223,7 +9067,7 @@ function loadUiSettings() {
         updateLobbyStatus('已入座 ' + SEAT_NAME[assigned] + '，已無條件套用房主牌局。');
       } else {
         net.assignedSeat = '';
-        { const order = networkGuestSeatOrder(); if (!order.includes(state.viewSeat)) state.viewSeat = order[0] || 'south'; }
+        if (!NETWORK_SEAT_ORDER.includes(state.viewSeat)) state.viewSeat = 'south';
         sendGuestJoin('snapshot-applied-needs-seat');
         updateLobbyStatus('已套用房主牌局，正在要求房主分配座位。');
       }
@@ -9261,14 +9105,14 @@ function loadUiSettings() {
   }
 
   function guestSeatOccupiedByDifferentLivePlayer(seat, clientId, playerKey, instanceId) {
-    if (!networkGuestSeatOrder().includes(seat)) return false;
+    if (!NETWORK_SEAT_ORDER.includes(seat)) return false;
     const player = net.players && net.players[seat];
     if (!player || isPlayerStale(player, Date.now()) || !hasNetworkHumanIdentity(player)) return false;
     return !guestPlayerIdentityMatches(player, clientId, playerKey, instanceId);
   }
 
   function guestSeatAvailableForNewAssignment(seat, now) {
-    if (!networkGuestSeatOrder().includes(seat)) return false;
+    if (!NETWORK_SEAT_ORDER.includes(seat)) return false;
     const player = net.players && net.players[seat];
     if (!player) return true;
     if (isPlayerStale(player, now || Date.now())) return true;
@@ -9278,14 +9122,9 @@ function loadUiSettings() {
   function assignGuestSeat(clientId, name, playerKey, preferredSeat, instanceId) {
     net.players = net.players || {};
     cleanupStaleNetworkPlayers('force');
-    {
-      const guestOrder = networkGuestSeatOrder();
-      if (!guestOrder.includes(preferredSeat)) preferredSeat = guestOrder[0] || '';
-    }
     if (guestSeatOccupiedByDifferentLivePlayer(preferredSeat, clientId, playerKey, instanceId)) preferredSeat = '';
-    const order = networkGuestSeatOrder();
     let existing = findAssignedGuestSeatForPlayer(clientId, playerKey, preferredSeat, instanceId);
-    if (!existing && order.includes(preferredSeat) && guestSeatAvailableForNewAssignment(preferredSeat, Date.now())) existing = preferredSeat;
+    if (!existing && NETWORK_SEAT_ORDER.includes(preferredSeat) && guestSeatAvailableForNewAssignment(preferredSeat, Date.now())) existing = preferredSeat;
     if (existing) {
       if (guestSeatOccupiedByDifferentLivePlayer(existing, clientId, playerKey, instanceId)) return '';
       keepGuestPlayerRecordHuman(existing, { clientId, playerKey, name, senderInstanceId: instanceId, role: 'guest' }, 'assign-existing');
@@ -9295,9 +9134,9 @@ function loadUiSettings() {
       return existing;
     }
     const now = Date.now();
-    const available = order.filter(s => guestSeatAvailableForNewAssignment(s, now));
+    const available = NETWORK_SEAT_ORDER.filter(s => guestSeatAvailableForNewAssignment(s, now));
     if (!available.length) return '';
-    const seat = available.includes(preferredSeat) ? preferredSeat : available[0];
+    const seat = available.includes(preferredSeat) ? preferredSeat : available[Math.floor(Math.random() * available.length)];
     net.players[seat] = { clientId, playerKey: playerKey || '', instanceId: instanceId || '', name: name || '來賓', seat, role: 'guest', human: true, autoplay: false, lastSeenAt: Date.now() };
     state.seatAutoPlay[seat] = false;
     removeDuplicateGuestPlayerRecords(seat, clientId, playerKey, 'assign-new');
@@ -9394,7 +9233,7 @@ function loadUiSettings() {
     if (net.role === 'guest') {
       if (data.kind === 'players') {
         net.players = data.players ? clonePlain(data.players) : (net.players || {});
-        const assigned = findAssignedGuestSeatForPlayer(net.clientId, net.playerKey, net.assignedSeat || '', net.instanceId);
+        const assigned = findAssignedGuestSeatForPlayer(net.clientId, net.playerKey, net.assignedSeat || state.viewSeat, net.instanceId);
         if (assigned) {
           net.assignedSeat = assigned;
           state.viewSeat = assigned;
@@ -9442,7 +9281,7 @@ function loadUiSettings() {
       requestNetworkSync('intent-blocked');
       return false;
     }
-    const guestSeat = isNetworkGuestSeat(net.assignedSeat) ? net.assignedSeat : '';
+    const guestSeat = NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : '';
     if (!isSeatlessIntent && !guestSeat) {
       addLog('尚未取得有效來賓座位，已要求房主重新同步');
       requestNetworkSync('guest-seat-missing');
@@ -9551,7 +9390,7 @@ function loadUiSettings() {
     if (!SEATS.includes(seat)) return { ok: false, reason: 'invalid-seat' };
     if (!assigned) return { ok: false, reason: 'seat-not-assigned' };
     if (assigned !== seat) return { ok: false, reason: 'seat-mismatch' };
-    if (!isNetworkGuestSeat(assigned)) return { ok: false, reason: 'guest-seat-forbidden-by-mode' };
+    if (!NETWORK_SEAT_ORDER.includes(assigned)) return { ok: false, reason: 'guest-east-forbidden' };
     const isAutoplayIntent = msg.action === 'autoplay';
     if (!isAutoplayIntent && msg.handId && state.handId && Number(msg.handId) !== Number(state.handId)) return { ok: false, reason: 'handId-mismatch' };
     if (!isAutoplayIntent && (msg.action === 'claim' || msg.action === 'skipClaim') && state.pending && state.pending.actionId && msg.pendingActionId && Number(msg.pendingActionId) !== Number(state.pending.actionId)) return { ok: false, reason: 'pending-mismatch' };
@@ -9583,7 +9422,7 @@ function loadUiSettings() {
       handId: state.handId || 0,
       phase: state.phase || '',
       openingStep: Number(openingDeal.step || 0),
-      seat: isNetworkGuestSeat(net.assignedSeat) ? net.assignedSeat : '',
+      seat: NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : '',
       playerKey: net.playerKey || ''
     }, reason || 'snapshot-ack', { reliable: false });
   }
@@ -9606,10 +9445,9 @@ function loadUiSettings() {
   function activeGuestSeatsForSnapshotAck() {
     if (net.role !== 'host') return [];
     cleanupStaleNetworkPlayers('snapshot-ack-check');
-    const guestSeats = networkGuestSeatOrder();
-    return guestSeats.filter(seat => {
+    return NETWORK_SEAT_ORDER.filter(seat => {
       const p = net.players && net.players[seat];
-      return !!(p && isActiveSeat(seat) && isActiveNetworkHumanPlayer(p, Date.now()));
+      return !!(p && isActiveNetworkHumanPlayer(p, Date.now()));
     });
   }
 
@@ -9788,7 +9626,7 @@ function loadUiSettings() {
         else publishNetworkPlayers('pulse');
       } else if (isOnlineGuest()) {
         publishNetworkHeartbeat();
-        const seatMissing = !isNetworkGuestSeat(net.assignedSeat);
+        const seatMissing = !NETWORK_SEAT_ORDER.includes(net.assignedSeat);
         if (seatMissing) sendGuestJoin('pulse-no-seat');
         if (isGuestLocalSyncSuspended()) {
           recordNetworkEvent('guest-sync-suspended', '本機動畫/開局流程中，暫停本次主動同步', { phase: state.phase || '', locked: !!state.locked, opening: !!(state.openingDeal && state.openingDeal.active) });
@@ -9816,7 +9654,7 @@ function loadUiSettings() {
 
   function publishNetworkHeartbeat() {
     if ((net.role !== 'guest' && net.role !== 'host') || !net.channel) return false;
-    const guestSeatMissing = net.role === 'guest' ? !isNetworkGuestSeat(net.assignedSeat) : false;
+    const guestSeatMissing = net.role === 'guest' ? !NETWORK_SEAT_ORDER.includes(net.assignedSeat) : false;
     const guestSnapshotStale = net.role === 'guest' ? (!net.lastSnapshotAt || Date.now() - Number(net.lastSnapshotAt || 0) > NETWORK_GUEST_SYNC_STALE_MS) : false;
     const guestNeedsSync = net.role === 'guest' ? (guestSeatMissing || isGuestSyncRequired() || guestSnapshotStale) : false;
     const payload = {
@@ -10040,7 +9878,7 @@ function loadUiSettings() {
       state.viewSeat = 'east';
       state.seatAutoPlay.east = false;
     } else {
-      { const order = networkGuestSeatOrder(); state.viewSeat = order.includes(state.viewSeat) ? state.viewSeat : (order[0] || 'south'); }
+      state.viewSeat = NETWORK_SEAT_ORDER.includes(state.viewSeat) ? state.viewSeat : 'south';
       applyGuestJoinDefaultSettings('guest-connect');
       cancelLocalOpeningForGuestConnect();
     }
@@ -10268,32 +10106,23 @@ function loadUiSettings() {
 
 
   function nextSeat(seat) {
-    const seats = activeSeats();
-    const index = seats.indexOf(seat);
-    return seats[(index + 1 + seats.length) % seats.length] || seats[0] || 'east';
+    let index = SEATS.indexOf(seat);
+    for (let step = 0; step < SEATS.length; step += 1) {
+      index = (index + 1 + SEATS.length) % SEATS.length;
+      if (isSeatActiveInTable(SEATS[index])) return SEATS[index];
+    }
+    return seat;
   }
 
   function seatDistance(from, to) {
-    const seats = activeSeats();
-    const a = seats.indexOf(from);
-    const b = seats.indexOf(to);
-    if (a >= 0 && b >= 0) return (b - a + seats.length) % seats.length;
-    const fa = SEATS.indexOf(from);
-    const tb = SEATS.indexOf(to);
-    return (tb - fa + 4) % 4;
+    const a = SEATS.indexOf(from);
+    const b = SEATS.indexOf(to);
+    return (b - a + 4) % 4;
   }
 
   function displayMap() {
-    const map = { east: 'bottom', south: 'right', west: 'top', north: 'left' };
-    const seats = activeSeats();
-    if (seats.length === 2) {
-      const view = seats.includes(state.viewSeat) ? state.viewSeat : seats[0];
-      const other = seats.find(seat => seat !== view) || seats[1] || view;
-      map[view] = 'bottom';
-      map[other] = 'top';
-      return map;
-    }
-    seats.forEach(seat => {
+    const map = {};
+    SEATS.forEach(seat => {
       map[seat] = DISPLAY_POSITIONS[seatDistance(state.viewSeat, seat)];
     });
     return map;
@@ -10365,7 +10194,7 @@ function loadUiSettings() {
       state.flowers[seat] = [];
       state.chips[seat] = state.chips[seat] ?? 5000;
       ensureScoreUnitTotals();
-      state.seatAutoPlay[seat] = isActiveSeat(seat) ? (previousSeatAutoPlay[seat] !== null ? previousSeatAutoPlay[seat] : seatAutoplayDefault(seat)) : false;
+      state.seatAutoPlay[seat] = previousSeatAutoPlay[seat] !== null ? previousSeatAutoPlay[seat] : seatAutoplayDefault(seat);
       state.declaredTing[seat] = false;
     });
     state.activeDrawnTileIds = {};
@@ -10411,7 +10240,6 @@ function loadUiSettings() {
     ensureContinuousRunObject();
     tileSerial = 1;
     applyNextRoundPlanIfNeeded();
-    normalizeActiveDealerAndViewSeat();
     state.handId += 1;
     randomizeHandVisualColors('new-game');
     state.turn = state.dealer;
@@ -10449,7 +10277,7 @@ function loadUiSettings() {
     net.closedSettlementId = '';
     resetSeatObjects();
     syncSeatAutoplayDefaults('new-game');
-    if (state.continuousRun.enabled) activeSeats().forEach(seat => state.seatAutoPlay[seat] = true);
+    if (state.continuousRun.enabled) SEATS.forEach(seat => state.seatAutoPlay[seat] = true);
     dom.resultPanel.classList.remove('show');
     setOpeningPrompt('');
     stallMonitorState.lastSignature = gameProgressSignature();
@@ -10478,18 +10306,16 @@ function loadUiSettings() {
   }
 
   function orderedSeatsFrom(seat) {
-    const seats = activeSeats();
-    const start = seats.indexOf(seat);
-    if (start < 0) return seats.slice();
-    return seats.map((_, offset) => seats[(start + offset) % seats.length]);
+    const start = SEATS.indexOf(seat);
+    if (start < 0) return SEATS.slice();
+    return SEATS.map((_, offset) => SEATS[(start + offset) % SEATS.length]);
   }
 
   function counterClockwiseSeat(seat, steps) {
-    const seats = activeSeats();
-    const start = seats.indexOf(seat);
-    if (start < 0) return seats[0] || 'east';
-    const normalized = ((Number(steps) || 0) % seats.length + seats.length) % seats.length;
-    return seats[(start - normalized + seats.length) % seats.length];
+    const start = SEATS.indexOf(seat);
+    if (start < 0) return SEATS[0];
+    const normalized = ((Number(steps) || 0) % SEATS.length + SEATS.length) % SEATS.length;
+    return SEATS[(start - normalized + SEATS.length) % SEATS.length];
   }
 
   function buildPhysicalWallFromTiles(tiles) {
@@ -10902,7 +10728,7 @@ function loadUiSettings() {
     await openingPause(OPENING_PHASE_PAUSE_MS);
     if (!stillCurrent()) return;
 
-    const dealOrder = orderedSeatsFrom(state.dealer);
+    const dealOrder = orderedSeatsFrom(state.dealer).filter(isSeatActiveInTable);
     state.openingDeal.step = 4;
     hideDicePanel();
     setOpeningPrompt('取牌');
@@ -10931,7 +10757,7 @@ function loadUiSettings() {
     await replaceOpeningFlowers(dealOrder, stillCurrent);
     if (!stillCurrent()) return;
     stopManualHumanAutoplayAfterOpening();
-    activeSeats().forEach(seat => sortHand(seat));
+    SEATS.forEach(seat => sortHand(seat));
     renderAll();
     if (isOnlineHost()) publishOpeningStepSnapshot('opening-flower-complete');
     if (isOnlineHost()) publishNetworkSnapshot('opening-guest-ready-after-flower', true);
@@ -11262,7 +11088,7 @@ function loadUiSettings() {
     const code = discarded.code;
     if (!code || isFlower(code)) return [];
     const winCandidates = [];
-    activeSeats().forEach(seat => {
+    SEATS.forEach(seat => {
       if (seat === discardSeat) return;
       if (canWinWithTile(seat, discarded)) {
         winCandidates.push({ seat, type: 'win', tiles: [], label: '胡', detail: '胡 ' + tileText(code) });
@@ -11270,7 +11096,7 @@ function loadUiSettings() {
     });
     if (winCandidates.length) return winCandidates;
     const result = [];
-    activeSeats().forEach(seat => {
+    SEATS.forEach(seat => {
       if (seat === discardSeat) return;
       if (state.declaredTing[seat]) return;
       const hand = state.hands[seat] || [];
@@ -11279,7 +11105,7 @@ function loadUiSettings() {
       if (same.length >= 2) result.push({ seat, type: 'pong', tiles: same.slice(0, 2).map(t => t.id), label: '碰' });
     });
     const chiSeat = nextSeat(discardSeat);
-    if (!isThreePlayerNoChiMode() && isActiveSeat(chiSeat) && !state.declaredTing[chiSeat]) getChiCandidates(chiSeat, code).forEach(c => result.push(c));
+    if (Number(state.tableMode) !== 3 && isSeatActiveInTable(chiSeat) && !state.declaredTing[chiSeat]) getChiCandidates(chiSeat, code).forEach(c => result.push(c));
     return result;
   }
 
@@ -11674,13 +11500,54 @@ function loadUiSettings() {
     return Math.min(best, sevenSh);
   }
 
+  const TW16_WIN_SUITS = ['m','p','s'];
+  const TW16_WIN_HONORS = ['E','S','W','N','C','F','P'];
+
+  /* 精確胡牌判定：遞迴嘗試把剩餘牌拆解成 setsNeeded 組(順子/刻子) + 1 對(雀頭)。
+     每次固定取「目前最小的那種牌」嘗試組合，是完整且正確的標準演算法，
+     用以取代 tw16ExactShanten 在 m==need 但無對子時可能誤判為可胡(-1) 的邊界錯誤。 */
+  function tw16TryDecomposeWin(counts, setsNeeded, pairUsed) {
+    let key = null;
+    for (let si = 0; si < TW16_WIN_SUITS.length && !key; si++) {
+      const suit = TW16_WIN_SUITS[si];
+      for (let r = 1; r <= 9; r++) { const k = suit + r; if ((counts[k] || 0) > 0) { key = k; break; } }
+    }
+    if (!key) {
+      for (let hi = 0; hi < TW16_WIN_HONORS.length; hi++) { const h = TW16_WIN_HONORS[hi]; if ((counts[h] || 0) > 0) { key = h; break; } }
+    }
+    if (!key) return setsNeeded === 0 && pairUsed;
+    const n = counts[key];
+    if (!pairUsed && n >= 2) {
+      counts[key] -= 2;
+      if (tw16TryDecomposeWin(counts, setsNeeded, true)) { counts[key] += 2; return true; }
+      counts[key] += 2;
+    }
+    if (setsNeeded > 0 && n >= 3) {
+      counts[key] -= 3;
+      if (tw16TryDecomposeWin(counts, setsNeeded - 1, pairUsed)) { counts[key] += 3; return true; }
+      counts[key] += 3;
+    }
+    if (setsNeeded > 0) {
+      const suit = key[0], rank = parseInt(key.slice(1), 10);
+      if (TW16_WIN_SUITS.includes(suit) && rank <= 7) {
+        const k2 = suit + (rank + 1), k3 = suit + (rank + 2);
+        if ((counts[k2] || 0) > 0 && (counts[k3] || 0) > 0) {
+          counts[key]--; counts[k2]--; counts[k3]--;
+          if (tw16TryDecomposeWin(counts, setsNeeded - 1, pairUsed)) { counts[key]++; counts[k2]++; counts[k3]++; return true; }
+          counts[key]++; counts[k2]++; counts[k3]++;
+        }
+      }
+    }
+    return false;
+  }
+
   function isWinningCodeList(codes, concealedSetsNeeded) {
     if (!Array.isArray(codes)) return false;
     const need = concealedSetsNeeded * 3 + 2;
     if (codes.length !== need) return false;
     const counts = Object.create(null);
     codes.forEach(code => { if (code && !isFlower(code)) counts[code] = (counts[code] || 0) + 1; });
-    return tw16ExactShanten(counts, concealedSetsNeeded) === -1;
+    return tw16TryDecomposeWin(Object.assign({}, counts), concealedSetsNeeded, false);
   }
 
   function canFormConcealedSets(counts, setsLeft) {
@@ -11981,12 +11848,13 @@ function loadUiSettings() {
   }
 
   function taiwanSettlementUnitsForSeat(kind, winner, fromSeat, seat, tai) {
+    if (!isSeatActiveInTable(seat)) return { bases: 0, taiUnits: 0 };
     const scoreTai = Math.max(0, Number(tai) || 0);
-    const seats = activeSeats();
-    if (!seats.includes(seat)) return { bases: 0, taiUnits: 0 };
     if (kind === 'self') {
-      const payerCount = Math.max(1, seats.length - 1);
-      if (seat === winner) return { bases: payerCount, taiUnits: scoreTai * payerCount };
+      /* 零和：贏家獲得 = 在桌對手數 * 1個單位；每位在桌對手各付1個單位。
+         4人模式對手數=3，與原規則(+3/-1)完全相同；2/3人模式自動依對手數調整，總和恆為0。 */
+      const opponents = activeSeats().filter(s => s !== winner).length;
+      if (seat === winner) return { bases: opponents, taiUnits: scoreTai * opponents };
       return { bases: -1, taiUnits: -scoreTai };
     }
     if (kind === 'ron') {
@@ -12005,7 +11873,7 @@ function loadUiSettings() {
 
   function applyWinChips(winner, kind, fromSeat, tai) {
     ensureScoreUnitTotals();
-    activeSeats().forEach(seat => {
+    SEATS.forEach(seat => {
       const units = taiwanSettlementUnitsForSeat(kind, winner, fromSeat, seat, tai);
       state.chips[seat] += taiwanSettlementDeltaFromUnits(units);
       state.scoreUnits[seat].bases += Number(units.bases) || 0;
@@ -12041,7 +11909,7 @@ function loadUiSettings() {
   function getRobKongCandidates(kongSeat, kongTile) {
     if (!kongTile || !kongTile.code || isFlower(kongTile.code)) return [];
     const out = [];
-    activeSeats().forEach(seat => {
+    SEATS.forEach(seat => {
       if (seat === kongSeat) return;
       if (canWinWithTile(seat, kongTile)) out.push({ seat, type: 'win', tiles: [], label: '搶槓胡', detail: '胡 ' + tileText(kongTile.code) });
     });
@@ -13308,31 +13176,10 @@ function loadUiSettings() {
 
   function positionTingChoicePanelAtTableCenter() {
     if (!dom.actionPanel || !dom.actionPanel.classList.contains('ting-choice-active')) return false;
-    /* 定位在和吃碰槓按鈕相同的位置（手牌框右上角） */
-    const seat = localHumanSeat();
-    const handEl = seat ? dom[DISPLAY_ELEMENT['bottom'].hand] : null;
-    const meldEl = byId('meldBottom');
-    const tableEl = byId('table');
-    if (handEl && tableEl) {
-      const tR = tableEl.getBoundingClientRect();
-      const hR = handEl.getBoundingClientRect();
-      const mR = meldEl ? meldEl.getBoundingClientRect() : null;
-      const mValid = mR && mR.width > 2 && mR.height > 2;
-      const boxTop   = Math.min(hR.top,   mValid ? mR.top   : hR.top);
-      const boxRight = Math.max(hR.right,  mValid ? mR.right : hR.right);
-      const rightFromTableRight   = Math.max(0, tR.right  - boxRight);
-      const bottomFromTableBottom = Math.max(0, tR.bottom - boxTop) + 8;
-      dom.actionPanel.style.setProperty('left',          'auto',                         'important');
-      dom.actionPanel.style.setProperty('top',           'auto',                         'important');
-      dom.actionPanel.style.setProperty('right',         rightFromTableRight  + 'px',    'important');
-      dom.actionPanel.style.setProperty('bottom',        bottomFromTableBottom + 'px',   'important');
-      dom.actionPanel.style.setProperty('transform',     'none',                         'important');
-      dom.actionPanel.style.setProperty('background',    'rgba(30,30,30,.82)',           'important');
-      dom.actionPanel.style.setProperty('border-radius', '10px',                        'important');
-      dom.actionPanel.style.setProperty('padding',       '6px 8px',                     'important');
-      return true;
-    }
-    /* fallback：桌面中央 */
+    /* 置中在四個座位手牌的正中央（桌面正中央） */
+    ['left','right','top','bottom','transform','transform-origin','background','border-radius','padding','width','height'].forEach(prop => {
+      dom.actionPanel.style.removeProperty(prop);
+    });
     setAbsolutePlacement(dom.actionPanel, {
       position: 'absolute',
       left: '50%',
@@ -13654,7 +13501,6 @@ function loadUiSettings() {
     clearTimeout(claimTimer);
     state.pending = null;
     state.turn = nextSeat(state.turn);
-    if (!isActiveSeat(state.turn)) state.turn = activeSeats()[0] || 'east';
     state.phase = 'draw';
     clearTurnDeadline();
     if (state.wall.length <= GAME_RULES.minLiveWallTiles) {
@@ -14265,7 +14111,7 @@ function loadUiSettings() {
       return SEATS.some(seat => !!state.seatAutoPlay[seat] && (seat === 'east' || isSeatAssignedHuman(seat)));
     }
     if (isOnlineGuest()) {
-      const guestSeat = isNetworkGuestSeat(net.assignedSeat) ? net.assignedSeat : (isActiveSeat(state.viewSeat) ? state.viewSeat : '');
+      const guestSeat = NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : (SEATS.includes(state.viewSeat) ? state.viewSeat : '');
       return !!(guestSeat && state.seatAutoPlay[guestSeat]);
     }
     return false;
@@ -14543,9 +14389,7 @@ function loadUiSettings() {
         + '<div class="settlement-reveal-line"><b>花牌/副露</b>' + lowerHtml + '</div>'
         + '</div>';
     }).join('');
-    const seatCount = Math.max(0, (payload && Array.isArray(payload.reveal)) ? payload.reveal.length : activeSeatCount());
-    const title = (seatCount || activeSeatCount()) + '座位手牌實體牌例';
-    return '<div class="settlement-section-title">' + escapeHtml(title) + '</div><div class="revealBlock settlement-reveal-block">' + rows + '</div>';
+    return '<div class="settlement-section-title">四座位手牌實體牌例</div><div class="revealBlock settlement-reveal-block">' + rows + '</div>';
   }
 
   function tileMiniHtml(tileObj, highlight) {
@@ -14572,8 +14416,7 @@ function loadUiSettings() {
   }
 
   function buildEndHandRevealHtml(winner, winTile) {
-    const seats = activeSeats();
-    const rows = seats.map(seat => {
+    const rows = SEATS.map(seat => {
       const hand = (state.hands[seat] || []).slice().sort((a, b) => tileOrder(a.code) - tileOrder(b.code));
       const meldText = (state.melds[seat] || []).length ? '　副露 ' + (state.melds[seat] || []).length + ' 組' : '';
       const flowerText = (state.flowers[seat] || []).length ? '　花 ' + (state.flowers[seat] || []).length : '';
@@ -14619,7 +14462,7 @@ function loadUiSettings() {
   function nextRoundPlanWithDealer(newDealer) {
     let windRound = state.windRound;
     let handNo = state.handNo + 1;
-    if (handNo > activeSeatCount()) { handNo = 1; windRound = (windRound + 1) % 4; }
+    if (handNo > 4) { handNo = 1; windRound = (windRound + 1) % 4; }
     return { dealer: newDealer, windRound, handNo, dealerRepeat: 0 };
   }
 
@@ -14633,7 +14476,6 @@ function loadUiSettings() {
     dom.resultTitle.textContent = '設定';
     dom.resultText.innerHTML = '<div class="settingsGrid">'
       + '<label class="settingsRow"><span>玩家名稱</span><input id="setPlayerName" type="text" value="' + escapeHtml(net.name || '') + '"><b></b></label>'
-      + '<label class="settingsRow"><span>遊戲模式</span><select id="setPlayerMode" ' + (isOnlineGuest() ? 'disabled' : '') + '><option value="four" ' + (normalizedPlayerMode(state.uiSettings.playerMode) === 'four' ? 'selected' : '') + '>四人模式</option><option value="three" ' + (normalizedPlayerMode(state.uiSettings.playerMode) === 'three' ? 'selected' : '') + '>三人模式（東南西；不可吃）</option><option value="two" ' + (normalizedPlayerMode(state.uiSettings.playerMode) === 'two' ? 'selected' : '') + '>雙人模式（東西對坐）</option></select><b></b></label>'
       + '<label class="settingsRow"><span>動畫速度</span><input id="setAnimSpeed" type="range" min="0" max="400" value="' + state.uiSettings.animSpeedPct + '"><b id="setAnimSpeedValue">' + (state.uiSettings.animSpeedPct ? state.uiSettings.animSpeedPct + '%' : '關') + '</b></label>'
       + '<label class="settingsRow"><span>牌圓角</span><input id="setTileRadius" type="range" min="0" max="38" value="' + state.uiSettings.tileRadiusPct + '"><b id="setTileRadiusValue">' + state.uiSettings.tileRadiusPct + '%</b></label>'
       + '<label class="settingsRow"><span>每底籌碼</span><input id="setScoreBaseChip" type="number" min="0" max="999999" step="10" value="' + state.uiSettings.scoreBaseChip + '" ' + (isOnlineGuest() ? 'disabled' : '') + '><b></b></label>'
@@ -14645,7 +14487,7 @@ function loadUiSettings() {
       + '<label class="settingsRow"><span>顯示迷你儀表板</span><input id="setMiniDashboardEnabled" type="checkbox" ' + (state.uiSettings.miniDashboardEnabled ? 'checked' : '') + '><b></b></label>'
       + '<label class="settingsRow"><span>顯示座位頭像</span><input id="setAvatarEnabled" type="checkbox" ' + (state.uiSettings.avatarEnabled !== false ? 'checked' : '') + '><b></b></label>'
       + '<div class="menuGrid"><button class="btn" id="settingsApplyBtn">套用</button><button class="btn red" id="settingsDefaultBtn">恢復預設</button></div>'
-      + '<div style="font-size:13px;color:#cbd5e1;line-height:1.55">雙人模式只啟用東家與西家，輪流摸打；南家、北家不發牌、不行動、不結算。三人模式啟用東家、南家、西家，北家停用；三人模式不可吃，可碰、槓、胡。連線時房主固定東家，三人第一位來賓為南家、第二位來賓為西家，雙人來賓固定西家；遊戲模式與每底 / 每台籌碼由房主東家設定同步，來賓不可覆蓋。</div>'
+      + '<div style="font-size:13px;color:#cbd5e1;line-height:1.55">每底 / 每台籌碼只由房主或單機端調整；來賓由房主快照同步設定。</div>'
       + '</div>';
     dom.resultNewBtn.style.display = 'none';
     dom.resultCloseBtn.textContent = '關閉';
@@ -14676,7 +14518,6 @@ function loadUiSettings() {
       if (!isOnlineGuest()) {
         state.uiSettings.scoreBaseChip = Math.round(clampNumber(0, Number(byId('setScoreBaseChip').value) || 0, 999999));
         state.uiSettings.scoreTaiChip = Math.round(clampNumber(0, Number(byId('setScoreTaiChip').value) || 0, 999999));
-        state.uiSettings.playerMode = normalizedPlayerMode(byId('setPlayerMode') ? byId('setPlayerMode').value : state.uiSettings.playerMode);
       }
       state.uiSettings.layoutMode = 'clean';
       state.uiSettings.wallVisible = !!byId('setWallVisible').checked;
@@ -14688,7 +14529,6 @@ function loadUiSettings() {
       const nameInput = byId('setPlayerName');
       if (nameInput) applyLocalPlayerName(nameInput.value, 'settings-apply');
       ensureUiSettings();
-      normalizeActiveDealerAndViewSeat();
       saveUiSettings();
       addLog('設定已套用');
       closeUtilityPanel();
@@ -16052,7 +15892,6 @@ function loadUiSettings() {
     ensureUiSettings();
     const rows = [];
     const add = (name, ok, detail) => rows.push({ name, ok: !!ok, detail: detail || '' });
-    add('每底籌碼預設', GAME_RULES.scoreBaseChip === 100 && Number(state.uiSettings.scoreBaseChip) === 100, '規則=' + GAME_RULES.scoreBaseChip + '，目前設定=' + state.uiSettings.scoreBaseChip);
     add('每台籌碼預設', GAME_RULES.scoreTaiChip === 10 && Number(state.uiSettings.scoreTaiChip) === 10, '規則=' + GAME_RULES.scoreTaiChip + '，目前設定=' + state.uiSettings.scoreTaiChip);
     add('動畫速度預設', Number(state.uiSettings.animSpeedPct) === 400, '目前=' + state.uiSettings.animSpeedPct + '%');
     add('顯示座位頭像預設', state.uiSettings.avatarEnabled === false, state.uiSettings.avatarEnabled ? '目前=開' : '目前=關');
@@ -16182,7 +16021,7 @@ function showIntegrityReport(precomputed) {
   }
 
   function getLocalBroadcastSeat() {
-    if (isOnlineGuest() && isNetworkGuestSeat(net.assignedSeat)) return net.assignedSeat;
+    if (isOnlineGuest() && NETWORK_SEAT_ORDER.includes(net.assignedSeat)) return net.assignedSeat;
     if (isOnlineHost()) return 'east';
     return state.viewSeat || 'east';
   }
@@ -17303,7 +17142,7 @@ function showIntegrityReport(precomputed) {
     const serial = renderSerial;
     if (serial !== renderSerial) return;
     const map = displayMap();
-    dom.roundStatus.textContent = WIND_NAME[state.windRound] + state.handNo + '局／' + PLAYER_MODE[normalizedPlayerMode(state.uiSettings && state.uiSettings.playerMode)] + (isThreePlayerNoChiMode() ? '／不可吃' : '') + '／剩餘' + state.wall.length + '張／莊' + SEAT_NAME[state.dealer].replace('家','') + (isNetworked() ? '／' + networkStatusText() : '') + (state.continuousRun.enabled ? '／連跑' + state.continuousRun.remaining : '');
+    dom.roundStatus.textContent = WIND_NAME[state.windRound] + state.handNo + '局／剩餘' + state.wall.length + '張／莊' + SEAT_NAME[state.dealer].replace('家','') + (isNetworked() ? '／' + networkStatusText() : '') + (state.continuousRun.enabled ? '／連跑' + state.continuousRun.remaining : '');
     updateScoreChipLine();
     if (dom.autoBtn) {
       dom.autoBtn.textContent = state.seatAutoPlay[state.viewSeat] ? '停止托管' : '電腦托管';
@@ -17354,8 +17193,7 @@ function showIntegrityReport(precomputed) {
       miniDashboardRenderKey = '';
       return;
     }
-    const dashboardSeats = activeSeats();
-    const renderKey = dashboardSeats.map(seat => [
+    const renderKey = Number(state.tableMode || 4) + '|' + SEATS.map(seat => [
       seat,
       seat === state.turn ? 'active' : '',
       dealerDashboardPrefixText(seat),
@@ -17372,9 +17210,9 @@ function showIntegrityReport(precomputed) {
         }).map(c => c.dataset.seat)
       );
       grid.replaceChildren();
-      dashboardSeats.forEach(seat => {
+      SEATS.forEach(seat => {
         const card = document.createElement('div');
-        card.className = 'tw16-mini-dashboard-card' + (seat === state.turn ? ' active' : '');
+        card.className = 'tw16-mini-dashboard-card' + (seat === state.turn ? ' active' : '') + (!isSeatActiveInTable(seat) ? ' tw16-mini-dashboard-inactive' : '');
         const name = document.createElement('div');
         name.className = 'tw16-mini-dashboard-seat';
         const dealerPrefix = dealerDashboardPrefixText(seat);
@@ -18448,33 +18286,6 @@ function showIntegrityReport(precomputed) {
     return forward;
   }
 
-  function renderBalancedFourSideWall() {
-    const total = Math.max(0, state.wall.length || 0);
-    const base = Math.floor(total / 4);
-    const extra = total % 4;
-    DISPLAY_POSITIONS.forEach((pos, index) => {
-      const wall = dom[DISPLAY_ELEMENT[pos].wall];
-      if (!wall) return;
-      const count = base + (index < extra ? 1 : 0);
-      wall.dataset.count = String(count);
-      let remaining = count;
-      while (remaining > 0) {
-        const stack = document.createElement('div');
-        stack.className = 'wallStack';
-        const lower = document.createElement('div');
-        lower.className = 'piece lower';
-        stack.appendChild(lower);
-        if (remaining > 1) {
-          const upper = document.createElement('div');
-          upper.className = 'piece upper';
-          stack.appendChild(upper);
-        }
-        wall.appendChild(stack);
-        remaining -= 2;
-      }
-    });
-  }
-
   function renderWall(map) {
     DISPLAY_POSITIONS.forEach(pos => {
       const wallEl = dom[DISPLAY_ELEMENT[pos].wall];
@@ -18485,13 +18296,34 @@ function showIntegrityReport(precomputed) {
     const physical = Array.isArray(state.physicalWall) ? state.physicalWall : [];
     const headTile = currentWallHeadTile();
     if (!physical.length) {
-      renderBalancedFourSideWall();
+      const total = Math.max(0, state.wall.length || 0);
+      const base = Math.floor(total / 4);
+      const extra = total % 4;
+      DISPLAY_POSITIONS.forEach((pos, index) => {
+        const wall = dom[DISPLAY_ELEMENT[pos].wall];
+        const count = base + (index < extra ? 1 : 0);
+        wall.dataset.count = String(count);
+        let remaining = count;
+        while (remaining > 0) {
+          const stack = document.createElement('div');
+          stack.className = 'wallStack';
+          const lower = document.createElement('div');
+          lower.className = 'piece lower';
+          stack.appendChild(lower);
+          if (remaining > 1) {
+            const upper = document.createElement('div');
+            upper.className = 'piece upper';
+            stack.appendChild(upper);
+          }
+          wall.appendChild(stack);
+          remaining -= 2;
+        }
+      });
       return;
     }
-    WALL_CIRCLE_SEATS.forEach(seat => {
+    SEATS.forEach(seat => {
       const pos = map[seat];
       const wall = dom[DISPLAY_ELEMENT[pos].wall];
-      if (!wall) return;
       wall.dataset.seat = seat;
       const tiles = physical.filter(t => t && t.wallSeat === seat);
       const stacks = new Map();
@@ -18587,7 +18419,6 @@ function showIntegrityReport(precomputed) {
       if (rows.meldRow) rows.meldRow.replaceChildren();
     });
     SEATS.forEach(seat => {
-      if (!isActiveSeat(seat)) return;
       const pos = map[seat];
       const rows = ensureHandRows(pos);
       const handRow = rows.handRow;
@@ -18605,30 +18436,44 @@ function showIntegrityReport(precomputed) {
             const lbl = document.createElement('span');
             lbl.className = 'ai-suggest-label';
             lbl.textContent = 'AI建議';
-            node.appendChild(lbl);
+            // 用 wrapper 包住 tile，讓 label 不受 tile overflow:hidden 裁切
+            const wrapper = document.createElement('div');
+            wrapper.className = 'ai-suggest-wrapper';
+            const ting2 = state.uiSettings && state.uiSettings.tingAssistEnabled ? getTingOptions(seat).find(opt => opt.discardId === tileObj.id) : null;
+            if (ting2) node.title = (node.title ? node.title + '；' : '') + '打出後聽：' + ting2.waits.map(tileText).join('、');
+            bindBottomHandSwipeDiscard(node, seat, tileObj, pos);
+            node.addEventListener('click', ev => {
+              if (consumeBottomSwipeDiscardClick(tileObj.id)) { ev.preventDefault(); ev.stopPropagation(); return; }
+              const tingOpts = getTingOptions(seat);
+              const tingOpt = tingOpts.find(opt => opt.discardId === tileObj.id);
+              if (tingOpt && !state.declaredTing[seat]) { openTingChoicePanel(seat); } else { submitDiscard(seat, tileObj.id, 'human'); }
+            });
+            wrapper.appendChild(lbl);
+            wrapper.appendChild(node);
+            handRow.appendChild(wrapper);
+          } else {
+            const ting = state.uiSettings && state.uiSettings.tingAssistEnabled ? getTingOptions(seat).find(opt => opt.discardId === tileObj.id) : null;
+            if (ting) node.title = (node.title ? node.title + '；' : '') + '打出後聽：' + ting.waits.map(tileText).join('、');
+            bindBottomHandSwipeDiscard(node, seat, tileObj, pos);
+            node.addEventListener('click', ev => {
+              if (consumeBottomSwipeDiscardClick(tileObj.id)) { ev.preventDefault(); ev.stopPropagation(); return; }
+              const tingOpts = getTingOptions(seat);
+              const tingOpt = tingOpts.find(opt => opt.discardId === tileObj.id);
+              if (tingOpt && !state.declaredTing[seat]) { openTingChoicePanel(seat); } else { submitDiscard(seat, tileObj.id, 'human'); }
+            });
+            handRow.appendChild(node);
           }
-          const ting = state.uiSettings && state.uiSettings.tingAssistEnabled ? getTingOptions(seat).find(opt => opt.discardId === tileObj.id) : null;
-          if (ting) node.title = (node.title ? node.title + '；' : '') + '打出後聽：' + ting.waits.map(tileText).join('、');
-          bindBottomHandSwipeDiscard(node, seat, tileObj, pos);
-          node.addEventListener('click', ev => {
-            if (consumeBottomSwipeDiscardClick(tileObj.id)) {
-              ev.preventDefault();
-              ev.stopPropagation();
-              return;
-            }
-            /* 打出前檢查是否可以聽牌，若可以則彈出聽牌詢問鈕 */
-            const tingOpts = getTingOptions(seat);
-            const tingOpt = tingOpts.find(opt => opt.discardId === tileObj.id);
-            if (tingOpt && !state.declaredTing[seat]) {
-              openTingChoicePanel(seat);
-            } else {
-              submitDiscard(seat, tileObj.id, 'human');
-            }
-          });
-          handRow.appendChild(node);
         });
       } else {
-        hand.forEach(() => handRow.appendChild(createBackTile()));
+        if (!hand.length && !isSeatActiveInTable(seat)) {
+          for (let pi = 0; pi < 16; pi += 1) {
+            const placeholder = createBackTile();
+            placeholder.classList.add('tw16-empty-seat-placeholder');
+            handRow.appendChild(placeholder);
+          }
+        } else {
+          hand.forEach(() => handRow.appendChild(createBackTile()));
+        }
       }
     });
   }
@@ -18643,7 +18488,6 @@ function showIntegrityReport(precomputed) {
       rows.meldRow.classList.toggle('hand-meld-row-horizontal', pos === 'bottom' || pos === 'top');
     });
     SEATS.forEach(seat => {
-      if (!isActiveSeat(seat)) return;
       const pos = map[seat];
       const rows = ensureHandRows(pos);
       const meldEl = rows.meldRow;
@@ -18656,6 +18500,12 @@ function showIntegrityReport(precomputed) {
         const concealedOwner = concealedKongOwnerOfMeld(meld);
         appendMeldTileGroup(meldEl, meld || [], pos, concealedOwner ? 'concealedKong' : 'meld', concealedOwner, meldIndex);
       });
+      if (!meldEl.children.length && !isSeatActiveInTable(seat)) {
+        const placeholder = createBackTile();
+        placeholder.classList.add('tw16-empty-seat-placeholder');
+        placeholder.classList.add('hand-exposed-group');
+        meldEl.appendChild(placeholder);
+      }
     });
     normalizeAllHandContainers(map);
   }
@@ -18676,7 +18526,7 @@ function showIntegrityReport(precomputed) {
         if (!(child && child.classList && child.classList.contains('hand-exposed-group'))) child.remove();
       });
       Array.from(rows.handRow.children || []).forEach(child => {
-        if (!(child && child.classList && child.classList.contains('tile'))) child.remove();
+        if (!(child && child.classList && (child.classList.contains('tile') || child.classList.contains('ai-suggest-wrapper')))) child.remove();
       });
     });
   }
@@ -18735,7 +18585,6 @@ function concealedKongOwnerOfMeld(meld) {
     });
     const lastRecord = state.discards && state.discards.length ? state.discards[state.discards.length - 1] : null;
     state.discards.forEach(record => {
-      if (!record || !isActiveSeat(record.seat)) return;
       const pos = map[record.seat] || 'bottom';
       const node = createTileElement(record.tile, false);
       node.title = SEAT_NAME[record.seat];
@@ -19214,11 +19063,9 @@ function concealedKongOwnerOfMeld(meld) {
       };
       /* box 也要換算為 table 相對座標 */
       const tableBox = { left: 0, top: 0, right: tr.width || table.offsetWidth, bottom: tr.height || table.offsetHeight, width: tr.width || table.offsetWidth, height: tr.height || table.offsetHeight };
-      const poolRect = positionCentralDiscardPool(discardBounds, tableBox, pad, items);
-      positionWallContainersOnDiscardPoolInnerEdges(poolRect);
+      positionCentralDiscardPool(discardBounds, tableBox, pad, items);
     } else {
-      const poolRect = positionCentralDiscardPool(boundaries, box, pad, items);
-      positionWallContainersOnDiscardPoolInnerEdges(poolRect);
+      positionCentralDiscardPool(boundaries, box, pad, items);
     }
     focusBottomHandDrawnTileIfNeeded();
   }
@@ -19273,7 +19120,7 @@ function concealedKongOwnerOfMeld(meld) {
 
   function positionCentralDiscardPool(bounds, box, pad, items) {
     const grid = dom.discardGrid;
-    if (!grid || !bounds) return null;
+    if (!grid || !bounds) return;
     const minW = Math.max(cssPixelNumber('--tw-discard-w', 18) * 6, 48);
     const minH = Math.max(cssPixelNumber('--tw-discard-h', 26) * 5, 48);
     let left = bounds.left;
@@ -19282,7 +19129,6 @@ function concealedKongOwnerOfMeld(meld) {
     let height = Math.max(minH, bounds.height);
     if (left + width > box.right - pad) left = Math.max(box.left + pad, box.right - pad - width);
     if (top + height > box.bottom - pad) top = Math.max(box.top + pad, box.bottom - pad - height);
-    const poolRect = { left, top, right: left + width, bottom: top + height, width, height };
     setAbsolutePlacement(grid, {
       left: px(left),
       top: px(top),
@@ -19294,34 +19140,6 @@ function concealedKongOwnerOfMeld(meld) {
       transformOrigin: 'left top'
     });
     positionDiscardBucketsInsidePool(grid);
-    return poolRect;
-  }
-
-  function positionWallContainersOnDiscardPoolInnerEdges(poolRect) {
-    const centerEl = byId('center');
-    let targetRect = null;
-    if (centerEl && centerEl.getBoundingClientRect) {
-      const rect = centerEl.getBoundingClientRect();
-      if (rect && Number.isFinite(rect.left) && Number.isFinite(rect.top) && rect.width > 0 && rect.height > 0) {
-        targetRect = { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height };
-      }
-    }
-    if (!targetRect && poolRect) targetRect = poolRect;
-    if (!targetRect) return;
-
-    /* 牌牆定位唯一依據：棄牌池半透明矩形的內緣。只改視覺位置，不改牌牆張數、發牌、摸牌、結算或人數規則。 */
-    const inset = Math.max(2, Math.round(cssPixelNumber('--tw-tile-w', 18) * 0.18));
-    const bottomBox = chainContentBox(dom.wallBottom, 'bottom', 'wall');
-    const topBox = chainContentBox(dom.wallTop, 'top', 'wall');
-    const leftBox = chainContentBox(dom.wallLeft, 'left', 'wall');
-    const rightBox = chainContentBox(dom.wallRight, 'right', 'wall');
-    const centerX = targetRect.left + targetRect.width / 2;
-    const centerY = targetRect.top + targetRect.height / 2;
-
-    placeByLeftTop(dom.wallTop, centerX - topBox.width / 2, targetRect.top + inset);
-    placeByLeftTop(dom.wallBottom, centerX - bottomBox.width / 2, targetRect.bottom - inset - bottomBox.height);
-    placeByLeftTop(dom.wallLeft, targetRect.left + inset, centerY - leftBox.height / 2);
-    placeByLeftTop(dom.wallRight, targetRect.right - inset - rightBox.width, centerY - rightBox.height / 2);
   }
 
   function visibleWallContentRect(pos) {
@@ -19404,75 +19222,41 @@ function concealedKongOwnerOfMeld(meld) {
     const tileH = cssPixelNumber('--tw-discard-h', cssPixelNumber('--tw-tile-h', 26));
     const sideTileW = cssPixelNumber('--tw-side-tile-w', tileH);
     const sideTileH = cssPixelNumber('--tw-side-tile-h', tileW);
-    const gap = Math.max(3, Math.round(Math.min(tileW, tileH) * 0.22));
+    const perLine = 6;
     const countOf = pos => {
       const el = grid.querySelector('.discard-' + pos);
       return Math.max(0, Number(el && el.dataset ? el.dataset.count : 0) || 0);
     };
-    const horizontalLineCapacity = Math.max(6, Math.floor((poolW - gap * 2) / Math.max(1, tileW)));
-    const horizontalSize = pos => {
+    const bucketSize = pos => {
       const count = countOf(pos);
-      if (!count) return { width: 0, height: 0, cols: 0, rows: 0, perLine: horizontalLineCapacity };
-      const perLine = Math.max(1, horizontalLineCapacity);
-      const cols = Math.min(count, perLine);
+      if (!count) return { width: 0, height: 0, cols: 0, rows: 0 };
+      if (pos === 'left' || pos === 'right') {
+        const rows = Math.min(perLine, count);
+        const cols = Math.ceil(count / perLine);
+        return { width: cols * sideTileW, height: rows * sideTileH, cols, rows };
+      }
+      const cols = Math.min(perLine, count);
       const rows = Math.ceil(count / perLine);
-      return { width: cols * tileW, height: rows * tileH, cols, rows, perLine };
+      return { width: cols * tileW, height: rows * tileH, cols, rows };
     };
     const sizes = {
-      top: horizontalSize('top'),
-      bottom: horizontalSize('bottom')
+      top: bucketSize('top'),
+      bottom: bucketSize('bottom'),
+      left: bucketSize('left'),
+      right: bucketSize('right')
     };
-    const sideAvailableH = Math.max(sideTileH, poolH - sizes.top.height - sizes.bottom.height - gap * 4);
-    const verticalLineCapacity = Math.max(6, Math.floor(sideAvailableH / Math.max(1, sideTileH)));
-    const verticalSize = pos => {
-      const count = countOf(pos);
-      if (!count) return { width: 0, height: 0, cols: 0, rows: 0, perLine: verticalLineCapacity };
-      const perLine = Math.max(1, verticalLineCapacity);
-      const rows = Math.min(count, perLine);
-      const cols = Math.ceil(count / perLine);
-      return { width: cols * sideTileW, height: rows * sideTileH, cols, rows, perLine };
-    };
-    sizes.left = verticalSize('left');
-    sizes.right = verticalSize('right');
-    const middleTop = sizes.top.height ? (sizes.top.height + gap) : 0;
-    const middleBottom = poolH - (sizes.bottom.height ? (sizes.bottom.height + gap) : 0);
-    const middleH = Math.max(0, middleBottom - middleTop);
     const basePlacement = {
-      top: {
-        left: Math.max(0, (poolW - sizes.top.width) / 2),
-        top: 0,
-        width: sizes.top.width,
-        height: sizes.top.height,
-        perLine: sizes.top.perLine
-      },
-      bottom: {
-        left: Math.max(0, (poolW - sizes.bottom.width) / 2),
-        top: Math.max(0, poolH - sizes.bottom.height),
-        width: sizes.bottom.width,
-        height: sizes.bottom.height,
-        perLine: sizes.bottom.perLine
-      },
-      left: {
-        left: 0,
-        top: middleTop + Math.max(0, (middleH - sizes.left.height) / 2),
-        width: sizes.left.width,
-        height: sizes.left.height,
-        perLine: sizes.left.perLine
-      },
-      right: {
-        left: Math.max(0, poolW - sizes.right.width),
-        top: middleTop + Math.max(0, (middleH - sizes.right.height) / 2),
-        width: sizes.right.width,
-        height: sizes.right.height,
-        perLine: sizes.right.perLine
-      }
+      top: { left: Math.max(0, (poolW - sizes.top.width) / 2), top: 0, width: sizes.top.width, height: sizes.top.height },
+      bottom: { left: Math.max(0, (poolW - sizes.bottom.width) / 2), top: Math.max(0, poolH - sizes.bottom.height), width: sizes.bottom.width, height: sizes.bottom.height },
+      left: { left: 0, top: Math.max(0, (poolH - sizes.left.height) / 2), width: sizes.left.width, height: sizes.left.height },
+      right: { left: Math.max(0, poolW - sizes.right.width), top: Math.max(0, (poolH - sizes.right.height) / 2), width: sizes.right.width, height: sizes.right.height }
     };
     DISPLAY_POSITIONS.forEach(pos => {
       const el = grid.querySelector('.discard-' + pos);
       const p = avoidWallWithDiscardPlacement(pos, basePlacement[pos], poolW, poolH, gridRect);
       if (!el || !p) return;
       setAbsolutePlacement(el, { left: px(p.left), top: px(p.top), right: 'auto', bottom: 'auto', width: px(p.width), height: px(p.height), transform: 'none', transformOrigin: 'left top' });
-      positionDiscardTilesInBucket(el, pos, p.width, p.height, Math.max(1, p.perLine || 1), tileW, tileH, sideTileW, sideTileH);
+      positionDiscardTilesInBucket(el, pos, p.width, p.height, perLine, tileW, tileH, sideTileW, sideTileH);
     });
   }
 
@@ -19502,7 +19286,6 @@ function concealedKongOwnerOfMeld(meld) {
 
 
 
-
   function placeCenteredAbove(el, size, center, bottomEdge, box, pad) {
     if (!el) return;
     placeByLeftTop(el, clampLeftInBox(center - (size.width || 0) / 2, size.width || 0, box, pad), bottomEdge - (size.height || 0));
@@ -19516,17 +19299,10 @@ function concealedKongOwnerOfMeld(meld) {
   
 
   function renderLabels(map) {
-    DISPLAY_POSITIONS.forEach(pos => {
-      const label = dom[DISPLAY_ELEMENT[pos].label];
-      if (label) { label.classList.remove('active','ting'); label.style.display = 'none'; label.innerHTML = ''; }
-      const wm = dom[{bottom:'wmBottom',top:'wmTop',left:'wmLeft',right:'wmRight'}[pos]];
-      if (wm) wm.style.display = 'none';
-    });
+    DISPLAY_POSITIONS.forEach(pos => dom[DISPLAY_ELEMENT[pos].label].classList.remove('active','ting'));
     SEATS.forEach(seat => {
-      if (!isActiveSeat(seat)) return;
       const pos = map[seat];
       const labelEl = dom[DISPLAY_ELEMENT[pos].label];
-      if (labelEl) labelEl.style.display = '';
       let meta = formatSeatScoreUnitMeta(seat);
       if (state.declaredTing[seat]) {
         let tingText = '聽牌';
@@ -19551,7 +19327,6 @@ function concealedKongOwnerOfMeld(meld) {
         const isTing = !!state.declaredTing[seat];
         wmEl.innerHTML = (isDealer ? '<span class="tw-wm-dealer">莊</span>' : '') + windChar + (isTing ? '<span class="tw-wm-ting">聽</span>' : '');
         const playPhase = state.phase === 'discard' || state.phase === 'claim' || state.phase === 'draw' || state.phase === 'selfwin';
-        wmEl.style.display = '';
         wmEl.style.visibility = playPhase ? 'visible' : 'hidden';
       }
     });
