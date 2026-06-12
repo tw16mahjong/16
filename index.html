@@ -6411,7 +6411,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     lobby.id = 'tw16Lobby';
     lobby.className = 'tw16-lobby';
     lobby.innerHTML = '<div class="tw16-lobby-card">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.12 22：46 改版）</span><span style="margin-left:auto;font-size:11px;font-weight:900;color:#4ade80;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);border-radius:999px;padding:2px 10px;white-space:nowrap;">精確動態規劃向聽</span></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.13 02：37 改版）</span><span style="margin-left:auto;font-size:11px;font-weight:900;color:#4ade80;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);border-radius:999px;padding:2px 10px;white-space:nowrap;">精確動態規劃向聽</span></div>'
       + '<div class="tw16-lobby-title">台灣麻將 Ably 連線 / 單機</div>'
       + '<div class="tw16-lobby-sub">★連線對戰：<br><span style="color:#ef4444">每人都要設同房名</span>，設好房名後<br>1人先按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">建立房間</span><br>其餘人按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">加入房間</span><br>★單人：按<span style="background:#15803d;color:#fff;border-radius:3px;padding:0 3px;">直接離線開始</span></div>'
       + '<div class="tw16-lobby-grid">'
@@ -18950,8 +18950,15 @@ function concealedKongOwnerOfMeld(meld) {
     const compactScale = state.openingDeal && state.openingDeal.wallCompact ? 0.90 : 1;
     const effectiveW = boardW * compactScale;
     const effectiveH = boardH * compactScale;
-    const centerX = box.left + box.width / 2;
-    const centerY = Math.min(Math.max(tableCenterY, box.top + effectiveH / 2 + pad), box.bottom - effectiveH / 2 - pad);
+    /* tw16_wallcenter_anchor: 以 discardGrid（四座位視角浮水印會合的桌面正中央）目前的實際
+       中心點作為牌牆置中基準，確保4個座位的牌牆都依各自視角左右置中於同一個桌面中心點，
+       不受box/tableCenterY在2人/3人模式下因座位佔位差異造成的偏移影響。 */
+    const gridEl = dom.discardGrid;
+    const gridRect = gridEl && gridEl.getBoundingClientRect ? gridEl.getBoundingClientRect() : null;
+    const hasGridRect = !!(gridRect && gridRect.width > 0 && gridRect.height > 0);
+    const centerX = hasGridRect ? (gridRect.left + gridRect.right) / 2 : (box.left + box.width / 2);
+    const fallbackCenterY = Math.min(Math.max(tableCenterY, box.top + effectiveH / 2 + pad), box.bottom - effectiveH / 2 - pad);
+    const centerY = hasGridRect ? (gridRect.top + gridRect.bottom) / 2 : fallbackCenterY;
     const left = centerX - effectiveW / 2;
     const right = centerX + effectiveW / 2;
     const top = centerY - effectiveH / 2;
@@ -19031,19 +19038,27 @@ function concealedKongOwnerOfMeld(meld) {
     const bottomRailTop = bottomHandTop - wb.height;
     const sideAvailableTop = Math.max(topLimit, topRailBottom + 2);
     const sideAvailableBottom = Math.min(bottomLimit, Math.max(sideAvailableTop + 20, bottomRailTop - 2));
-    const sideHandH = Math.max(hl.height, hr.height);
-    const portrait = box.height >= box.width;
-    const freeSpace = Math.max(0, sideAvailableBottom - sideAvailableTop - sideHandH);
-    const sideTop = Math.max(sideAvailableTop, Math.min(sideAvailableBottom - sideHandH, sideAvailableTop + freeSpace * (portrait ? 0.06 : 0.16)));
+    /* tw16_sideseat_center_anchor: 左右兩座位的手牌(含花牌副露列，同一個handEl容器)
+       各自以discardGrid目前的實際中心點(四座位浮水印會合點)做垂直置中，
+       即依各自視角的「左右置中」對齊同一個桌面正中央，與牌牆使用同一基準。 */
+    const gridElSC = dom.discardGrid;
+    const gridRectSC = gridElSC && gridElSC.getBoundingClientRect ? gridElSC.getBoundingClientRect() : null;
+    const hasGridRectSC = !!(gridRectSC && gridRectSC.width > 0 && gridRectSC.height > 0);
+    const sideCenterY = hasGridRectSC ? (gridRectSC.top + gridRectSC.bottom) / 2 : (sideAvailableTop + sideAvailableBottom) / 2;
+    const clampSideTop = h => {
+      if (h > sideAvailableBottom - sideAvailableTop) return sideCenterY - h / 2;
+      const maxTop = sideAvailableBottom - h;
+      return Math.min(Math.max(sideCenterY - h / 2, sideAvailableTop), maxTop);
+    };
 
     const leftHandLeft = box.left + pad;
-    const leftHandTop = clampTopInBox(sideTop, hl.height, box, pad);
+    const leftHandTop = clampSideTop(hl.height);
     const leftHandCenterY = leftHandTop + hl.height / 2;
     placeByLeftTop(items.left.hand, leftHandLeft, leftHandTop);
     placeByLeftTop(items.left.wall, leftHandLeft + hl.width, clampTopInBox(leftHandCenterY - wl.height / 2, wl.height, box, pad));
 
     const rightHandLeft = box.right - pad - hr.width;
-    const rightHandTop = clampTopInBox(sideTop, hr.height, box, pad);
+    const rightHandTop = clampSideTop(hr.height);
     const rightHandCenterY = rightHandTop + hr.height / 2;
     placeByLeftTop(items.right.hand, rightHandLeft, rightHandTop);
     placeByLeftTop(items.right.wall, rightHandLeft - wr.width, clampTopInBox(rightHandCenterY - wr.height / 2, wr.height, box, pad));
@@ -19222,13 +19237,18 @@ function concealedKongOwnerOfMeld(meld) {
     const tileH = cssPixelNumber('--tw-discard-h', cssPixelNumber('--tw-tile-h', 26));
     const sideTileW = cssPixelNumber('--tw-side-tile-w', tileH);
     const sideTileH = cssPixelNumber('--tw-side-tile-h', tileW);
-    const perLine = 6;
     const countOf = pos => {
       const el = grid.querySelector('.discard-' + pos);
       return Math.max(0, Number(el && el.dataset ? el.dataset.count : 0) || 0);
     };
-    const bucketSize = pos => {
-      const count = countOf(pos);
+    const counts = { top: countOf('top'), bottom: countOf('bottom'), left: countOf('left'), right: countOf('right') };
+    /* 每個方位各自的「每列張數」，預設6。
+       若某座位自身棄牌堆往桌面中央延伸的長度(top/bottom看高度、left/right看寬度)
+       會超過該方向pool的一半(=自己座位視角桌面上下/左右的中間橫線)，
+       就把該座位每列張數+1重新計算，直到不再超過中線為止。適用所有人數模式。 */
+    const perLineMap = { top: 6, bottom: 6, left: 6, right: 6 };
+    const bucketSize = (pos, perLine) => {
+      const count = counts[pos];
       if (!count) return { width: 0, height: 0, cols: 0, rows: 0 };
       if (pos === 'left' || pos === 'right') {
         const rows = Math.min(perLine, count);
@@ -19239,11 +19259,21 @@ function concealedKongOwnerOfMeld(meld) {
       const rows = Math.ceil(count / perLine);
       return { width: cols * tileW, height: rows * tileH, cols, rows };
     };
+    DISPLAY_POSITIONS.forEach(pos => {
+      const isSide = pos === 'left' || pos === 'right';
+      const limit = (isSide ? poolW : poolH) / 2;
+      for (let guard = 0; guard < 64; guard += 1) {
+        const size = bucketSize(pos, perLineMap[pos]);
+        const span = isSide ? size.width : size.height;
+        if (span <= limit || perLineMap[pos] >= counts[pos]) break;
+        perLineMap[pos] += 1;
+      }
+    });
     const sizes = {
-      top: bucketSize('top'),
-      bottom: bucketSize('bottom'),
-      left: bucketSize('left'),
-      right: bucketSize('right')
+      top: bucketSize('top', perLineMap.top),
+      bottom: bucketSize('bottom', perLineMap.bottom),
+      left: bucketSize('left', perLineMap.left),
+      right: bucketSize('right', perLineMap.right)
     };
     const basePlacement = {
       top: { left: Math.max(0, (poolW - sizes.top.width) / 2), top: 0, width: sizes.top.width, height: sizes.top.height },
@@ -19256,7 +19286,7 @@ function concealedKongOwnerOfMeld(meld) {
       const p = avoidWallWithDiscardPlacement(pos, basePlacement[pos], poolW, poolH, gridRect);
       if (!el || !p) return;
       setAbsolutePlacement(el, { left: px(p.left), top: px(p.top), right: 'auto', bottom: 'auto', width: px(p.width), height: px(p.height), transform: 'none', transformOrigin: 'left top' });
-      positionDiscardTilesInBucket(el, pos, p.width, p.height, perLine, tileW, tileH, sideTileW, sideTileH);
+      positionDiscardTilesInBucket(el, pos, p.width, p.height, perLineMap[pos], tileW, tileH, sideTileW, sideTileH);
     });
   }
 
