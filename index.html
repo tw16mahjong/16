@@ -10287,8 +10287,10 @@ function loadUiSettings() {
     const map = { east: 'bottom', south: 'right', west: 'top', north: 'left' };
     const seats = activeSeats();
     if (seats.length === 2) {
-      map[seats[0]] = 'bottom';
-      map[seats[1]] = 'top';
+      const view = seats.includes(state.viewSeat) ? state.viewSeat : seats[0];
+      const other = seats.find(seat => seat !== view) || seats[1] || view;
+      map[view] = 'bottom';
+      map[other] = 'top';
       return map;
     }
     seats.forEach(seat => {
