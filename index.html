@@ -17097,6 +17097,24 @@ function showIntegrityReport(precomputed) {
     return true;
   }
 
+  /* g259b: 同步獨立語音鈕(#voiceBtn)的視覺狀態，使其與 broadcastBtn/全域錄音狀態一致 */
+  function syncVoiceBtnVisual() {
+    const vb = dom.voiceBtn || byId('voiceBtn');
+    if (!(vb instanceof HTMLElement)) return;
+    if (voiceBroadcastRecording) {
+      vb.classList.add('recording');
+      vb.classList.remove('pressing');
+      vb.textContent = '錄音中';
+    } else if (voiceBroadcastStarting) {
+      vb.classList.add('pressing');
+      vb.classList.remove('recording');
+      vb.textContent = '語音';
+    } else {
+      vb.classList.remove('recording', 'pressing', 'tw17-v45-holding');
+      vb.textContent = '語音';
+    }
+  }
+
   /* g259: 在桌面(牌桌背景區)連點兩下，快速叫出文字廣播輸入框，方便桌面操作。
      需排除手牌/棄牌/按鈕等可互動元素，避免誤觸；雙擊與雙點(touch)皆支援。 */
   function bindTableDoubleTapBroadcast() {
@@ -17115,16 +17133,18 @@ function showIntegrityReport(precomputed) {
       clickCount += 1;
       clearTimeout(clickTimer);
       if (clickCount === 2) {
-        clickTimer = setTimeout(() => { clickCount = 0; }, 380);
         ev.preventDefault();
-        openTextBroadcastInput('table-double-click');
+        clickTimer = setTimeout(() => {
+          if (clickCount === 2) openTextBroadcastInput('table-double-click');
+          clickCount = 0;
+        }, 380);
         return;
       }
       if (clickCount >= 3) {
         clickCount = 0;
         ev.preventDefault();
-        if (voiceBroadcastRecording) stopVoiceBroadcastRecording();
-        else startVoiceBroadcastRecording(dom.broadcastBtn || byId('broadcastBtn'));
+        if (voiceBroadcastRecording) { stopVoiceBroadcastRecording(); syncVoiceBtnVisual(); }
+        else { Promise.resolve(startVoiceBroadcastRecording(dom.broadcastBtn || byId('broadcastBtn'))).then(syncVoiceBtnVisual); syncVoiceBtnVisual(); }
         return;
       }
       clickTimer = setTimeout(() => { clickCount = 0; }, 380);
@@ -17153,16 +17173,18 @@ function showIntegrityReport(precomputed) {
       clearTimeout(tapTimer);
       if (tapCount === 2) {
         ev.preventDefault();
-        openTextBroadcastInput('table-double-tap');
-        tapTimer = setTimeout(() => { tapCount = 0; }, 380);
+        tapTimer = setTimeout(() => {
+          if (tapCount === 2) openTextBroadcastInput('table-double-tap');
+          tapCount = 0;
+        }, 380);
         return;
       }
       if (tapCount >= 3) {
         ev.preventDefault();
         tapCount = 0;
         lastTapAt = 0;
-        if (voiceBroadcastRecording) stopVoiceBroadcastRecording();
-        else startVoiceBroadcastRecording(dom.broadcastBtn || byId('broadcastBtn'));
+        if (voiceBroadcastRecording) { stopVoiceBroadcastRecording(); syncVoiceBtnVisual(); }
+        else { Promise.resolve(startVoiceBroadcastRecording(dom.broadcastBtn || byId('broadcastBtn'))).then(syncVoiceBtnVisual); syncVoiceBtnVisual(); }
         return;
       }
       tapTimer = setTimeout(() => { tapCount = 0; }, 380);
