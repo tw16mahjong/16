@@ -3902,7 +3902,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     const sessionId = normalizeNetworkId(msg && (msg.sessionId || msg.senderInstanceId || msg.instanceId));
     const seat = networkSeatOrder().includes(assignedSeat) ? assignedSeat : (networkSeatOrder().includes(msg && msg.seat) ? msg.seat : networkSeatFromSessionId(sessionId));
     if (!sessionId) return null;
-    return { sessionId, seat: seat || 'south' };
+    return { sessionId, seat: seat || networkSeatOrder()[0] || 'east' };
   }
 
   function networkGuestSnapshotTargetOptions(msg, assignedSeat) {
@@ -4573,7 +4573,7 @@ html body .app.perspective3d .discardSeat .tile::before {
       });
     }
     const singleAckTag = reliable && net.role !== 'host'
-      ? nextNetworkReceiptTag(networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : (SEATS.includes(state.viewSeat) ? state.viewSeat : 'south'))
+      ? nextNetworkReceiptTag(networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : (SEATS.includes(state.viewSeat) ? state.viewSeat : (networkSeatOrder()[0] || 'east')))
       : '';
     const ackCode = reliable ? makeNetworkPayloadCode() : '';
     const firstTag = singleAckTag || (Object.keys(ackTags).length ? ackTags[Object.keys(ackTags)[0]] : '');
@@ -4650,7 +4650,7 @@ html body .app.perspective3d .discardSeat .tile::before {
       updateLobbyStatus('已入座 ' + SEAT_NAME[assigned] + '，等待房主牌局狀態。');
     } else if (!networkSeatOrder().includes(net.assignedSeat)) {
       net.assignedSeat = '';
-      if (!networkSeatOrder().includes(state.viewSeat)) state.viewSeat = 'south';
+      if (!networkSeatOrder().includes(state.viewSeat)) state.viewSeat = networkSeatOrder()[0] || 'east';
     }
     syncSeatAutoplayDefaults('players');
     if (assigned) {
@@ -8977,7 +8977,7 @@ function loadUiSettings() {
         clearGuestApiKeyRetry('pregame-seat-assigned');
         updateLobbyStatus('已取得座位 ' + SEAT_NAME[assigned] + '，等待房主開局快照。');
       } else {
-        if (!networkSeatOrder().includes(state.viewSeat)) state.viewSeat = 'south';
+        if (!networkSeatOrder().includes(state.viewSeat)) state.viewSeat = networkSeatOrder()[0] || 'east';
         sendGuestJoin('pregame-snapshot-needs-seat');
         updateLobbyStatus('已收到房主等待狀態，正在要求分配座位與開局快照。');
       }
@@ -9068,7 +9068,7 @@ function loadUiSettings() {
         updateLobbyStatus('已入座 ' + SEAT_NAME[assigned] + '，已無條件套用房主牌局。');
       } else {
         net.assignedSeat = '';
-        if (!networkSeatOrder().includes(state.viewSeat)) state.viewSeat = 'south';
+        if (!networkSeatOrder().includes(state.viewSeat)) state.viewSeat = networkSeatOrder()[0] || 'east';
         sendGuestJoin('snapshot-applied-needs-seat');
         updateLobbyStatus('已套用房主牌局，正在要求房主分配座位。');
       }
@@ -9879,7 +9879,7 @@ function loadUiSettings() {
       state.viewSeat = 'east';
       state.seatAutoPlay.east = false;
     } else {
-      state.viewSeat = networkSeatOrder().includes(state.viewSeat) ? state.viewSeat : 'south';
+      state.viewSeat = networkSeatOrder().includes(state.viewSeat) ? state.viewSeat : (networkSeatOrder()[0] || 'east');
       applyGuestJoinDefaultSettings('guest-connect');
       cancelLocalOpeningForGuestConnect();
     }
