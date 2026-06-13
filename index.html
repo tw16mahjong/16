@@ -1028,10 +1028,13 @@
   min-height:var(--tw-side-tile-h)!important;
   max-width:var(--tw-side-tile-w)!important;
   max-height:var(--tw-side-tile-h)!important;
-  border-radius:0!important;
+  border-radius:var(--tw-side-tile-radius,0)!important;
 }
 .app .wall .piece{
-  border-radius:0!important;
+  border-radius:var(--tw-wall-piece-radius,0)!important;
+}
+.app .wall-left .piece,.app .wall-right .piece{
+  border-radius:var(--tw-wall-side-piece-radius,0)!important;
 }
 
 .hand-top,.hand-bottom,.hand-left,.hand-right,
@@ -6398,6 +6401,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     bindVoiceBroadcastButton();
     bindVoiceBtnDedicated();
     bindGuestHumanActivityWatcher();
+    bindTableDoubleTapBroadcast();
     setupDraggableUtilityPanel();
     window.addEventListener('resize', () => { clampUtilityPanelToViewport(); renderAll(); });
     window.addEventListener('orientationchange', () => setTimeout(renderAll, 80));
@@ -17090,6 +17094,45 @@ function showIntegrityReport(precomputed) {
       if (document.hidden) stopRec();
     }, { passive: true });
 
+    return true;
+  }
+
+  /* g259: 在桌面(牌桌背景區)連點兩下，快速叫出文字廣播輸入框，方便桌面操作。
+     需排除手牌/棄牌/按鈕等可互動元素，避免誤觸；雙擊與雙點(touch)皆支援。 */
+  function bindTableDoubleTapBroadcast() {
+    const table = byId('table');
+    if (!(table instanceof HTMLElement)) return false;
+    if (table.dataset.dblTapBroadcastBound === '1') return true;
+    table.dataset.dblTapBroadcastBound = '1';
+    const isInteractiveTarget = target => {
+      if (!(target instanceof Element)) return false;
+      return !!target.closest('.tile, .hand, .melds, .discardSeat, .seatLabel, .actionPanel, .dicePanel, button, input, textarea, a, .tw-wm, .tw16-seat-avatar-wm, [data-menu]');
+    };
+    table.addEventListener('dblclick', ev => {
+      if (isInteractiveTarget(ev.target)) return;
+      ev.preventDefault();
+      openTextBroadcastInput('table-double-click');
+    });
+    let lastTapAt = 0;
+    let lastTapX = 0;
+    let lastTapY = 0;
+    table.addEventListener('touchend', ev => {
+      if (isInteractiveTarget(ev.target)) return;
+      const touch = ev.changedTouches && ev.changedTouches[0];
+      if (!touch) return;
+      const now = Date.now();
+      const dx = touch.clientX - lastTapX;
+      const dy = touch.clientY - lastTapY;
+      if (now - lastTapAt < 320 && Math.abs(dx) < 32 && Math.abs(dy) < 32) {
+        ev.preventDefault();
+        lastTapAt = 0;
+        openTextBroadcastInput('table-double-tap');
+        return;
+      }
+      lastTapAt = now;
+      lastTapX = touch.clientX;
+      lastTapY = touch.clientY;
+    }, { passive: false });
     return true;
   }
 
