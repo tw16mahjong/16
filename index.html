@@ -3462,6 +3462,13 @@ html body .app.perspective3d .discardSeat .tile::before {
   function activeSeats() {
     return SEATS.filter(isSeatActiveInTable);
   }
+  /* tw16_min_live_wall: 流局門檻(海底)依人數模式等比例調整，4/3/2人分別為16/12/8張；
+     每槓一次(暗槓/加槓/吃碰槓)再多留1張，與標準規則一致。 */
+  function currentMinLiveWallTiles() {
+    const tm = Number(state.tableMode) || 4;
+    const base = (GAME_RULES.minLiveWallTilesByMode && GAME_RULES.minLiveWallTilesByMode[tm]) || GAME_RULES.minLiveWallTiles || 16;
+    return base + Math.max(0, Number(state.kongsThisHand) || 0);
+  }
   const WALL_CIRCLE_SEATS = ['east', 'north', 'west', 'south'];
   const SEAT_NAME = { east: '東家', south: '南家', west: '西家', north: '北家' };
   const WIND_NAME = ['東', '南', '西', '北'];
@@ -3485,6 +3492,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     snapshotDebounceMs: 24,
     pulseMs: 1200,
     minLiveWallTiles: 16,
+    minLiveWallTilesByMode: { 4: 16, 3: 12, 2: 8 },
     scoreBaseChip: 100,
     scoreTaiChip: 10,
     winHistoryLimit: 10
@@ -8558,12 +8566,13 @@ function loadUiSettings() {
       ended: state.ended,
       locked: state.locked,
       lockedAt: state.lockedAt,
+      kongsThisHand: state.kongsThisHand,
       tableMode: Number(state.tableMode) || 4
     });
   }
 
   const NETWORK_STATE_KEY_PACK = {
-    handId: 'h', windRound: 'wr', handNo: 'hn', dealerRepeat: 'dr', dealer: 'd', viewSeat: 'v', turn: 't', phase: 'p', pending: 'pd', actionDeadlineAt: 'ad',
+    handId: 'h', windRound: 'wr', handNo: 'hn', dealerRepeat: 'dr', kongsThisHand: 'kh', dealer: 'd', viewSeat: 'v', turn: 't', phase: 'p', pending: 'pd', actionDeadlineAt: 'ad',
     wall: 'w', physicalWall: 'pw', openingDeal: 'od', fixedSeatLabelStyles: 'fs', labelPositionsLocked: 'lp', hands: 'hs', melds: 'm', flowers: 'f',
     discards: 'ds', chips: 'c', scoreUnits: 'su', scoreChipSettings: 'sc', handVisualColors: 'vc', seatAutoPlay: 'ap', declaredTing: 'dt', activeDrawnTileIds: 'di', voiceEvents: 've', nextRoundPlan: 'nr', lastSettlement: 'ls', winHistory: 'wh', lastActionId: 'la', ended: 'e', locked: 'lk', lockedAt: 'lt', tableMode: 'tm'
   };
@@ -10251,6 +10260,7 @@ function loadUiSettings() {
     tileSerial = 1;
     applyNextRoundPlanIfNeeded();
     state.handId += 1;
+    state.kongsThisHand = 0;
     randomizeHandVisualColors('new-game');
     state.turn = state.dealer;
     state.phase = 'opening';
@@ -11126,7 +11136,7 @@ function loadUiSettings() {
       if (same.length >= 2) result.push({ seat, type: 'pong', tiles: same.slice(0, 2).map(t => t.id), label: '碰' });
     });
     const chiSeat = nextSeat(discardSeat);
-    if (Number(state.tableMode) !== 3 && isSeatActiveInTable(chiSeat) && !state.declaredTing[chiSeat]) getChiCandidates(chiSeat, code).forEach(c => result.push(c));
+    if (Number(state.tableMode) === 4 && isSeatActiveInTable(chiSeat) && !state.declaredTing[chiSeat]) getChiCandidates(chiSeat, code).forEach(c => result.push(c));
     return result;
   }
 
@@ -11307,6 +11317,7 @@ function loadUiSettings() {
     tw16MonteCarloPoolCache = { key: '', pool: [] };
     tw16TingOptionsCache = null;
     if (candidate.type === 'kong') {
+      state.kongsThisHand = (Number(state.kongsThisHand) || 0) + 1;
       const supplement = drawSupplementTile(candidate.seat);
       sortHand(candidate.seat, supplement && supplement.id);
       addLog(SEAT_NAME[candidate.seat] + candidate.label + ' ' + tileText(pending.tile.code));
@@ -12020,6 +12031,7 @@ function loadUiSettings() {
       emitGameVoiceEvent(SEAT_NAME[option.seat] + '槓', 'own-kong:' + state.handId + ':' + state.lastActionId + ':' + option.seat + ':' + option.code + ':concealed', { kind: 'kong', seat: option.seat });
       ensureStatsObject();
       state.stats.kongs += 1;
+      state.kongsThisHand = (Number(state.kongsThisHand) || 0) + 1;
       recordHandEvent('kong', option.seat, SEAT_NAME[option.seat] + '暗槓 ' + tileText(option.code), { type: option.type, tile: option.code });
     } else if (option.type === 'addKong') {
       const id = option.tiles[0];
@@ -12032,6 +12044,7 @@ function loadUiSettings() {
       emitGameVoiceEvent(SEAT_NAME[option.seat] + '槓', 'own-kong:' + state.handId + ':' + state.lastActionId + ':' + option.seat + ':' + option.code + ':add', { kind: 'kong', seat: option.seat });
       ensureStatsObject();
       state.stats.kongs += 1;
+      state.kongsThisHand = (Number(state.kongsThisHand) || 0) + 1;
       recordHandEvent('kong', option.seat, SEAT_NAME[option.seat] + '加槓 ' + tileText(option.code), { type: option.type, tile: option.code });
     } else {
       return false;
@@ -12900,7 +12913,7 @@ function loadUiSettings() {
      牌牆剩 ≤28 進入殘局意識，≤16 進入深度殘局。 */
   function smartAiEndgameLevel() {
     const wall = Array.isArray(state.wall) ? state.wall.length : 99;
-    if (wall <= GAME_RULES.minLiveWallTiles) return 2;   // ≤16
+    if (wall <= currentMinLiveWallTiles()) return 2;   // 深度殘局
     if (wall <= 28) return 1;
     return 0;
   }
@@ -13572,7 +13585,7 @@ function loadUiSettings() {
     state.turn = nextSeat(state.turn);
     state.phase = 'draw';
     clearTurnDeadline();
-    if (state.wall.length <= GAME_RULES.minLiveWallTiles) {
+    if (state.wall.length <= currentMinLiveWallTiles()) {
       endHandDraw();
       return;
     }
@@ -14531,7 +14544,8 @@ function loadUiSettings() {
   function nextRoundPlanWithDealer(newDealer) {
     let windRound = state.windRound;
     let handNo = state.handNo + 1;
-    if (handNo > 4) { handNo = 1; windRound = (windRound + 1) % 4; }
+    const cycleLen = Number(state.tableMode) || 4;
+    if (handNo > cycleLen) { handNo = 1; windRound = (windRound + 1) % 4; }
     return { dealer: newDealer, windRound, handNo, dealerRepeat: 0 };
   }
 
