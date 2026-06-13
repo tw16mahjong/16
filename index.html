@@ -3700,7 +3700,8 @@ html body .app.perspective3d .discardSeat .tile::before {
   let lobbyAblyKeyRemoteFrameLoadingPromise = null;
   let lobbyAblyKeyServerRecordsCache = [];
   let lobbyAblyKeyDisplayState = { key: '', usable: false };
-  const NETWORK_SEAT_ORDER = ['south', 'west', 'north'];
+  const NETWORK_SEAT_ORDER_BASE = ['south', 'west', 'north'];
+  function networkSeatOrder(){ return NETWORK_SEAT_ORDER_BASE.filter(isSeatActiveInTable); }
   const NETWORK_PLAYER_STALE_MS = 120000;
   const NETWORK_GUEST_ALIVE_MS = 5000;
 
@@ -3769,7 +3770,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   function networkSeatFromSessionId(sessionId) {
     const sid = String(sessionId || '').trim();
     if (!sid || !net.players) return '';
-    return NETWORK_SEAT_ORDER.find(seat => {
+    return networkSeatOrder().find(seat => {
       const p = net.players && net.players[seat];
       return !!(p && String(p.instanceId || '').trim() === sid);
     }) || '';
@@ -3801,7 +3802,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
   function isGuestPlayerRecord(player) {
-    return !!(player && (player.human === true || player.role === 'guest' || NETWORK_SEAT_ORDER.includes(player.seat)));
+    return !!(player && (player.human === true || player.role === 'guest' || networkSeatOrder().includes(player.seat)));
   }
 
   function isActiveNetworkHumanPlayer(player, now) {
@@ -3813,7 +3814,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
   function keepGuestPlayerRecordHuman(seat, msg, reason) {
-    if (!NETWORK_SEAT_ORDER.includes(seat)) return '';
+    if (!networkSeatOrder().includes(seat)) return '';
     net.players = net.players || {};
     const player = net.players[seat] || {};
     player.clientId = normalizeNetworkId((msg && msg.clientId) || player.clientId);
@@ -3833,7 +3834,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   function touchGuestPlayerFromMessage(msg, reason) {
     if (!isOnlineHost() || !msg) return '';
     if ((msg.role && msg.role !== 'guest') || (msg.senderRole && msg.senderRole !== 'guest')) return '';
-    const preferredSeat = NETWORK_SEAT_ORDER.includes(msg.seat) ? msg.seat : '';
+    const preferredSeat = networkSeatOrder().includes(msg.seat) ? msg.seat : '';
     let assigned = findAssignedGuestSeatForPlayer(msg.clientId, msg.playerKey, preferredSeat, msg.senderInstanceId || msg.sessionId || msg.instanceId || '');
     if (!assigned) assigned = assignGuestSeat(msg.clientId, msg.name || '來賓', msg.playerKey || '', preferredSeat, msg.senderInstanceId || msg.sessionId || msg.instanceId || '');
     if (assigned) {
@@ -3850,7 +3851,7 @@ html body .app.perspective3d .discardSeat .tile::before {
   }
 
   function nextNetworkReceiptTag(seat) {
-    const safeSeat = SEATS.includes(seat) ? seat : (NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : state.viewSeat || 'east');
+    const safeSeat = SEATS.includes(seat) ? seat : (networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : state.viewSeat || 'east');
     if (!net.reliableSeatCounters || typeof net.reliableSeatCounters !== 'object') net.reliableSeatCounters = {};
     const next = ((Number(net.reliableSeatCounters[safeSeat]) || 0) % 999) + 1;
     net.reliableSeatCounters[safeSeat] = next;
@@ -3882,7 +3883,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     const now = Date.now();
     const seen = new Set();
     const out = [];
-    NETWORK_SEAT_ORDER.forEach(seat => {
+    networkSeatOrder().forEach(seat => {
       const p = net.players && net.players[seat];
       const sessionId = networkPlayerSessionId(p);
       if (sessionId && isActiveNetworkHumanPlayer(p, now) && !seen.has(sessionId)) {
@@ -3899,7 +3900,7 @@ html body .app.perspective3d .discardSeat .tile::before {
 
   function networkGuestTargetInfoFromMessage(msg, assignedSeat) {
     const sessionId = normalizeNetworkId(msg && (msg.sessionId || msg.senderInstanceId || msg.instanceId));
-    const seat = NETWORK_SEAT_ORDER.includes(assignedSeat) ? assignedSeat : (NETWORK_SEAT_ORDER.includes(msg && msg.seat) ? msg.seat : networkSeatFromSessionId(sessionId));
+    const seat = networkSeatOrder().includes(assignedSeat) ? assignedSeat : (networkSeatOrder().includes(msg && msg.seat) ? msg.seat : networkSeatFromSessionId(sessionId));
     if (!sessionId) return null;
     return { sessionId, seat: seat || 'south' };
   }
@@ -4104,7 +4105,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     const targetSeat = String(incoming.targetSeat || '').trim();
     if (targetSessionId && targetSessionId !== String(net.instanceId || '').trim()) return false;
     if (targetClientId && targetClientId !== String(net.clientId || '').trim()) return false;
-    if (targetSeat && NETWORK_SEAT_ORDER.includes(net.assignedSeat) && targetSeat !== net.assignedSeat) return false;
+    if (targetSeat && networkSeatOrder().includes(net.assignedSeat) && targetSeat !== net.assignedSeat) return false;
     return true;
   }
 
@@ -4572,7 +4573,7 @@ html body .app.perspective3d .discardSeat .tile::before {
       });
     }
     const singleAckTag = reliable && net.role !== 'host'
-      ? nextNetworkReceiptTag(NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : (SEATS.includes(state.viewSeat) ? state.viewSeat : 'south'))
+      ? nextNetworkReceiptTag(networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : (SEATS.includes(state.viewSeat) ? state.viewSeat : 'south'))
       : '';
     const ackCode = reliable ? makeNetworkPayloadCode() : '';
     const firstTag = singleAckTag || (Object.keys(ackTags).length ? ackTags[Object.keys(ackTags)[0]] : '');
@@ -4647,9 +4648,9 @@ html body .app.perspective3d .discardSeat .tile::before {
       clearGuestJoinRetry();
       clearGuestApiKeyRetry('guest-seat-assigned');
       updateLobbyStatus('已入座 ' + SEAT_NAME[assigned] + '，等待房主牌局狀態。');
-    } else if (!NETWORK_SEAT_ORDER.includes(net.assignedSeat)) {
+    } else if (!networkSeatOrder().includes(net.assignedSeat)) {
       net.assignedSeat = '';
-      if (!NETWORK_SEAT_ORDER.includes(state.viewSeat)) state.viewSeat = 'south';
+      if (!networkSeatOrder().includes(state.viewSeat)) state.viewSeat = 'south';
     }
     syncSeatAutoplayDefaults('players');
     if (assigned) {
@@ -4743,7 +4744,7 @@ html body .app.perspective3d .discardSeat .tile::before {
           senderRole: 'guest',
           intentId: data.intentId || (data.sessionId || data.clientId || 'guest') + ':' + (data.intentSeq || data.sentAt || Date.now())
         });
-        if (!NETWORK_SEAT_ORDER.includes(msg.seat)) msg.seat = touchedSeat || findAssignedGuestSeatForPlayer(msg.clientId, msg.playerKey, data.seat, data.sessionId || data.senderInstanceId) || '';
+        if (!networkSeatOrder().includes(msg.seat)) msg.seat = touchedSeat || findAssignedGuestSeatForPlayer(msg.clientId, msg.playerKey, data.seat, data.sessionId || data.senderInstanceId) || '';
         return handleNetworkIntent(msg);
       }
       if (data.type === 'textBroadcast') { handleTextBroadcast(Object.assign({}, data, { kind: 'textBroadcast' })); return true; }
@@ -6812,7 +6813,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     let changed = false;
     if (state.uiSettings.turnHandFrameEnabled !== true) { state.uiSettings.turnHandFrameEnabled = true; changed = true; }
     if (state.uiSettings.avatarEnabled === undefined) { state.uiSettings.avatarEnabled = false; changed = true; }
-    const guestSeat = NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : (NETWORK_SEAT_ORDER.includes(state.viewSeat) ? state.viewSeat : '');
+    const guestSeat = networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : (networkSeatOrder().includes(state.viewSeat) ? state.viewSeat : '');
     if (!net.guestAutoplayInitializedSeats || typeof net.guestAutoplayInitializedSeats !== 'object') net.guestAutoplayInitializedSeats = {};
     if (guestSeat && !net.guestAutoplayInitializedSeats[guestSeat]) {
       state.seatAutoPlay[guestSeat] = false;
@@ -7583,7 +7584,7 @@ function loadUiSettings() {
 
   function guestStillNeedsTableEntry() {
     if (net.role !== 'guest') return false;
-    if (NETWORK_SEAT_ORDER.includes(net.assignedSeat) && Number(net.lastAppliedSnapshotSeq || 0) > 0) return false;
+    if (networkSeatOrder().includes(net.assignedSeat) && Number(net.lastAppliedSnapshotSeq || 0) > 0) return false;
     return true;
   }
 
@@ -7692,7 +7693,7 @@ function loadUiSettings() {
 
   function updateGuestSyncStatus(reason) {
     if (net.role !== 'guest') return;
-    const assignedText = NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? ('已入座 ' + SEAT_NAME[net.assignedSeat] + '，') : '等待房主分配座位，';
+    const assignedText = networkSeatOrder().includes(net.assignedSeat) ? ('已入座 ' + SEAT_NAME[net.assignedSeat] + '，') : '等待房主分配座位，';
     const elapsed = net.guestSyncStartedAt ? Math.max(0, Math.round((Date.now() - net.guestSyncStartedAt) / 1000)) : 0;
     updateLobbyStatus(assignedText + '正在強制取得房主同步… ' + elapsed + '秒');
     setOpeningPrompt('等待房主同步');
@@ -7803,7 +7804,7 @@ function loadUiSettings() {
     }
     const required = isGuestSyncRequired();
     const now = Date.now();
-    const seatMissing = !NETWORK_SEAT_ORDER.includes(net.assignedSeat);
+    const seatMissing = !networkSeatOrder().includes(net.assignedSeat);
     const stale = !net.lastSnapshotAt || now - Number(net.lastSnapshotAt || 0) > NETWORK_GUEST_SYNC_STALE_MS;
     const seqGap = guestHostSeqGap() >= NETWORK_GUEST_SYNC_SEQ_GAP_THRESHOLD;
     const shouldAskHost = seatMissing || required || stale || seqGap;
@@ -7837,7 +7838,7 @@ function loadUiSettings() {
     const now = Date.now();
     if (reason !== 'autoplay-toggle' && now - Number(net.lastHumanActivityNotifyAt || 0) < 500) return false;
     net.lastHumanActivityNotifyAt = now;
-    const seat = NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : (NETWORK_SEAT_ORDER.includes(state.viewSeat) ? state.viewSeat : '');
+    const seat = networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : (networkSeatOrder().includes(state.viewSeat) ? state.viewSeat : '');
     return !!publishNetworkRoomMessage('human', {
       action: 'humanActivity',
       human: true,
@@ -7850,7 +7851,7 @@ function loadUiSettings() {
 
   function notifyHostGuestInitialAutoplayOff(reason) {
     if (!isOnlineGuest() || !net.room || !net.channel) return false;
-    const seat = NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : (NETWORK_SEAT_ORDER.includes(state.viewSeat) ? state.viewSeat : '');
+    const seat = networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : (networkSeatOrder().includes(state.viewSeat) ? state.viewSeat : '');
     if (!seat) return false;
     if (!net.guestInitialAutoplayOffNotifiedSeats || typeof net.guestInitialAutoplayOffNotifiedSeats !== 'object') net.guestInitialAutoplayOffNotifiedSeats = {};
     const notifyKey = seat + ':' + String(net.instanceId || '');
@@ -7869,7 +7870,7 @@ function loadUiSettings() {
   }
 
   function guestInitialAutoplayOffWindowActive(seat) {
-    if (!isOnlineGuest() || !NETWORK_SEAT_ORDER.includes(seat)) return false;
+    if (!isOnlineGuest() || !networkSeatOrder().includes(seat)) return false;
     const map = net.guestInitialAutoplayOffAtBySeat;
     const at = map && Number(map[seat] || 0);
     return !!(at && Date.now() - at < 10000);
@@ -7921,7 +7922,7 @@ function loadUiSettings() {
 
   function sendGuestJoin(reason) {
     if (!isOnlineGuest()) return false;
-    if (NETWORK_SEAT_ORDER.includes(net.assignedSeat)) {
+    if (networkSeatOrder().includes(net.assignedSeat)) {
       requestNetworkSync('guest-has-seat');
       return true;
     }
@@ -7929,20 +7930,20 @@ function loadUiSettings() {
     const sent = publishNetworkRoomMessage('hello', {
       action: 'join',
       joinReason: reason || 'join',
-      preferredSeat: NETWORK_SEAT_ORDER.includes(state.viewSeat) ? state.viewSeat : '',
+      preferredSeat: networkSeatOrder().includes(state.viewSeat) ? state.viewSeat : '',
       lastAppliedSnapshotSeq: Number(net.lastAppliedSnapshotSeq || 0),
       localAutoplay: false,
       stopTimeoutTakeover: true
     }, reason || 'join');
     updateLobbyStatus(sent ? '已送出入座要求，等待房主分配座位…' : '入座要求送出失敗，正在重試…');
     clearGuestJoinRetry();
-    if (!NETWORK_SEAT_ORDER.includes(net.assignedSeat)) {
+    if (!networkSeatOrder().includes(net.assignedSeat)) {
       net.joinTimer = setTimeout(() => {
-        if (isOnlineGuest() && !NETWORK_SEAT_ORDER.includes(net.assignedSeat)) sendGuestJoin('retry-' + net.joinAttempts);
+        if (isOnlineGuest() && !networkSeatOrder().includes(net.assignedSeat)) sendGuestJoin('retry-' + net.joinAttempts);
       }, Math.min(2500, 360 + net.joinAttempts * 160));
     }
     requestNetworkSync('join-' + (reason || 'join'));
-    if (!NETWORK_SEAT_ORDER.includes(net.assignedSeat)) scheduleGuestApiKeyRetry('join-wait-timeout', NETWORK_GUEST_ENTRY_RETRY_MS);
+    if (!networkSeatOrder().includes(net.assignedSeat)) scheduleGuestApiKeyRetry('join-wait-timeout', NETWORK_GUEST_ENTRY_RETRY_MS);
     return sent;
   }
 
@@ -7967,7 +7968,7 @@ function loadUiSettings() {
 
   function isSeatRemoteHuman(seat) {
     if (!isOnlineHost()) return false;
-    if (!NETWORK_SEAT_ORDER.includes(seat)) return false;
+    if (!networkSeatOrder().includes(seat)) return false;
     const p = net.players && net.players[seat];
     const sessionId = networkPlayerSessionId(p);
     if (!sessionId || !isActiveNetworkHumanPlayer(p, Date.now())) return false;
@@ -8013,7 +8014,7 @@ function loadUiSettings() {
         autoplay: !!state.seatAutoPlay.east,
         lastSeenAt: Date.now()
       });
-    } else if (isOnlineGuest() && NETWORK_SEAT_ORDER.includes(net.assignedSeat)) {
+    } else if (isOnlineGuest() && networkSeatOrder().includes(net.assignedSeat)) {
       net.players = net.players || {};
       const current = net.players[net.assignedSeat] || {};
       net.players[net.assignedSeat] = Object.assign({}, current, {
@@ -8073,9 +8074,9 @@ function loadUiSettings() {
   function findAssignedGuestSeatForPlayer(clientId, playerKey, preferredSeat, instanceId) {
     const players = net.players || {};
     const now = Date.now();
-    const identitySeat = NETWORK_SEAT_ORDER.find(seat => guestPlayerIdentityMatches(players[seat], clientId, playerKey, instanceId));
+    const identitySeat = networkSeatOrder().find(seat => guestPlayerIdentityMatches(players[seat], clientId, playerKey, instanceId));
     if (identitySeat) return identitySeat;
-    if (NETWORK_SEAT_ORDER.includes(preferredSeat)) {
+    if (networkSeatOrder().includes(preferredSeat)) {
       const preferredPlayer = players[preferredSeat];
       if (!preferredPlayer || isPlayerStale(preferredPlayer, now) || !hasNetworkHumanIdentity(preferredPlayer)) return preferredSeat;
       return '';
@@ -8084,14 +8085,14 @@ function loadUiSettings() {
   }
 
   function removeDuplicateGuestPlayerRecords(activeSeat, clientId, playerKey, reason) {
-    if (!isOnlineHost() || !NETWORK_SEAT_ORDER.includes(activeSeat)) return false;
+    if (!isOnlineHost() || !networkSeatOrder().includes(activeSeat)) return false;
     const activePlayer = net.players && net.players[activeSeat];
     const activeInstance = networkPlayerSessionId(activePlayer);
     const activeClient = normalizeNetworkId(clientId || networkPlayerClientId(activePlayer));
     const activeKey = normalizeNetworkId(playerKey || networkPlayerKey(activePlayer));
     let changed = false;
     let currentTurnChangedToComputer = false;
-    NETWORK_SEAT_ORDER.forEach(seat => {
+    networkSeatOrder().forEach(seat => {
       if (seat === activeSeat) return;
       const p = net.players && net.players[seat];
       if (!p || !hasNetworkHumanIdentity(p)) return;
@@ -8173,7 +8174,7 @@ function loadUiSettings() {
   }
 
   function isGuestAutoplayChangeAllowed(seat, enabled, reason) {
-    if (!NETWORK_SEAT_ORDER.includes(seat)) return true;
+    if (!networkSeatOrder().includes(seat)) return true;
     if (isOnlineGuest() && seat === net.assignedSeat) {
       return isGuestOwnedAutoplayReason(reason) || guestShouldAcceptHostAutoplayState(reason, enabled);
     }
@@ -8976,7 +8977,7 @@ function loadUiSettings() {
         clearGuestApiKeyRetry('pregame-seat-assigned');
         updateLobbyStatus('已取得座位 ' + SEAT_NAME[assigned] + '，等待房主開局快照。');
       } else {
-        if (!NETWORK_SEAT_ORDER.includes(state.viewSeat)) state.viewSeat = 'south';
+        if (!networkSeatOrder().includes(state.viewSeat)) state.viewSeat = 'south';
         sendGuestJoin('pregame-snapshot-needs-seat');
         updateLobbyStatus('已收到房主等待狀態，正在要求分配座位與開局快照。');
       }
@@ -9012,7 +9013,7 @@ function loadUiSettings() {
     recordNetworkEvent('snapshot-in', '無條件套用房主快照 #' + (seq || '?') + '｜' + (msg.reason || ''), { seq, reason: msg.reason || '', hostChanged, turn: incoming && incoming.turn, phase: incoming && incoming.phase, handId: incoming && incoming.handId, animation: snapshotAnimation && snapshotAnimation.type });
 
     const localSeatBeforeApply = net.assignedSeat || state.viewSeat;
-    const guestSeatBeforeSnapshot = isOnlineGuest() && NETWORK_SEAT_ORDER.includes(localSeatBeforeApply) ? localSeatBeforeApply : '';
+    const guestSeatBeforeSnapshot = isOnlineGuest() && networkSeatOrder().includes(localSeatBeforeApply) ? localSeatBeforeApply : '';
     const guestAutoplayBeforeSnapshot = guestSeatBeforeSnapshot && typeof state.seatAutoPlay[guestSeatBeforeSnapshot] === 'boolean' ? state.seatAutoPlay[guestSeatBeforeSnapshot] : null;
     const guestSnapshotMayApplyAutoplay = /turn-timeout-autoplay/.test(String(msg.reason || ''));
     if (net.role === 'guest') {
@@ -9041,7 +9042,7 @@ function loadUiSettings() {
     applyHandVisualColors();
 
     if (isOnlineGuest()) {
-      const assigned = findAssignedGuestSeatForPlayer(net.clientId, net.playerKey, localSeatBeforeApply) || (NETWORK_SEAT_ORDER.includes(localSeatBeforeApply) ? localSeatBeforeApply : '');
+      const assigned = findAssignedGuestSeatForPlayer(net.clientId, net.playerKey, localSeatBeforeApply) || (networkSeatOrder().includes(localSeatBeforeApply) ? localSeatBeforeApply : '');
       if (assigned) {
         net.assignedSeat = assigned;
         state.viewSeat = assigned;
@@ -9067,7 +9068,7 @@ function loadUiSettings() {
         updateLobbyStatus('已入座 ' + SEAT_NAME[assigned] + '，已無條件套用房主牌局。');
       } else {
         net.assignedSeat = '';
-        if (!NETWORK_SEAT_ORDER.includes(state.viewSeat)) state.viewSeat = 'south';
+        if (!networkSeatOrder().includes(state.viewSeat)) state.viewSeat = 'south';
         sendGuestJoin('snapshot-applied-needs-seat');
         updateLobbyStatus('已套用房主牌局，正在要求房主分配座位。');
       }
@@ -9105,14 +9106,14 @@ function loadUiSettings() {
   }
 
   function guestSeatOccupiedByDifferentLivePlayer(seat, clientId, playerKey, instanceId) {
-    if (!NETWORK_SEAT_ORDER.includes(seat)) return false;
+    if (!networkSeatOrder().includes(seat)) return false;
     const player = net.players && net.players[seat];
     if (!player || isPlayerStale(player, Date.now()) || !hasNetworkHumanIdentity(player)) return false;
     return !guestPlayerIdentityMatches(player, clientId, playerKey, instanceId);
   }
 
   function guestSeatAvailableForNewAssignment(seat, now) {
-    if (!NETWORK_SEAT_ORDER.includes(seat)) return false;
+    if (!networkSeatOrder().includes(seat)) return false;
     const player = net.players && net.players[seat];
     if (!player) return true;
     if (isPlayerStale(player, now || Date.now())) return true;
@@ -9124,7 +9125,7 @@ function loadUiSettings() {
     cleanupStaleNetworkPlayers('force');
     if (guestSeatOccupiedByDifferentLivePlayer(preferredSeat, clientId, playerKey, instanceId)) preferredSeat = '';
     let existing = findAssignedGuestSeatForPlayer(clientId, playerKey, preferredSeat, instanceId);
-    if (!existing && NETWORK_SEAT_ORDER.includes(preferredSeat) && guestSeatAvailableForNewAssignment(preferredSeat, Date.now())) existing = preferredSeat;
+    if (!existing && networkSeatOrder().includes(preferredSeat) && guestSeatAvailableForNewAssignment(preferredSeat, Date.now())) existing = preferredSeat;
     if (existing) {
       if (guestSeatOccupiedByDifferentLivePlayer(existing, clientId, playerKey, instanceId)) return '';
       keepGuestPlayerRecordHuman(existing, { clientId, playerKey, name, senderInstanceId: instanceId, role: 'guest' }, 'assign-existing');
@@ -9134,7 +9135,7 @@ function loadUiSettings() {
       return existing;
     }
     const now = Date.now();
-    const available = NETWORK_SEAT_ORDER.filter(s => guestSeatAvailableForNewAssignment(s, now));
+    const available = networkSeatOrder().filter(s => guestSeatAvailableForNewAssignment(s, now));
     if (!available.length) return '';
     const seat = available.includes(preferredSeat) ? preferredSeat : available[Math.floor(Math.random() * available.length)];
     net.players[seat] = { clientId, playerKey: playerKey || '', instanceId: instanceId || '', name: name || '來賓', seat, role: 'guest', human: true, autoplay: false, lastSeenAt: Date.now() };
@@ -9225,7 +9226,7 @@ function loadUiSettings() {
       }
       if (data.kind === 'intent') {
         const msg = Object.assign({}, data, { protocol: 'tw16-clean-ably-v1', kind: 'intent', action: data.action || 'intent', intentId: data.intentId || (data.senderInstanceId + ':' + data.at + ':' + (data.action || 'intent')) });
-        if (!msg.seat || !NETWORK_SEAT_ORDER.includes(msg.seat)) msg.seat = findAssignedGuestSeatForPlayer(msg.clientId, msg.playerKey, data.seat, data.senderInstanceId) || data.seat || '';
+        if (!msg.seat || !networkSeatOrder().includes(msg.seat)) msg.seat = findAssignedGuestSeatForPlayer(msg.clientId, msg.playerKey, data.seat, data.senderInstanceId) || data.seat || '';
         return handleNetworkIntent(msg);
       }
       return false;
@@ -9281,7 +9282,7 @@ function loadUiSettings() {
       requestNetworkSync('intent-blocked');
       return false;
     }
-    const guestSeat = NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : '';
+    const guestSeat = networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : '';
     if (!isSeatlessIntent && !guestSeat) {
       addLog('尚未取得有效來賓座位，已要求房主重新同步');
       requestNetworkSync('guest-seat-missing');
@@ -9371,7 +9372,7 @@ function loadUiSettings() {
 
   function markNetworkPlayerActive(msg, restoreHumanControl) {
     if (!isOnlineHost() || !msg) return '';
-    let seat = NETWORK_SEAT_ORDER.includes(msg.seat) ? msg.seat : '';
+    let seat = networkSeatOrder().includes(msg.seat) ? msg.seat : '';
     if (!seat) seat = findAssignedGuestSeatForPlayer(msg.clientId, msg.playerKey, msg.seat, msg.senderInstanceId || msg.sessionId || '');
     if (!seat) return '';
     keepGuestPlayerRecordHuman(seat, msg, 'active-' + (msg.action || 'message'));
@@ -9390,7 +9391,7 @@ function loadUiSettings() {
     if (!SEATS.includes(seat)) return { ok: false, reason: 'invalid-seat' };
     if (!assigned) return { ok: false, reason: 'seat-not-assigned' };
     if (assigned !== seat) return { ok: false, reason: 'seat-mismatch' };
-    if (!NETWORK_SEAT_ORDER.includes(assigned)) return { ok: false, reason: 'guest-east-forbidden' };
+    if (!networkSeatOrder().includes(assigned)) return { ok: false, reason: 'guest-east-forbidden' };
     const isAutoplayIntent = msg.action === 'autoplay';
     if (!isAutoplayIntent && msg.handId && state.handId && Number(msg.handId) !== Number(state.handId)) return { ok: false, reason: 'handId-mismatch' };
     if (!isAutoplayIntent && (msg.action === 'claim' || msg.action === 'skipClaim') && state.pending && state.pending.actionId && msg.pendingActionId && Number(msg.pendingActionId) !== Number(state.pending.actionId)) return { ok: false, reason: 'pending-mismatch' };
@@ -9400,7 +9401,7 @@ function loadUiSettings() {
 
 
   function snapshotAckSeatKey(msg) {
-    const seat = msg && NETWORK_SEAT_ORDER.includes(msg.seat) ? msg.seat : '';
+    const seat = msg && networkSeatOrder().includes(msg.seat) ? msg.seat : '';
     if (seat) return seat;
     const instanceId = msg && String(msg.senderInstanceId || '').trim();
     if (instanceId) return 'i:' + instanceId;
@@ -9422,7 +9423,7 @@ function loadUiSettings() {
       handId: state.handId || 0,
       phase: state.phase || '',
       openingStep: Number(openingDeal.step || 0),
-      seat: NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : '',
+      seat: networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : '',
       playerKey: net.playerKey || ''
     }, reason || 'snapshot-ack', { reliable: false });
   }
@@ -9445,7 +9446,7 @@ function loadUiSettings() {
   function activeGuestSeatsForSnapshotAck() {
     if (net.role !== 'host') return [];
     cleanupStaleNetworkPlayers('snapshot-ack-check');
-    return NETWORK_SEAT_ORDER.filter(seat => {
+    return networkSeatOrder().filter(seat => {
       const p = net.players && net.players[seat];
       return !!(p && isActiveNetworkHumanPlayer(p, Date.now()));
     });
@@ -9626,7 +9627,7 @@ function loadUiSettings() {
         else publishNetworkPlayers('pulse');
       } else if (isOnlineGuest()) {
         publishNetworkHeartbeat();
-        const seatMissing = !NETWORK_SEAT_ORDER.includes(net.assignedSeat);
+        const seatMissing = !networkSeatOrder().includes(net.assignedSeat);
         if (seatMissing) sendGuestJoin('pulse-no-seat');
         if (isGuestLocalSyncSuspended()) {
           recordNetworkEvent('guest-sync-suspended', '本機動畫/開局流程中，暫停本次主動同步', { phase: state.phase || '', locked: !!state.locked, opening: !!(state.openingDeal && state.openingDeal.active) });
@@ -9654,7 +9655,7 @@ function loadUiSettings() {
 
   function publishNetworkHeartbeat() {
     if ((net.role !== 'guest' && net.role !== 'host') || !net.channel) return false;
-    const guestSeatMissing = net.role === 'guest' ? !NETWORK_SEAT_ORDER.includes(net.assignedSeat) : false;
+    const guestSeatMissing = net.role === 'guest' ? !networkSeatOrder().includes(net.assignedSeat) : false;
     const guestSnapshotStale = net.role === 'guest' ? (!net.lastSnapshotAt || Date.now() - Number(net.lastSnapshotAt || 0) > NETWORK_GUEST_SYNC_STALE_MS) : false;
     const guestNeedsSync = net.role === 'guest' ? (guestSeatMissing || isGuestSyncRequired() || guestSnapshotStale) : false;
     const payload = {
@@ -9878,7 +9879,7 @@ function loadUiSettings() {
       state.viewSeat = 'east';
       state.seatAutoPlay.east = false;
     } else {
-      state.viewSeat = NETWORK_SEAT_ORDER.includes(state.viewSeat) ? state.viewSeat : 'south';
+      state.viewSeat = networkSeatOrder().includes(state.viewSeat) ? state.viewSeat : 'south';
       applyGuestJoinDefaultSettings('guest-connect');
       cancelLocalOpeningForGuestConnect();
     }
@@ -14179,7 +14180,7 @@ function loadUiSettings() {
       return SEATS.some(seat => !!state.seatAutoPlay[seat] && (seat === 'east' || isSeatAssignedHuman(seat)));
     }
     if (isOnlineGuest()) {
-      const guestSeat = NETWORK_SEAT_ORDER.includes(net.assignedSeat) ? net.assignedSeat : (SEATS.includes(state.viewSeat) ? state.viewSeat : '');
+      const guestSeat = networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : (SEATS.includes(state.viewSeat) ? state.viewSeat : '');
       return !!(guestSeat && state.seatAutoPlay[guestSeat]);
     }
     return false;
@@ -15236,7 +15237,7 @@ function loadUiSettings() {
         + '<button class="btn" data-menu="import-tiles-clipboard">貼上剪貼簿牌圖</button>'
         + '<button class="btn" data-menu="import-tiles-zip">匯入ZIP建檔並套用</button>'
         + '<button class="btn" data-menu="tile-skin-db">牌圖資料庫讀入</button>'
-        + '<button class="btn" data-menu="preview-table-tiles">本桌42張預覽</button>'
+        + '<button class="btn" data-menu="preview-table-tiles">本局牌圖預覽</button>'
         + '<button class="btn red" data-menu="clear-tiles">清除目前牌圖</button>',
         '牌圖管理期間牌局會暫停；關閉面板後再繼續。ZIP 會建成一套牌圖資料集，可像資料庫一樣列出、讀入、覆蓋更新與刪除。',
         { includeBackButton: false });
@@ -16116,7 +16117,7 @@ function showIntegrityReport(precomputed) {
   }
 
   function getLocalBroadcastSeat() {
-    if (isOnlineGuest() && NETWORK_SEAT_ORDER.includes(net.assignedSeat)) return net.assignedSeat;
+    if (isOnlineGuest() && networkSeatOrder().includes(net.assignedSeat)) return net.assignedSeat;
     if (isOnlineHost()) return 'east';
     return state.viewSeat || 'east';
   }
@@ -19905,15 +19906,22 @@ function concealedKongOwnerOfMeld(meld) {
   const IMPORT_REFERENCE_TARGET_CODE = { F1:'F5', F2:'F6', F3:'F7', F4:'F8', F5:'F1', F6:'F2', F7:'F3', F8:'F4' };
 
   function currentTableTilePreviewRows() {
-    return IMPORT_TILE_CODES.map(row => row.map(code => ({ importCode: code, gameCode: importTileGameCode(code), label: importTileDisplayText(code) })));
+    const tm = Number(state.tableMode) || 4;
+    const allowed = new Set(allNonFlowerCodes());
+    return IMPORT_TILE_CODES.map((row, rowIndex) => {
+      if (rowIndex === 4) return tm === 4 ? row.map(code => ({ importCode: code, gameCode: importTileGameCode(code), label: importTileDisplayText(code) })) : [];
+      return row.filter(code => allowed.has(importTileGameCode(code))).map(code => ({ importCode: code, gameCode: importTileGameCode(code), label: importTileDisplayText(code) }));
+    });
   }
 
   function buildCurrentTableTileImagePreviewHtml() {
     const rowTitles = ['萬', '索', '筒', '字', '花'];
     const rows = currentTableTilePreviewRows();
+    const totalCount = rows.reduce((sum, row) => sum + row.length, 0);
     const customCount = customTileImageMap && typeof customTileImageMap === 'object' ? Object.keys(customTileImageMap).length : 0;
-    const note = customCount ? '目前顯示本桌已套用的自訂牌圖；未自訂者顯示內建牌圖。' : '目前尚未套用自訂牌圖，以下顯示本桌內建牌圖。';
+    const note = (customCount ? '目前顯示本桌已套用的自訂牌圖；未自訂者顯示內建牌圖。' : '目前尚未套用自訂牌圖，以下顯示本桌內建牌圖。') + '（本局共 ' + totalCount + ' 種牌面）';
     const body = rows.map((row, rowIndex) => {
+      if (!row.length) return '';
       const tiles = row.map(item => {
         return '<div class="currentTileImagePreviewCell">' + tileMiniHtml({ id: 'preview-' + item.gameCode, code: item.gameCode }, false) + '<div class="currentTileImagePreviewName">' + escapeHtml(item.label) + '</div></div>';
       }).join('');
@@ -19923,7 +19931,8 @@ function concealedKongOwnerOfMeld(meld) {
   }
 
   function showCurrentTableTileImagePreview() {
-    openUtilityPanel('本桌42張牌圖預覽', buildCurrentTableTileImagePreviewHtml());
+    const tm = Number(state.tableMode) || 4;
+    openUtilityPanel('本局牌圖預覽（' + tm + '人模式）', buildCurrentTableTileImagePreviewHtml());
   }
 
   function customTileSkinPreviewTileHtml(importCode, tiles) {
