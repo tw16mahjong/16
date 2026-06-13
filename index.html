@@ -3162,7 +3162,7 @@ html body .tileSkinSetPreviewCell .tile,
 html body .hand-top .hand-row .tile,
 html body .hand-top .hand-exposed-group .tile,
 html body .hand-top .hand-meld-row .tile{
-  border-radius:var(--tw-tile-radius,calc(var(--tw-tile-w) * .18))!important;
+  border-radius:calc(var(--tw-tile-w) * .18)!important;
   overflow:hidden!important;
   background-clip:padding-box!important;
   clip-path:inset(0 round var(--tw-tile-radius,calc(var(--tw-tile-w) * .18)))!important;
@@ -3179,7 +3179,7 @@ html body .hand-left .hand-exposed-group .tile,
 html body .hand-right .hand-exposed-group .tile,
 html body .hand-left .hand-meld-row .tile,
 html body .hand-right .hand-meld-row .tile{
-  border-radius:var(--tw-side-tile-radius,calc(var(--tw-side-tile-h) * .20))!important;
+  border-radius:calc(var(--tw-side-tile-h) * .20)!important;
   overflow:hidden!important;
   background-clip:padding-box!important;
   clip-path:inset(0 round var(--tw-side-tile-radius,calc(var(--tw-side-tile-h) * .20)))!important;
@@ -15905,7 +15905,7 @@ function loadUiSettings() {
         + '<li>禁止吃牌，僅可碰、槓。</li>';
     }
     html += (tm === 4 ? '<li>花牌即時補花，補牌與槓後補牌皆由牌尾補。</li>' : '<li>本模式牌組無花牌，不會補花。</li>')
-      + '<li>一般摸牌由牌牆前端摸，剩 16 張流局。</li>'
+      + '<li>一般摸牌由牌牆前端摸，剩 ' + currentMinLiveWallTiles() + ' 張流局（' + (tm === 4 ? 16 : (tm === 3 ? 12 : 8)) + '張基礎；每槓一次再多留1張，海底流局莊家連莊）。</li>'
       + '<li>胡牌型：5 組面子 + 1 對將眼。</li>'
       + '<li>吃碰槓胡都走同一條 pending 流程；胡牌優先於槓碰吃，並支援搶槓。</li>'
       + '</ul>'
