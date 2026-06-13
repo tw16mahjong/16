@@ -17097,22 +17097,17 @@ function showIntegrityReport(precomputed) {
     return true;
   }
 
-  /* g259b: 同步獨立語音鈕(#voiceBtn)的視覺狀態，使其與 broadcastBtn/全域錄音狀態一致 */
-  function syncVoiceBtnVisual() {
+  /* g259b: 觸發獨立語音鈕(#voiceBtn)既有的「按放即切換錄音」邏輯(含SpeechRecognition備援)，
+     確保桌面三連點與直接按語音鈕的行為、外觀完全一致。 */
+  function triggerVoiceBtnToggle() {
     const vb = dom.voiceBtn || byId('voiceBtn');
-    if (!(vb instanceof HTMLElement)) return;
-    if (voiceBroadcastRecording) {
-      vb.classList.add('recording');
-      vb.classList.remove('pressing');
-      vb.textContent = '錄音中';
-    } else if (voiceBroadcastStarting) {
-      vb.classList.add('pressing');
-      vb.classList.remove('recording');
-      vb.textContent = '語音';
-    } else {
-      vb.classList.remove('recording', 'pressing', 'tw17-v45-holding');
-      vb.textContent = '語音';
+    if (!(vb instanceof HTMLElement)) return false;
+    try {
+      vb.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerType: 'touch', button: 0 }));
+    } catch (e) {
+      try { vb.dispatchEvent(new Event('pointerup', { bubbles: true, cancelable: true })); } catch (e2) { return false; }
     }
+    return true;
   }
 
   /* g259: 在桌面(牌桌背景區)連點兩下，快速叫出文字廣播輸入框，方便桌面操作。
@@ -17143,8 +17138,7 @@ function showIntegrityReport(precomputed) {
       if (clickCount >= 3) {
         clickCount = 0;
         ev.preventDefault();
-        if (voiceBroadcastRecording) { stopVoiceBroadcastRecording(); syncVoiceBtnVisual(); }
-        else { Promise.resolve(startVoiceBroadcastRecording(dom.broadcastBtn || byId('broadcastBtn'))).then(syncVoiceBtnVisual); syncVoiceBtnVisual(); }
+        triggerVoiceBtnToggle();
         return;
       }
       clickTimer = setTimeout(() => { clickCount = 0; }, 380);
@@ -17183,8 +17177,7 @@ function showIntegrityReport(precomputed) {
         ev.preventDefault();
         tapCount = 0;
         lastTapAt = 0;
-        if (voiceBroadcastRecording) { stopVoiceBroadcastRecording(); syncVoiceBtnVisual(); }
-        else { Promise.resolve(startVoiceBroadcastRecording(dom.broadcastBtn || byId('broadcastBtn'))).then(syncVoiceBtnVisual); syncVoiceBtnVisual(); }
+        triggerVoiceBtnToggle();
         return;
       }
       tapTimer = setTimeout(() => { tapCount = 0; }, 380);
