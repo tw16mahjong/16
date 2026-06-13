@@ -6402,6 +6402,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     bindVoiceBtnDedicated();
     bindGuestHumanActivityWatcher();
     bindTableDoubleTapBroadcast();
+    bindEnterKeyBroadcast();
     setupDraggableUtilityPanel();
     window.addEventListener('resize', () => { clampUtilityPanelToViewport(); renderAll(); });
     window.addEventListener('orientationchange', () => setTimeout(renderAll, 80));
@@ -17112,6 +17113,22 @@ function showIntegrityReport(precomputed) {
 
   /* g259: 在桌面(牌桌背景區)連點兩下，快速叫出文字廣播輸入框，方便桌面操作。
      需排除手牌/棄牌/按鈕等可互動元素，避免誤觸；雙擊與雙點(touch)皆支援。 */
+  /* g259c: 按下Enter鍵直接叫出文字廣播輸入框；若焦點在其他輸入框/可編輯區域，
+     或文字廣播框已開啟，則不處理，避免干擾正常輸入。 */
+  function bindEnterKeyBroadcast() {
+    if (document.documentElement.dataset.enterBroadcastBound === '1') return true;
+    document.documentElement.dataset.enterBroadcastBound = '1';
+    document.addEventListener('keydown', ev => {
+      if (ev.key !== 'Enter') return;
+      if (textBroadcastInputOpen) return;
+      const ae = document.activeElement;
+      if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+      ev.preventDefault();
+      openTextBroadcastInput('enter-key');
+    });
+    return true;
+  }
+
   function bindTableDoubleTapBroadcast() {
     const table = byId('table');
     if (!(table instanceof HTMLElement)) return false;
