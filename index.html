@@ -17108,14 +17108,32 @@ function showIntegrityReport(precomputed) {
       if (!(target instanceof Element)) return false;
       return !!target.closest('.tile, .hand, .melds, .discardSeat, .seatLabel, .actionPanel, .dicePanel, button, input, textarea, a, .tw-wm, .tw16-seat-avatar-wm, [data-menu]');
     };
-    table.addEventListener('dblclick', ev => {
+    let clickCount = 0;
+    let clickTimer = 0;
+    table.addEventListener('click', ev => {
       if (isInteractiveTarget(ev.target)) return;
-      ev.preventDefault();
-      openTextBroadcastInput('table-double-click');
+      clickCount += 1;
+      clearTimeout(clickTimer);
+      if (clickCount === 2) {
+        clickTimer = setTimeout(() => { clickCount = 0; }, 380);
+        ev.preventDefault();
+        openTextBroadcastInput('table-double-click');
+        return;
+      }
+      if (clickCount >= 3) {
+        clickCount = 0;
+        ev.preventDefault();
+        if (voiceBroadcastRecording) stopVoiceBroadcastRecording();
+        else startVoiceBroadcastRecording(dom.broadcastBtn || byId('broadcastBtn'));
+        return;
+      }
+      clickTimer = setTimeout(() => { clickCount = 0; }, 380);
     });
     let lastTapAt = 0;
     let lastTapX = 0;
     let lastTapY = 0;
+    let tapCount = 0;
+    let tapTimer = 0;
     table.addEventListener('touchend', ev => {
       if (isInteractiveTarget(ev.target)) return;
       const touch = ev.changedTouches && ev.changedTouches[0];
@@ -17123,15 +17141,31 @@ function showIntegrityReport(precomputed) {
       const now = Date.now();
       const dx = touch.clientX - lastTapX;
       const dy = touch.clientY - lastTapY;
-      if (now - lastTapAt < 320 && Math.abs(dx) < 32 && Math.abs(dy) < 32) {
-        ev.preventDefault();
-        lastTapAt = 0;
-        openTextBroadcastInput('table-double-tap');
-        return;
-      }
+      const close = now - lastTapAt < 380 && Math.abs(dx) < 32 && Math.abs(dy) < 32;
       lastTapAt = now;
       lastTapX = touch.clientX;
       lastTapY = touch.clientY;
+      if (close) {
+        tapCount += 1;
+      } else {
+        tapCount = 1;
+      }
+      clearTimeout(tapTimer);
+      if (tapCount === 2) {
+        ev.preventDefault();
+        openTextBroadcastInput('table-double-tap');
+        tapTimer = setTimeout(() => { tapCount = 0; }, 380);
+        return;
+      }
+      if (tapCount >= 3) {
+        ev.preventDefault();
+        tapCount = 0;
+        lastTapAt = 0;
+        if (voiceBroadcastRecording) stopVoiceBroadcastRecording();
+        else startVoiceBroadcastRecording(dom.broadcastBtn || byId('broadcastBtn'));
+        return;
+      }
+      tapTimer = setTimeout(() => { tapCount = 0; }, 380);
     }, { passive: false });
     return true;
   }
