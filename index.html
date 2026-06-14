@@ -13725,7 +13725,7 @@ function loadUiSettings() {
     if (!lockedAt) return false;
     const isAutoSeat = isSeatAutoDrivenBySystem(state.turn);
     const maxLockMs = isAutoSeat
-      ? Math.max(80, Math.round(discardAnimationMs() * 0.3))
+      ? Math.max(300, Math.round(discardAnimationMs() * 0.8))
       : Math.max(2400, discardAnimationMs() * 4);
     if (Date.now() - lockedAt < maxLockMs) return false;
     state.locked = false;
@@ -13904,7 +13904,7 @@ function loadUiSettings() {
     if (canAutoDiscard && !state.ended && !state.pending && !state.locked) {
       recordNetworkEvent('auto-drive-wait', SEAT_NAME[seat] + '電腦代管未完成動作', { seat, phase: state.phase, reason: reason || '', handCount: (state.hands[seat] || []).length });
       clearTimeout(autoplayTimer);
-      autoplayTimer = setTimeout(() => scheduleDriveSeat('auto-driven-retry'), 80);
+      autoplayTimer = setTimeout(() => scheduleDriveSeat('auto-driven-retry'), 150);
     }
   }
 
