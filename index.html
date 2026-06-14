@@ -9136,6 +9136,14 @@ function loadUiSettings() {
     Object.keys(incoming).forEach(key => {
       state[key] = incoming[key];
     });
+    if (isOnlineGuest()) try {
+      const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || 'null');
+      if (_gl && state.uiSettings) {
+        ['turnHandFrameEnabled','tingAssistEnabled','miniDashboardEnabled'].forEach(k => {
+          if (_gl[k] !== undefined) state.uiSettings[k] = _gl[k];
+        });
+      }
+    } catch(e) {}
     trimWinHistory();
     if (incomingScoreChipSettings) applyHostScoreChipSettings(incomingScoreChipSettings, msg.reason || 'snapshot');
     net.players = msg.players ? clonePlain(msg.players) : (net.players || {});
@@ -14714,6 +14722,7 @@ function loadUiSettings() {
       state.uiSettings.turnHandFrameEnabled = !!byId('setTurnHandFrameEnabled').checked;
       state.uiSettings.tingAssistEnabled = !!byId('setTingAssistEnabled').checked;
       state.uiSettings.miniDashboardEnabled = !!byId('setMiniDashboardEnabled').checked;
+      if (isOnlineGuest()) try { localStorage.setItem('tw16GuestUiLocal', JSON.stringify({ turnHandFrameEnabled: state.uiSettings.turnHandFrameEnabled, tingAssistEnabled: state.uiSettings.tingAssistEnabled, miniDashboardEnabled: state.uiSettings.miniDashboardEnabled })); } catch(e) {}
       state.uiSettings.avatarEnabled = byId('setAvatarEnabled') ? !!byId('setAvatarEnabled').checked : false;
       const nameInput = byId('setPlayerName');
       if (nameInput) applyLocalPlayerName(nameInput.value, 'settings-apply');
