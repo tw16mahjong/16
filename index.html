@@ -867,9 +867,9 @@
   0%,49%{opacity:1;filter:brightness(1.45);text-shadow:0 0 10px rgba(255,232,90,.95),0 1px 3px rgba(0,0,0,.75);}
   50%,100%{opacity:.20;filter:brightness(.78);text-shadow:0 1px 2px rgba(0,0,0,.45);}
 }
-.tw-wm{position:absolute;z-index:2;pointer-events:none;font-size:16px;font-weight:900;line-height:1;color:rgba(255,255,255,.22);transform-origin:50% 50%;display:flex;flex-direction:column;align-items:center;gap:2px;}
-.tw-wm-dealer{display:inline-flex;align-items:center;justify-content:center;width:1.6em;height:1.6em;border:1.5px solid #ef4444;border-radius:999px;color:#fff;background:#ef4444;font-size:0.7em;font-weight:1000;line-height:1;text-shadow:none;}
-.tw-wm-ting{display:inline-flex;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid #ef4444;border-radius:3px;color:#ef4444;background:transparent;font-size:0.65em;font-weight:1000;line-height:1;text-shadow:none;margin-top:2px;}
+.tw-wm{position:absolute;z-index:2;pointer-events:none;font-size:16px;font-weight:900;line-height:1;color:rgba(255,255,255,.22);transform-origin:50% 50%;display:flex;flex-direction:column;align-items:center;gap:0;}
+.tw-wm-dealer{position:absolute;top:-1.2em;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;justify-content:center;width:1.6em;height:1.6em;border:1.5px solid #ef4444;border-radius:999px;color:#fff;background:#ef4444;font-size:0.7em;font-weight:1000;line-height:1;text-shadow:none;}
+.tw-wm-ting{position:absolute;bottom:-1.2em;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid #ef4444;border-radius:3px;color:#ef4444;background:transparent;font-size:0.65em;font-weight:1000;line-height:1;text-shadow:none;}
 .tw16-mini-dashboard-ting{position:absolute;left:3px;bottom:2px;font-size:clamp(8px,calc(var(--tw-mini-dashboard-card-w,80px)*.14),11px);font-weight:1000;color:#ef4444;border:1px solid #ef4444;border-radius:3px;padding:0 2px;line-height:1.2;pointer-events:none;}
 .tw-wm-b{transform:translate(-50%,-50%);}
 .tw-wm-t{transform:translate(-50%,-50%) rotate(180deg);}
@@ -9040,7 +9040,7 @@ function loadUiSettings() {
       return showBigTileAnimation(animation.tile, { holdMs: Math.max(360, Math.round(discardAnimationMs() * 1.55)), fadeMs: 120, className: 'discarding' });
     }
     if (animation.type === 'draw') {
-      return false;  // 摸牌放大動畫已停用
+      return false;
       positionDrawAnimationAtSeat(animation.seat, animation.tile);
       return showBigTileAnimation(animation.tile, { holdMs: 520, fadeMs: 150, className: 'drawing' });
     }
@@ -11141,7 +11141,6 @@ function loadUiSettings() {
 
   function submitDiscard(seat, tileId, source, options = {}) {
     if (isOnlineGuest() && source !== 'remote' && seat === net.assignedSeat) {
-      // 不播本地即時出牌動畫，由房主 snapshot 統一播
       return publishNetworkIntent({ action: 'discard', tileId });
     }
     const allowComputerRecovery = !!(options && options.forceComputer && isOnlineHost() && isHostDrivenSeat(seat) && !state.ended && !state.locked && !state.pending && seat === state.turn && state.phase === 'discard' && (state.hands[seat] || []).length);
@@ -12169,7 +12168,7 @@ function loadUiSettings() {
     return completeOwnKong(option, source);
   }
 
-  const TW16_SMART_AI_MONTE_CARLO_SAMPLES = 8;
+  const TW16_SMART_AI_MONTE_CARLO_SAMPLES = 12;
   let tw16MonteCarloPoolCache = { key: '', pool: [] };  // pool 快取，同一局面只建一次
   let tw16VisibleCountCache = null;        // ① 每回合 visibleCount 快取
   let tw16StrategyContextKeyCache = null;  // ② 每回合 strategy context key 快取
@@ -12590,7 +12589,7 @@ function loadUiSettings() {
       const next = smartAiBestDiscardForCodesLight(seat, afterDraw, concealedSetsNeeded);
       total += next && next.potential ? (next.potential.value - baseValue) : -10;
     }
-    return total / sampleCount * 0.18;
+    return total / sampleCount * 0.28;
   }
 
   // ⑦ 增量維護 discard key 快取，避免每次重建 20 筆字串
@@ -12609,6 +12608,8 @@ function loadUiSettings() {
   }
 
   function smartAiDiscardCandidateScore(seat, tileObj, index, hand) {
+    const _ting = state.declaredTing || {};
+    const _anyTing = SEATS.some(o => o !== seat && !!_ting[o]);
     const handCounts = smartAiCountsFromCodes(smartAiCodesFromHand(hand));
     const needed = requiredConcealedSets(seat);
     const afterCodes = (hand || []).filter(t => t && String(t.id) !== String(tileObj && tileObj.id)).map(t => t.code).filter(code => code && !isFlower(code));
@@ -12619,12 +12620,11 @@ function loadUiSettings() {
     score += smartAiSafetyDiscardScore(seat, code);
     score += strategyLibraryDiscardBonus(seat, hand, tileObj);
     score += smartAiMonteCarloDiscardValue(seat, afterCodes, needed, potential, code);
-    if (index === (hand || []).length - 1) score += 1.5;
+    if (index === (hand || []).length - 1) score += (_anyTing ? 1.5 : 4.0);
     // 台數潛力：⑤ 傳入已計算的 potential（含 shanten），避免重算 smartAiApproxShape
     const taiPot = smartAiTaiPotential(seat, afterCodes, potential);
-    score += taiPot * 3.5;
-    // 危險感知（獨立於是否有人聽牌）
-    score -= smartAiThreatAwareDiscardRisk(seat, code) * 0.6;
+    score += taiPot * (_anyTing ? 3.0 : 6.0);
+    score -= smartAiThreatAwareDiscardRisk(seat, code) * (_anyTing ? 1.2 : 0.4);
     // ③ 七對子路線：若棄此牌後七對向聽更優，額外加分；若拆了對子則懲罰
     if (potential.isSevenPairsPath || (potential.sevenPairsShanten !== undefined && potential.sevenPairsShanten <= 2)) {
       const handCodes2 = (hand || []).map(t => t && t.code).filter(c => c && !isFlower(c));
@@ -12647,7 +12647,7 @@ function loadUiSettings() {
     const endgame = smartAiEndgameLevel();
     score += smartAiEndgameDiscardAdjust(seat, code, endgame);
     // ③ 對手手型推算：根據對手棄牌模式增加危險牌懲罰
-    score -= smartAiOpponentHandInference(seat, code) * 0.7;
+    score -= smartAiOpponentHandInference(seat, code) * (_anyTing ? 1.2 : 0.5);
     // ④ 放槍成本：接近流局時容忍放槍給籌碼較多的對手
     score += smartAiRonCostDiscardAdjust(seat, code, endgame);
     // ⑥ 輸分壓力：領先時更保守（中張懲罰），落後時可以冒險
@@ -12692,6 +12692,22 @@ function loadUiSettings() {
           else score -= 3;
         }
       });
+    }
+    // 多步前瞻：無人聽牌時，若對手副露>=2且棄牌<=5（接近聽牌），提前懲罰危險牌
+    if (!_anyTing) {
+      let _lookahead = 0;
+      SEATS.forEach(function(other) {
+        if (other === seat) return;
+        const _om = (state.melds[other] || []).length;
+        const _od = (tw16SeatDiscardSetCache && tw16SeatDiscardSetCache[other])
+          ? tw16SeatDiscardSetCache[other].size
+          : (state.discards || []).filter(function(d) { return d && d.seat === other; }).length;
+        if (_om >= 2 && _od <= 5) {
+          const _threat = smartAiThreatAwareDiscardRisk(seat, code);
+          if (_threat > 5) _lookahead += _threat * 0.4;
+        }
+      });
+      score -= _lookahead;
     }
     return { id: tileObj && tileObj.id || '', code: code || '', score, idx: index, analysis: potential };
   }
@@ -13080,6 +13096,12 @@ function loadUiSettings() {
         else if (discardedSuits.length >= 2) riskAdj += 5;
       }
       if (otherMelds.length >= 2) riskAdj += 6;
+      // 加深推算：近4張棄牌集中同一花色 → 該花色危險
+      const recentDiscards = otherDiscards.slice(-4);
+      const recentSuits = recentDiscards.map(cd => cd && cd[0]).filter(s => s && 'mps'.includes(s));
+      if (recentSuits.length >= 3 && new Set(recentSuits).size === 1 && isSuitPrefix(code[0]) && recentSuits[0] === code[0]) riskAdj += 8;
+      // 對手從未棄字牌（5張以上）→ 字牌可能是暗刻
+      if (otherDiscards.length >= 5 && !otherDiscards.some(cd => isHonorCode(cd)) && isHonorCode(code)) riskAdj += 10;
     });
     if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[code] = riskAdj;
     return riskAdj;
@@ -13634,7 +13656,7 @@ function loadUiSettings() {
   }
 
   function playDrawAnimation(seat, tileObj) {
-    return false;  // 摸牌放大動畫已停用
+    return false;
     const isAuto = isSeatAutoDrivenBySystem(seat) || !!(state.seatAutoPlay && state.seatAutoPlay[seat]);
     positionDrawAnimationAtSeat(seat, tileObj);
     return showBigTileAnimation(tileObj, { holdMs: isAuto ? 80 : 520, fadeMs: isAuto ? 40 : 150, className: 'drawing', autoSeat: isAuto });
@@ -13649,11 +13671,11 @@ function loadUiSettings() {
       done();
       return;
     }
-    const doneFloor = isAuto ? 80 : 360;
-    const holdFloor = isAuto ? 60 : 320;
+    const doneFloor = isAuto ? 40 : 360;
+    const holdFloor = isAuto ? 30 : 320;
     showBigTileAnimation(tileObj, {
-      holdMs: Math.max(holdFloor, Math.round(ms * 1.55)),
-      fadeMs: Math.max(isAuto ? 30 : 90, Math.round(ms * 0.24)),
+      holdMs: isAuto ? Math.max(holdFloor, Math.round(ms * 0.5)) : Math.max(holdFloor, Math.round(ms * 1.55)),
+      fadeMs: Math.max(isAuto ? 15 : 90, Math.round(isAuto ? ms * 0.1 : ms * 0.24)),
       className: 'discarding',
       autoSeat: isAuto,
     });
@@ -13703,7 +13725,7 @@ function loadUiSettings() {
     if (!lockedAt) return false;
     const isAutoSeat = isSeatAutoDrivenBySystem(state.turn);
     const maxLockMs = isAutoSeat
-      ? Math.max(300, discardAnimationMs())
+      ? Math.max(80, Math.round(discardAnimationMs() * 0.3))
       : Math.max(2400, discardAnimationMs() * 4);
     if (Date.now() - lockedAt < maxLockMs) return false;
     state.locked = false;
@@ -13882,7 +13904,7 @@ function loadUiSettings() {
     if (canAutoDiscard && !state.ended && !state.pending && !state.locked) {
       recordNetworkEvent('auto-drive-wait', SEAT_NAME[seat] + '電腦代管未完成動作', { seat, phase: state.phase, reason: reason || '', handCount: (state.hands[seat] || []).length });
       clearTimeout(autoplayTimer);
-      autoplayTimer = setTimeout(() => scheduleDriveSeat('auto-driven-retry'), 200);
+      autoplayTimer = setTimeout(() => scheduleDriveSeat('auto-driven-retry'), 80);
     }
   }
 
@@ -18744,6 +18766,7 @@ function showIntegrityReport(precomputed) {
         hand.forEach((tileObj, idx) => {
           const node = createTileElement(tileObj, false);
           node.classList.toggle('drawn', shouldRenderActiveDrawnTile(seat, tileObj));
+          node.classList.toggle('tw16-drawn-mark', !!(activeDrawnTileId(seat) && String(tileObj.id) === activeDrawnTileId(seat) && !state.ended));
           node.classList.toggle('tw16-drawn-mark', !!(activeDrawnTileId(seat) && String(tileObj.id) === activeDrawnTileId(seat) && !state.ended));
           const isStrategySuggested = !!(strategySuggestedTileId && tileObj && String(tileObj.id) === String(strategySuggestedTileId));
           node.classList.toggle('strategy-discard-suggestion', isStrategySuggested);
