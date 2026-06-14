@@ -6889,7 +6889,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     state.uiSettings.layoutMode = 'clean';
     state.uiSettings.wallVisible = state.uiSettings.wallVisible !== false;
     state.uiSettings.screenWakeLockEnabled = !!state.uiSettings.screenWakeLockEnabled;
-    state.uiSettings.turnHandFrameEnabled = state.uiSettings.turnHandFrameEnabled !== false;
+    if (state.uiSettings.turnHandFrameEnabled === undefined) state.uiSettings.turnHandFrameEnabled = true;
     state.uiSettings.tingAssistEnabled = state.uiSettings.tingAssistEnabled !== false;
     state.uiSettings.miniDashboardEnabled = state.uiSettings.miniDashboardEnabled !== false;
     state.uiSettings.avatarEnabled = !!state.uiSettings.avatarEnabled;
