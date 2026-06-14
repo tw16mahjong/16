@@ -12177,7 +12177,7 @@ function loadUiSettings() {
     return completeOwnKong(option, source);
   }
 
-  const TW16_SMART_AI_MONTE_CARLO_SAMPLES = 12;
+  const TW16_SMART_AI_MONTE_CARLO_SAMPLES = 8;
   let tw16MonteCarloPoolCache = { key: '', pool: [] };  // pool 快取，同一局面只建一次
   let tw16VisibleCountCache = null;        // ① 每回合 visibleCount 快取
   let tw16StrategyContextKeyCache = null;  // ② 每回合 strategy context key 快取
@@ -13711,7 +13711,7 @@ function loadUiSettings() {
     if (!lockedAt) return false;
     const isAutoSeat = isSeatAutoDrivenBySystem(state.turn);
     const maxLockMs = isAutoSeat
-      ? Math.max(800, discardAnimationMs() * 2)
+      ? Math.max(300, discardAnimationMs())
       : Math.max(2400, discardAnimationMs() * 4);
     if (Date.now() - lockedAt < maxLockMs) return false;
     state.locked = false;
