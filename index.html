@@ -13671,11 +13671,11 @@ function loadUiSettings() {
       done();
       return;
     }
-    const doneFloor = isAuto ? 40 : 360;
-    const holdFloor = isAuto ? 30 : 320;
+    const doneFloor = isAuto ? 80 : 360;
+    const holdFloor = isAuto ? 60 : 320;
     showBigTileAnimation(tileObj, {
-      holdMs: isAuto ? Math.max(holdFloor, Math.round(ms * 0.5)) : Math.max(holdFloor, Math.round(ms * 1.55)),
-      fadeMs: Math.max(isAuto ? 15 : 90, Math.round(isAuto ? ms * 0.1 : ms * 0.24)),
+      holdMs: Math.max(holdFloor, Math.round(ms * 1.55)),
+      fadeMs: Math.max(isAuto ? 30 : 90, Math.round(ms * 0.24)),
       className: 'discarding',
       autoSeat: isAuto,
     });
@@ -13725,7 +13725,7 @@ function loadUiSettings() {
     if (!lockedAt) return false;
     const isAutoSeat = isSeatAutoDrivenBySystem(state.turn);
     const maxLockMs = isAutoSeat
-      ? Math.max(300, Math.round(discardAnimationMs() * 0.8))
+      ? Math.max(800, discardAnimationMs() * 2)
       : Math.max(2400, discardAnimationMs() * 4);
     if (Date.now() - lockedAt < maxLockMs) return false;
     state.locked = false;
@@ -13904,7 +13904,7 @@ function loadUiSettings() {
     if (canAutoDiscard && !state.ended && !state.pending && !state.locked) {
       recordNetworkEvent('auto-drive-wait', SEAT_NAME[seat] + '電腦代管未完成動作', { seat, phase: state.phase, reason: reason || '', handCount: (state.hands[seat] || []).length });
       clearTimeout(autoplayTimer);
-      autoplayTimer = setTimeout(() => scheduleDriveSeat('auto-driven-retry'), 150);
+      autoplayTimer = setTimeout(() => scheduleDriveSeat('auto-driven-retry'), 200);
     }
   }
 
