@@ -11141,15 +11141,7 @@ function loadUiSettings() {
 
   function submitDiscard(seat, tileId, source, options = {}) {
     if (isOnlineGuest() && source !== 'remote' && seat === net.assignedSeat) {
-      /* 立即觸發本地出牌動畫，讓玩家感覺即時無 lag */
-      try {
-        const tileObj = (state.hands[seat] || []).find(t => t.id === tileId);
-        if (tileObj) {
-          const ms = discardAnimationMs();
-          positionDiscardAnimationAtSeat(seat);
-          showBigTileAnimation(tileObj, { holdMs: Math.max(320, Math.round(ms * 1.55)), fadeMs: Math.max(90, Math.round(ms * 0.24)), className: 'discarding' });
-        }
-      } catch (e) {}
+      // 不播本地即時出牌動畫，由房主 snapshot 統一播
       return publishNetworkIntent({ action: 'discard', tileId });
     }
     const allowComputerRecovery = !!(options && options.forceComputer && isOnlineHost() && isHostDrivenSeat(seat) && !state.ended && !state.locked && !state.pending && seat === state.turn && state.phase === 'discard' && (state.hands[seat] || []).length);
