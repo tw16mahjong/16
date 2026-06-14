@@ -867,9 +867,9 @@
   0%,49%{opacity:1;filter:brightness(1.45);text-shadow:0 0 10px rgba(255,232,90,.95),0 1px 3px rgba(0,0,0,.75);}
   50%,100%{opacity:.20;filter:brightness(.78);text-shadow:0 1px 2px rgba(0,0,0,.45);}
 }
-.tw-wm{position:absolute;z-index:2;pointer-events:none;font-size:28px;font-weight:900;line-height:1;color:rgba(255,255,255,.22);transform-origin:50% 50%;display:flex;flex-direction:column;align-items:center;gap:2px;}
-.tw-wm-dealer{display:inline-flex;align-items:center;justify-content:center;width:1.6em;height:1.6em;border:1.5px solid #ef4444;border-radius:999px;color:#fff;background:#ef4444;font-size:0.45em;font-weight:1000;line-height:1;text-shadow:none;}
-.tw-wm-ting{display:inline-flex;align-items:center;justify-content:center;padding:0 2px;border:1.5px solid #ef4444;border-radius:3px;color:#ef4444;background:transparent;font-size:0.4em;font-weight:1000;line-height:1;text-shadow:none;margin-top:2px;}
+.tw-wm{position:absolute;z-index:2;pointer-events:none;font-size:16px;font-weight:900;line-height:1;color:rgba(255,255,255,.22);transform-origin:50% 50%;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.tw-wm-dealer{display:inline-flex;align-items:center;justify-content:center;width:1.6em;height:1.6em;border:1.5px solid #ef4444;border-radius:999px;color:#fff;background:#ef4444;font-size:0.7em;font-weight:1000;line-height:1;text-shadow:none;}
+.tw-wm-ting{display:inline-flex;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid #ef4444;border-radius:3px;color:#ef4444;background:transparent;font-size:0.65em;font-weight:1000;line-height:1;text-shadow:none;margin-top:2px;}
 .tw16-mini-dashboard-ting{position:absolute;left:3px;bottom:2px;font-size:clamp(8px,calc(var(--tw-mini-dashboard-card-w,80px)*.14),11px);font-weight:1000;color:#ef4444;border:1px solid #ef4444;border-radius:3px;padding:0 2px;line-height:1.2;pointer-events:none;}
 .tw-wm-b{transform:translate(-50%,-50%);}
 .tw-wm-t{transform:translate(-50%,-50%) rotate(180deg);}
@@ -19691,6 +19691,8 @@ function concealedKongOwnerOfMeld(meld) {
         wmEl.style.color = isSeatActiveInTable(seat) ? '' : 'transparent';
         const playPhase = state.phase === 'discard' || state.phase === 'claim' || state.phase === 'draw' || state.phase === 'selfwin';
         wmEl.style.visibility = playPhase ? 'visible' : 'hidden';
+        const isActiveTurn = playPhase && state.turn === seat && !state.ended;
+        wmEl.style.color = isActiveTurn ? '#ff3333' : (isSeatActiveInTable(seat) ? '' : 'transparent');
       }
     });
     positionSeatLabels(map);
@@ -19744,7 +19746,7 @@ function concealedKongOwnerOfMeld(meld) {
       if(!tEl||!gEl)return;
       const tR=tEl.getBoundingClientRect(),gR=gEl.getBoundingClientRect();
       if(!tR.width||!gR.width)return;
-      const cx=(gR.left+gR.right)/2-tR.left, cy=(gR.top+gR.bottom)/2-tR.top, off=48;
+      const cx=(gR.left+gR.right)/2-tR.left, cy=(gR.top+gR.bottom)/2-tR.top, off=18;
       if(dom.wmBottom){dom.wmBottom.style.left=cx+'px';dom.wmBottom.style.top=(cy+off)+'px';}
       if(dom.wmTop)   {dom.wmTop.style.left   =cx+'px';dom.wmTop.style.top   =(cy-off)+'px';}
       if(dom.wmLeft)  {dom.wmLeft.style.left  =(cx-off)+'px';dom.wmLeft.style.top=cy+'px';}
