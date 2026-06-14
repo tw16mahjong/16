@@ -6911,7 +6911,13 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (net.role !== 'guest') return false;
     ensureUiSettings();
     let changed = false;
-    if (state.uiSettings.turnHandFrameEnabled !== true) { state.uiSettings.turnHandFrameEnabled = true; changed = true; }
+    // 來賓加入時，優先用 localStorage 儲存的設定，否則預設 true
+    try {
+      const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || 'null');
+      if (_gl && _gl.turnHandFrameEnabled !== undefined) {
+        if (state.uiSettings.turnHandFrameEnabled !== _gl.turnHandFrameEnabled) { state.uiSettings.turnHandFrameEnabled = _gl.turnHandFrameEnabled; changed = true; }
+      } else if (state.uiSettings.turnHandFrameEnabled !== true) { state.uiSettings.turnHandFrameEnabled = true; changed = true; }
+    } catch(e) { if (state.uiSettings.turnHandFrameEnabled !== true) { state.uiSettings.turnHandFrameEnabled = true; changed = true; } }
     if (state.uiSettings.avatarEnabled === undefined) { state.uiSettings.avatarEnabled = false; changed = true; }
     const guestSeat = networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : (networkSeatOrder().includes(state.viewSeat) ? state.viewSeat : '');
     if (!net.guestAutoplayInitializedSeats || typeof net.guestAutoplayInitializedSeats !== 'object') net.guestAutoplayInitializedSeats = {};
