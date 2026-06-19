@@ -874,6 +874,8 @@
 @keyframes tw16DecidingPulse{0%,100%{opacity:1;}50%{opacity:.45;}}
 .tw16-mini-dashboard-card.deciding{outline:2px solid #f97316!important;box-shadow:0 0 10px rgba(249,115,22,.65)!important;}
 .tw16-mini-dashboard-ting{position:absolute;left:3px;bottom:2px;font-size:clamp(8px,calc(var(--tw-mini-dashboard-card-w,80px)*.14),11px);font-weight:1000;color:#ef4444;border:1px solid #ef4444;border-radius:3px;padding:0 2px;line-height:1.2;pointer-events:none;}
+.tw16-mini-dashboard-paused-by{position:absolute;right:2px;top:2px;font-size:clamp(7px,calc(var(--tw-mini-dashboard-card-w,80px)*.12),10px);font-weight:1000;color:#fff;background:rgba(220,38,38,.94);border-radius:3px;padding:0 3px;line-height:1.3;white-space:nowrap;pointer-events:none;box-shadow:0 0 5px rgba(255,32,32,.6);z-index:8;}
+.tw16-mini-dashboard-card.tw16-paused-by-card{outline:2px solid rgba(220,38,38,.85)!important;box-shadow:0 0 8px rgba(220,38,38,.5)!important;}
 .tw-wm-b{transform:translate(-50%,-50%);}
 .tw-wm-t{transform:translate(-50%,-50%) rotate(180deg);}
 .tw-wm-l{transform:translate(-50%,-50%) rotate(90deg);}
@@ -1221,7 +1223,7 @@
   gap:0!important;row-gap:0!important;column-gap:0!important;align-items:flex-start!important;pointer-events:none!important;
 }
 .topbar .menu{position:relative!important;display:inline-flex!important;align-items:flex-start!important;gap:0!important;pointer-events:auto!important;z-index:2147483001!important;}
-.topbar .rightBtns{margin-left:auto!important;display:flex!important;gap:0!important;align-items:flex-start!important;pointer-events:auto!important;z-index:2147483001!important;}
+.topbar .rightBtns{position:relative!important;margin-left:auto!important;display:flex!important;gap:0!important;align-items:flex-start!important;pointer-events:auto!important;z-index:2147483001!important;}
 .topbar .btn{
   min-width:0!important;border:0!important;outline:0!important;border-radius:12px!important;color:#fff!important;background:linear-gradient(180deg,#2563eb,#1d4ed8)!important;
   box-shadow:none!important;padding:7px 12px!important;font-size:12px!important;font-weight:900!important;line-height:1.08!important;
@@ -3009,30 +3011,39 @@ body, .app {
   display:none!important;
 }
 .ai-suggest-wrapper{
-  position:relative;
-  display:inline-flex;
-  flex:0 0 auto;
-  overflow:visible;
+  position:relative!important;
+  display:inline-flex!important;
+  flex:0 0 auto!important;
+  overflow:visible!important;
+  z-index:2147483400!important;
+  isolation:isolate!important;
+}
+.shared-hand-container:has(.ai-suggest-wrapper),
+.hand-row:has(.ai-suggest-wrapper){
+  z-index:2147483300!important;
+  overflow:visible!important;
 }
 .ai-suggest-label{
-  display:block;
-  position:absolute;
-  left:0;
-  bottom:calc(100% + 1px);
-  top:auto;
-  width:max-content;
-  height:auto;
-  padding:1px 3px;
-  margin:0;
-  border-radius:2px 2px 0 0;
-  background:rgba(220,0,0,.92);
-  color:#fff;
-  font-size:clamp(5px,calc(var(--tw-tile-w,28px) * .26),7px);
-  font-weight:900;
-  line-height:1.15;
-  white-space:nowrap;
-  pointer-events:none;
-  z-index:99;
+  display:block!important;
+  position:absolute!important;
+  left:-2px!important;
+  bottom:calc(100% + 2px)!important;
+  top:auto!important;
+  width:max-content!important;
+  height:auto!important;
+  padding:1px 2px!important;
+  margin:0!important;
+  border-radius:3px!important;
+  background:rgba(220,0,0,.92)!important;
+  color:#fff!important;
+  font-size:clamp(5px,calc(var(--tw-tile-w,28px) * .22),6px)!important;
+  font-weight:1000!important;
+  line-height:1.05!important;
+  white-space:nowrap!important;
+  pointer-events:none!important;
+  z-index:2147483500!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.78)!important;
+  box-shadow:0 0 4px rgba(255,32,32,.72)!important;
 }
 .hand-bottom .hand-tile-row .tile.strategy-discard-suggestion:hover{
   transform:translateY(-6px) scale(1.085)!important;
@@ -3048,6 +3059,73 @@ body, .app {
   box-shadow:inset 0 0 0 1px rgba(255,32,32,.92)!important;
   pointer-events:none!important;
   z-index:3!important;
+}
+
+
+
+
+/* tw16_ai_fast_claim_advice: 非托管吃碰槓視窗於 AI 判斷的最佳鈕左側標示。 */
+.actionAiAdviceLine,.actionSkipLine{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  margin-top:6px!important;
+  width:max-content!important;
+  max-width:100%!important;
+  align-self:center!important;
+}
+.actionAiAdviceLine{
+  margin-top:0!important;
+}
+.claimAiSkipAdvice,.claimAiBestAdvice{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  color:#ff2020!important;
+  font-size:clamp(18px,calc(var(--tw-tile-w,28px) * .90),28px)!important;
+  font-weight:1000!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.75),0 0 6px rgba(255,32,32,.55)!important;
+  pointer-events:none!important;
+}
+.actionSkipLine .actionSkipBtn,.actionAiAdviceLine .actionBtn{
+  margin-top:0!important;
+}
+
+/* AI建議文字使用全域浮動層，位置由紅框牌面的即時座標決定；不佔手牌空間且不被棄牌池遮住。 */
+.ai-suggest-wrapper > .ai-suggest-label{display:none!important;}
+.ai-suggest-floating-layer{
+  position:fixed!important;
+  left:0!important;
+  top:0!important;
+  width:0!important;
+  height:0!important;
+  z-index:2147483647!important;
+  pointer-events:none!important;
+  overflow:visible!important;
+  contain:none!important;
+}
+.ai-suggest-floating-layer .ai-suggest-label{
+  position:fixed!important;
+  display:block!important;
+  left:var(--ai-suggest-left,0px)!important;
+  top:var(--ai-suggest-top,0px)!important;
+  bottom:auto!important;
+  transform:none!important;
+  z-index:2147483647!important;
+  padding:0 2px!important;
+  border-radius:2px!important;
+  background:rgba(220,0,0,.94)!important;
+  color:#fff!important;
+  font-size:clamp(5px,calc(var(--tw-tile-w,28px) * .18),6px)!important;
+  font-weight:1000!important;
+  line-height:1.05!important;
+  white-space:nowrap!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.82)!important;
+  box-shadow:0 0 4px rgba(255,32,32,.72)!important;
 }
 
 
@@ -3485,6 +3563,253 @@ html body .app.perspective3d .discardSeat .tile::before {
 .tw16-win-float{position:absolute;transform:translate(-50%,-50%);font-size:34px;font-weight:1000;color:#ff1414;pointer-events:none;z-index:9999;display:none;text-shadow:0 0 10px rgba(255,20,20,.9),0 2px 6px rgba(0,0,0,.75);animation:tw16WinFloatBounce .55s ease-in-out infinite;}
 @keyframes tw16WinFloatBounce{0%,100%{transform:translate(-50%,-50%) scale(1) rotate(-3deg);}50%{transform:translate(-50%,-65%) scale(1.25) rotate(3deg);}}
 
+
+
+/* AI最佳鈕標示：浮動小標籤，不佔用按鈕排版空間。 */
+.actionAiFloatingLine{
+  position:relative!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:max-content!important;
+  height:max-content!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+  flex:0 0 auto!important;
+}
+.actionAiFloatingLine .actionBtn{
+  position:relative!important;
+  z-index:1!important;
+}
+.actionAiFloatingBadge{
+  position:absolute!important;
+  right:calc(100% + 3px)!important;
+  left:auto!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  z-index:2147483004!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:max-content!important;
+  max-width:42px!important;
+  padding:1px 2px!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:3px!important;
+  background:rgba(0,0,0,.18)!important;
+  color:#ff2020!important;
+  font-size:clamp(8px,calc(var(--tw-tile-w,22px) * .46),12px)!important;
+  font-weight:1000!important;
+  line-height:1.05!important;
+  white-space:nowrap!important;
+  letter-spacing:-.5px!important;
+  text-shadow:0 0 5px rgba(255,32,32,.86),0 1px 2px rgba(0,0,0,.72)!important;
+  box-shadow:none!important;
+  pointer-events:none!important;
+}
+.actionSkipLine .actionAiFloatingBadge{color:#ff2020!important;}
+
+
+/* g260: 吃碰槓選擇鈕固定在最高互動層，避免被桌面牌、棄牌池、座位標籤或3D桌面遮住。 */
+.actionPanel.action-panel-visible:not(.ting-choice-active),
+#actionPanel.action-panel-visible:not(.ting-choice-active){
+  position:fixed!important;
+  z-index:2147483646!important;
+  isolation:isolate!important;
+  contain:none!important;
+  overflow:visible!important;
+  pointer-events:auto!important;
+  transform-style:flat!important;
+}
+.actionPanel.action-panel-visible:not(.ting-choice-active) .actionBtn,
+.actionPanel.action-panel-visible:not(.ting-choice-active) .actionTileStrip,
+.actionPanel.action-panel-visible:not(.ting-choice-active) .claimAiSkipAdvice,
+.actionPanel.action-panel-visible:not(.ting-choice-active) .claimAiBestAdvice{
+  position:relative!important;
+  z-index:2147483647!important;
+}
+.actionPanel.action-panel-visible:not(.ting-choice-active) .tile{
+  position:relative!important;
+  z-index:2147483647!important;
+}
+
+/* g261: AI建議開關獨立於提示文字之外，固定在最上方第1行、貼齊畫面右緣，會隨版面自適應，不受提示文字長度影響。 */
+.tw16-ai-suggestion-toggle-mini{
+  position:absolute!important;
+  left:auto!important;
+  top:-1.3em!important;
+  right:0!important;
+  bottom:auto!important;
+  margin-top:0!important;
+  z-index:2147483646!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:auto!important;
+  min-width:0!important;
+  height:1.4em!important;
+  min-height:0!important;
+  padding:1px 4px!important;
+  border:1px solid rgba(255,255,255,.48)!important;
+  border-radius:3px!important;
+  background:rgba(15,23,42,.78)!important;
+  color:#fde68a!important;
+  font-size:10px!important;
+  font-weight:1000!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  pointer-events:auto!important;
+  user-select:none!important;
+  -webkit-user-select:none!important;
+  box-shadow:0 4px 10px rgba(0,0,0,.32)!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.72)!important;
+  vertical-align:baseline!important;
+  transform:none!important;
+}
+.tw16-ai-suggestion-toggle-mini.off{
+  color:#cbd5e1!important;
+  background:rgba(15,23,42,.40)!important;
+  border-color:rgba(148,163,184,.34)!important;
+  box-shadow:none!important;
+}
+@media(max-width:700px){
+  .tw16-ai-suggestion-toggle-mini{font-size:9px!important;height:1.3em!important;padding:1px 3px!important;left:auto!important;}
+}
+
+
+
+/* g263: 除錯用「暫停倒計時」按鈕，用position:fixed跳出topbar排版競爭，改由JS依「每底/每台籌碼」文字實際位置動態貼齊在右邊，永遠不會被擠到消失。 */
+.tw16-scorechip-row{
+  display:flex!important;
+  align-items:center!important;
+  gap:5px!important;
+  pointer-events:auto!important;
+}
+.tw16-debug-pause-toggle{
+  position:fixed!important;
+  left:0!important;
+  top:0!important;
+  right:auto!important;
+  bottom:auto!important;
+  margin:0!important;
+  z-index:2147483646!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:auto!important;
+  min-width:fit-content!important;
+  height:1.4em!important;
+  min-height:0!important;
+  padding:1px 4px!important;
+  border:1px solid rgba(255,255,255,.48)!important;
+  border-radius:3px!important;
+  background:rgba(15,23,42,.78)!important;
+  color:#9ad1ff!important;
+  font-size:10px!important;
+  font-weight:1000!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  pointer-events:auto!important;
+  user-select:none!important;
+  -webkit-user-select:none!important;
+  box-shadow:0 4px 10px rgba(0,0,0,.32)!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.72)!important;
+  vertical-align:baseline!important;
+  transform:none!important;
+}
+.tw16-debug-pause-toggle.paused{
+  color:#fff!important;
+  background:rgba(220,38,38,.92)!important;
+  border-color:rgba(255,255,255,.7)!important;
+  box-shadow:0 0 8px rgba(255,32,32,.65)!important;
+
+}
+@media(max-width:700px){
+  .tw16-debug-pause-toggle{font-size:9px!important;height:1.3em!important;padding:1px 3px!important;left:auto!important;}
+}
+
+
+/* g262: AI建議標籤固定貼在最佳按鈕紅框內左上角。
+   標籤仍為 absolute 浮動子層，不新增包裹、不參與排版、不改變吃碰槓/跳過鈕原始位置。 */
+.actionBtn.actionAiFloatingTarget{
+  position:relative!important;
+  overflow:visible!important;
+  outline:2px solid #ff2020!important;
+  outline-offset:2px!important;
+  border-radius:6px!important;
+  box-shadow:0 0 10px rgba(255,32,32,.6)!important;
+}
+.actionBtn.actionAiFloatingTarget .actionAiFloatingBadge,
+.actionBtn.actionAiFloatingTarget .claimAiBestAdvice,
+.actionBtn.actionAiFloatingTarget .claimAiSkipAdvice{
+  position:absolute!important;
+  left:2px!important;
+  right:auto!important;
+  top:2px!important;
+  bottom:auto!important;
+  transform:none!important;
+  z-index:2147483647!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:max-content!important;
+  max-width:calc(100% - 4px)!important;
+  min-width:0!important;
+  height:auto!important;
+  padding:0 2px!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:2px!important;
+  background:rgba(220,0,0,.88)!important;
+  color:#fff!important;
+  font-size:clamp(5px,calc(var(--tw-tile-w,22px) * .23),7px)!important;
+  font-weight:1000!important;
+  line-height:1.05!important;
+  white-space:nowrap!important;
+  letter-spacing:-.6px!important;
+  text-shadow:0 1px 1px rgba(0,0,0,.65)!important;
+  box-shadow:none!important;
+  pointer-events:none!important;
+  flex:none!important;
+  opacity:.98!important;
+}
+.actionAiAdviceLine,.actionSkipLine,.actionAiFloatingLine{
+  display:contents!important;
+  width:auto!important;
+  height:auto!important;
+  margin:0!important;
+  padding:0!important;
+}
+
+
+/* tw16_battle_merge_fix: AI模式與自動對戰統計窗 */
+.tw16-battle-stats{position:fixed;right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));z-index:2147483200;display:none;min-width:168px;max-width:min(42vw,230px);padding:8px 10px;border-radius:14px;background:rgba(2,8,23,.82);border:1px solid rgba(253,230,138,.42);box-shadow:0 12px 28px rgba(0,0,0,.45),0 0 14px rgba(253,230,138,.18);color:#f8fafc;font-size:11px;font-weight:900;line-height:1.45;pointer-events:none;text-align:left}.tw16-battle-stats.show{display:block}.tw16-battle-stats-title{color:#fde68a;font-size:13px;font-weight:1000;text-align:center;margin-bottom:4px}.tw16-battle-stats-row{display:flex;justify-content:space-between;gap:10px;white-space:nowrap}.tw16-battle-red{color:#fca5a5}.tw16-battle-green{color:#86efac}.tw16-battle-grid{display:grid;grid-template-columns:76px minmax(0,1fr);gap:6px;align-items:center;margin-top:6px}.tw16-battle-grid select{width:100%;border:1px solid rgba(255,255,255,.16);border-radius:9px;background:rgba(2,6,23,.72);color:#fff;padding:6px;font-weight:900}.tw16-battle-seat-title{color:#fde68a;font-weight:1000;text-align:right}.tw16-battle-note{margin-top:8px;color:#cbd5e1;font-size:12px;font-weight:800;line-height:1.45;text-align:center}
+@media(max-width:700px){.tw16-battle-stats{right:6px;bottom:calc(env(safe-area-inset-bottom) + 6px);max-width:48vw;font-size:10px;min-width:146px}}
+
+
+/* tw16_battle_stats_collapse: 對戰統計窗可縮小/展開 */
+.tw16-battle-stats{pointer-events:auto!important;}
+.tw16-battle-stats-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;}
+.tw16-battle-stats-head .tw16-battle-stats-title{margin:0!important;text-align:left!important;flex:1 1 auto;}
+.tw16-battle-stats-toggle{flex:0 0 auto;border:1px solid rgba(253,230,138,.48);border-radius:8px;background:rgba(15,23,42,.74);color:#fde68a;font-size:11px;font-weight:1000;line-height:1;padding:4px 7px;cursor:pointer;box-shadow:none;touch-action:manipulation;}
+.tw16-battle-stats-toggle:active{transform:scale(.96);filter:brightness(1.18);}
+.tw16-battle-stats.collapsed{min-width:104px;max-width:160px;padding:6px 8px;}
+.tw16-battle-stats.collapsed .tw16-battle-stats-row{display:none!important;}
+.tw16-battle-stats.collapsed .tw16-battle-stats-head{margin-bottom:0;}
+.tw16-battle-stats.collapsed .tw16-battle-stats-title{font-size:12px!important;white-space:nowrap;}
+@media(max-width:700px){.tw16-battle-stats.collapsed{min-width:92px;max-width:138px}.tw16-battle-stats-toggle{font-size:10px;padding:3px 6px}}
+/* tw16_battle_stats_drag: 對戰統計窗可拖動位置 */
+.tw16-battle-stats{touch-action:none!important;user-select:none!important;-webkit-user-select:none!important;}
+.tw16-battle-stats-head{cursor:move;}
+.tw16-battle-stats-title{cursor:move;}
+.tw16-battle-stats-toggle{cursor:pointer;touch-action:manipulation!important;}
+.tw16-battle-stats.dragging{opacity:.92;box-shadow:0 14px 34px rgba(0,0,0,.58),0 0 18px rgba(253,230,138,.28)!important;}
+/* tw16_battle_chip_delta: 對戰統計窗顯示兩隊籌碼增減與領先 */
+.tw16-battle-delta{margin-left:4px;font-weight:1000}.tw16-battle-delta.plus{color:#fca5a5}.tw16-battle-delta.minus{color:#86efac}.tw16-battle-delta.zero{color:#cbd5e1}.tw16-battle-leader b{color:#fde68a}
+
+
 </style>
 </head>
 <body>
@@ -3500,10 +3825,11 @@ html body .app.perspective3d .discardSeat .tile::before {
 <div class="menu">
 <button class="btn" id="menuBtn" aria-label="開啟選單">選單 ▾</button>
 </div>
-<div class="roundStatusBlock"><div class="status" id="roundStatus">東1局／剩餘0張</div><div class="scoreChipLine" id="scoreChipLine">每底 100／每台 10 籌碼</div></div>
+<div class="roundStatusBlock"><div class="status" id="roundStatus">東1局／剩餘0張</div><div class="tw16-scorechip-row"><div class="scoreChipLine" id="scoreChipLine">每底 100／每台 10 籌碼</div><button type="button" class="tw16-debug-pause-toggle" id="tw16DebugPauseToggle" aria-label="暫停出牌倒計時">暫停倒計時</button></div></div>
 <div class="rightBtns">
 <button class="btn small red" id="autoBtn" aria-label="電腦托管">電腦托管</button>
-<span class="tw16-btn-hint-wrap"><span class="tw16-btn-hint-top">（視窗上點2下開啟）</span><button class="btn small" id="broadcastBtn" aria-label="打字廣播">打字</button></span>
+<button type="button" class="tw16-ai-suggestion-toggle-mini" id="tw16AiSuggestionToggleMini" aria-label="顯示AI建議">☑AI建議</button>
+<span class="tw16-btn-hint-wrap"><span class="tw16-btn-hint-top">(視窗上點2下開啟)</span><button class="btn small" id="broadcastBtn" aria-label="打字廣播">打字</button></span>
 <span class="tw16-btn-hint-wrap"><span class="tw16-btn-hint-bottom">（視窗上點3下開啟/關閉）</span><button class="btn small" id="voiceBtn" aria-label="語音錄音">語音</button></span>
 <button class="btn iconBtn" id="newGameBtn" aria-label="重新開局">↻</button>
 <button class="btn iconBtn" id="fullBtn" aria-label="全螢幕">⛶</button>
@@ -3639,6 +3965,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     phase: 'discard',
     pending: null,
     actionDeadlineAt: 0,
+    debugPauseBy: '',
     wall: [],
     physicalWall: [],
     openingDeal: null,
@@ -3660,7 +3987,8 @@ html body .app.perspective3d .discardSeat .tile::before {
     nextRoundPlan: null,
     lastSettlement: null,
     continuousRun: { enabled: false, remaining: 0, delayMs: 700 },
-    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: 100, scoreTaiChip: 10 },
+    battle: { enabled: false, startedAt: 0, handsAtStart: 0, redWins: 0, greenWins: 0, drawHands: 0, lastHandId: 0, seats: { east: { team: 'red', aiMode: 'exact' }, south: { team: 'green', aiMode: 'greedy' }, west: { team: 'red', aiMode: 'exact' }, north: { team: 'green', aiMode: 'greedy' } } },
+    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: 100, scoreTaiChip: 10, aiMode: 'exact' },
     handVisualColors: null,
     locked: false,
     lockedAt: 0,
@@ -6481,6 +6809,9 @@ html body .app.perspective3d .discardSeat .tile::before {
 
   function setupDom() {
     ['roundStatus','scoreChipLine','newGameBtn','fullBtn','autoBtn','menuBtn','broadcastBtn','voiceBtn','discardGrid','dicePanel','openingPrompt','tw16NetworkWaitHint','bigDiscard','turnArrow','log','resultPanel','resultTitle','resultText','resultBackBtn','resultNewBtn','resultCloseBtn','actionPanel'].forEach(id => { dom[id] = byId(id); });
+    if (dom.actionPanel && dom.actionPanel.parentNode !== document.body) {
+      document.body.appendChild(dom.actionPanel);
+    }
     DISPLAY_POSITIONS.forEach(pos => {
       dom[DISPLAY_ELEMENT[pos].hand] = byId(DISPLAY_ELEMENT[pos].hand);
       dom[DISPLAY_ELEMENT[pos].label] = byId(DISPLAY_ELEMENT[pos].label);
@@ -6512,6 +6843,8 @@ html body .app.perspective3d .discardSeat .tile::before {
     window.addEventListener('orientationchange', () => setTimeout(renderAll, 80));
     createInterface329Lobby();
     createInterface329Extras();
+    loadBattleConfig();
+    ensureBattleStatsWindow();
     initializeCustomTileImportUi();
   }
 
@@ -6529,7 +6862,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     lobby.id = 'tw16Lobby';
     lobby.className = 'tw16-lobby';
     lobby.innerHTML = '<div class="tw16-lobby-card">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.17 14:50 改版）</span><span style="margin-left:auto;font-size:11px;font-weight:900;color:#4ade80;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);border-radius:999px;padding:2px 10px;white-space:nowrap;">精確動態規劃向聽</span></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.19 00:00 改版）</span><span style="margin-left:auto;font-size:11px;font-weight:900;color:#4ade80;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);border-radius:999px;padding:2px 10px;white-space:nowrap;">精確動態規劃向聽</span></div>'
       + '<div class="tw16-lobby-title">台灣麻將 Ably 連線 / 單機</div>'
       + '<div class="tw16-lobby-sub">★連線對戰：<br><span style="color:#ef4444">每人都要設同房名</span>，設好房名後<br>1人先按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">建立房間</span><br>其餘人按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">加入房間</span><br>★單人：按<span style="background:#15803d;color:#fff;border-radius:3px;padding:0 3px;">直接離線開始</span></div>'
       + '<div class="tw16-lobby-grid">'
@@ -6562,6 +6895,19 @@ html body .app.perspective3d .discardSeat .tile::before {
     const keySheetLoadFile = byId('tw16LobbyKeySheetLoadFile');
     const hostBtn = byId('tw16LobbyHost');
     const guestBtn = byId('tw16LobbyGuest');
+    const roomInput = byId('tw16LobbyRoom');
+    const updateHostButtonState = () => {
+      const canCreateRoom = !!roomValue();
+      if (hostBtn) {
+        hostBtn.disabled = !canCreateRoom;
+        hostBtn.setAttribute('aria-disabled', canCreateRoom ? 'false' : 'true');
+      }
+      if (guestBtn) {
+        guestBtn.disabled = !canCreateRoom;
+        guestBtn.setAttribute('aria-disabled', canCreateRoom ? 'false' : 'true');
+      }
+    };
+    window.tw16UpdateLobbyHostButtonState = updateHostButtonState;
     const offlineBtn = byId('tw16LobbyOffline');
     renderLobbyAblyApiKeyCandidates(false);
     renderLobbyAblyKeyUseStatusBox();
@@ -6576,6 +6922,12 @@ html body .app.perspective3d .discardSeat .tile::before {
     if (editAblyKeyBtn) editAblyKeyBtn.addEventListener('click', () => editLobbyAblyApiKey());
     if (localAblyKeyBtn) localAblyKeyBtn.addEventListener('click', () => openLobbyAblyApiKeySheetFilePicker());
     if (keySheetLoadFile) keySheetLoadFile.addEventListener('change', () => handleLobbyAblyApiKeySheetLocalFile(keySheetLoadFile.files && keySheetLoadFile.files[0]));
+    updateHostButtonState();
+    if (roomInput) {
+      ['input','change','keyup','compositionend','paste','blur'].forEach(evt => {
+        roomInput.addEventListener(evt, () => setTimeout(updateHostButtonState, 0));
+      });
+    }
     if (hostBtn) hostBtn.addEventListener('click', async () => {
       saveLastInputs();
       applyLobbyTableModeSelection();
@@ -6711,6 +7063,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     const lobby = byId('tw16Lobby');
     if (lobby) lobby.hidden = false;
     try { const savedName=localStorage.getItem('tw16_last_player_name'),savedRoom=localStorage.getItem('tw16_last_room_name'),nEl=byId('tw16LobbyName'),rEl=byId('tw16LobbyRoom'); if(nEl&&savedName)nEl.value=savedName; if(rEl&&savedRoom)rEl.value=savedRoom; } catch(e){}
+    if (typeof window.tw16UpdateLobbyHostButtonState === 'function') window.tw16UpdateLobbyHostButtonState();
     const cb = byId('tw16ChatBoard'); if (cb) cb.style.display = 'none';
     const md = dom.tw16MiniDashboard || byId('tw16MiniDashboard'); if (md) md.style.setProperty('display','none','important');
     const cs = document.querySelector('.tw16-mini-dashboard-chip-sum'); if (cs) cs.remove();
@@ -6744,6 +7097,32 @@ html body .app.perspective3d .discardSeat .tile::before {
       document.body.appendChild(dash);
       dom.tw16MiniDashboard = dash;
       dom.tw16MiniDashboardGrid = byId('tw16MiniDashboardGrid');
+      dom.tw16AiSuggestionToggleMini = byId('tw16AiSuggestionToggleMini');
+      if (dom.tw16AiSuggestionToggleMini) {
+        dom.tw16AiSuggestionToggleMini.addEventListener('click', function(ev) {
+          if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+          ensureUiSettings();
+          state.uiSettings.aiSuggestionEnabled = state.uiSettings.aiSuggestionEnabled === false;
+          saveUiSettings();
+          if (isOnlineGuest()) try {
+            const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || 'null') || {};
+            _gl.aiSuggestionEnabled = state.uiSettings.aiSuggestionEnabled;
+            _gl.turnHandFrameEnabled = state.uiSettings.turnHandFrameEnabled;
+            _gl.tingAssistEnabled = state.uiSettings.tingAssistEnabled;
+            _gl.miniDashboardEnabled = state.uiSettings.miniDashboardEnabled;
+            localStorage.setItem('tw16GuestUiLocal', JSON.stringify(_gl));
+          } catch(e) {}
+          updateAiSuggestionMiniToggle();
+          renderStrategySuggestion();
+        }, { capture: true });
+      }
+      dom.tw16DebugPauseToggle = byId('tw16DebugPauseToggle');
+      if (dom.tw16DebugPauseToggle) {
+        dom.tw16DebugPauseToggle.addEventListener('click', function(ev) {
+          if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+          requestDebugPauseToggle(!isTileManagementPausingGame());
+        }, { capture: true });
+      }
       /* 大廳顯示時自動隱藏迷你儀表板 */
       const updateDashVisibility = () => {
         const lobby = byId('tw16Lobby');
@@ -6916,6 +7295,7 @@ html body .app.perspective3d .discardSeat .tile::before {
     state.uiSettings.avatarEnabled = !!state.uiSettings.avatarEnabled;
     state.uiSettings.voiceEventEnabled = !!state.uiSettings.voiceEventEnabled;
     state.uiSettings.perspective3d = !!state.uiSettings.perspective3d;
+    if (!['exact','greedy'].includes(state.uiSettings.aiMode)) state.uiSettings.aiMode = 'exact';
     const scoreBaseChip = Number(state.uiSettings.scoreBaseChip);
     const scoreTaiChip = Number(state.uiSettings.scoreTaiChip);
     state.uiSettings.scoreBaseChip = Number.isFinite(scoreBaseChip) ? Math.round(clampNumber(0, scoreBaseChip, 999999)) : GAME_RULES.scoreBaseChip;
@@ -6925,7 +7305,7 @@ html body .app.perspective3d .discardSeat .tile::before {
 
 
   function defaultUiSettingsObject() {
-    return { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: GAME_RULES.scoreBaseChip, scoreTaiChip: GAME_RULES.scoreTaiChip };
+    return { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, aiSuggestionEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: GAME_RULES.scoreBaseChip, scoreTaiChip: GAME_RULES.scoreTaiChip, aiMode: 'exact' };
   }
 
   function applyGuestJoinDefaultSettings(reason) {
@@ -6934,13 +7314,13 @@ html body .app.perspective3d .discardSeat .tile::before {
     let changed = false;
     try {
       const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || 'null');
-      ['turnHandFrameEnabled', 'tingAssistEnabled', 'miniDashboardEnabled'].forEach(function(_k) {
+      ['turnHandFrameEnabled', 'tingAssistEnabled', 'aiSuggestionEnabled', 'miniDashboardEnabled'].forEach(function(_k) {
         if (_gl && _gl[_k] !== undefined) {
           if (state.uiSettings[_k] !== _gl[_k]) { state.uiSettings[_k] = _gl[_k]; changed = true; }
         } else if (state.uiSettings[_k] !== true) { state.uiSettings[_k] = true; changed = true; }
       });
     } catch(e) {
-      ['turnHandFrameEnabled', 'tingAssistEnabled', 'miniDashboardEnabled'].forEach(function(_k) {
+      ['turnHandFrameEnabled', 'tingAssistEnabled', 'aiSuggestionEnabled', 'miniDashboardEnabled'].forEach(function(_k) {
         if (state.uiSettings[_k] !== true) { state.uiSettings[_k] = true; changed = true; }
       });
     }
@@ -8391,6 +8771,20 @@ function loadUiSettings() {
     return !!tileManagementPause.active;
   }
 
+  function requestDebugPauseToggle(enabled) {
+    const seat = localHumanSeat() || state.viewSeat || '';
+    if (isOnlineGuest()) {
+      publishNetworkIntent({ action: 'debugPause', enabled: !!enabled });
+      state.debugPauseBy = enabled ? seat : '';
+    } else {
+      state.debugPauseBy = enabled ? seat : '';
+      if (isOnlineHost()) publishHostActionState('debug-pause-toggle');
+    }
+    if (enabled) pauseGameForTileManagement('debug-pause-toggle');
+    else resumeGameAfterTileManagement('debug-pause-toggle');
+    updateDebugPauseToggle();
+  }
+
   function pauseGameForTileManagement(reason) {
     if (state.ended) return false;
     const now = Date.now();
@@ -8666,6 +9060,7 @@ function loadUiSettings() {
       phase: state.phase,
       pending: state.pending,
       actionDeadlineAt: state.actionDeadlineAt,
+      debugPauseBy: state.debugPauseBy,
       wall: state.wall,
       physicalWall: state.physicalWall,
       openingDeal: state.openingDeal,
@@ -8696,7 +9091,7 @@ function loadUiSettings() {
   }
 
   const NETWORK_STATE_KEY_PACK = {
-    handId: 'h', windRound: 'wr', handNo: 'hn', dealerRepeat: 'dr', kongsThisHand: 'kh', dealer: 'd', viewSeat: 'v', turn: 't', phase: 'p', pending: 'pd', actionDeadlineAt: 'ad',
+    handId: 'h', windRound: 'wr', handNo: 'hn', dealerRepeat: 'dr', kongsThisHand: 'kh', dealer: 'd', viewSeat: 'v', turn: 't', phase: 'p', pending: 'pd', actionDeadlineAt: 'ad', debugPauseBy: 'dpb',
     wall: 'w', physicalWall: 'pw', openingDeal: 'od', fixedSeatLabelStyles: 'fs', labelPositionsLocked: 'lp', hands: 'hs', melds: 'm', flowers: 'f',
     discards: 'ds', chips: 'c', scoreUnits: 'su', scoreChipSettings: 'sc', handVisualColors: 'vc', seatAutoPlay: 'ap', declaredTing: 'dt', activeDrawnTileIds: 'di', voiceEvents: 've', nextRoundPlan: 'nr', lastSettlement: 'ls', winHistory: 'wh', lastActionId: 'la', ended: 'e', locked: 'lk', lockedAt: 'lt', tableMode: 'tm'
   };
@@ -9173,7 +9568,7 @@ function loadUiSettings() {
     Object.keys(incoming).forEach(key => {
       state[key] = incoming[key];
     });
-    if (isOnlineGuest()) try { const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || 'null'); if (_gl && state.uiSettings) ['turnHandFrameEnabled','tingAssistEnabled','miniDashboardEnabled'].forEach(k => { if (_gl[k] !== undefined) state.uiSettings[k] = _gl[k]; }); } catch(e) {}
+    if (isOnlineGuest()) try { const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || 'null'); if (_gl && state.uiSettings) ['turnHandFrameEnabled','tingAssistEnabled','aiSuggestionEnabled','miniDashboardEnabled'].forEach(k => { if (_gl[k] !== undefined) state.uiSettings[k] = _gl[k]; }); } catch(e) {}
     if (isOnlineGuest()) {
       try {
         SEATS.forEach(function(seat, idx) {
@@ -9748,6 +10143,11 @@ function loadUiSettings() {
           renderAll();
           if (state.seatAutoPlay[seat]) scheduleDriveSeat('remote-autoplay');
         }
+        break;
+      case 'debugPause':
+        accepted = msg.enabled ? pauseGameForTileManagement('remote-debug-pause') : resumeGameAfterTileManagement('remote-debug-pause');
+        if (accepted) state.debugPauseBy = msg.enabled ? seat : '';
+        renderAll();
         break;
       case 'broadcast':
         addLog('廣播 ' + SEAT_NAME[seat] + '：' + String(msg.text || '').slice(0, 60));
@@ -11683,16 +12083,13 @@ function loadUiSettings() {
       return tw16SuitShantenDP(c9);
     });
     groups.push(tw16HonorShantenOpts(counts));
-    let sevenSh = 99;
-    if (need === 5) {
-      const pairs = Object.keys(counts).filter(k => (counts[k] || 0) >= 2).length;
-      sevenSh = Math.max(0, 6 - pairs);
-    }
     let best = need * 2 + 1;
     function dp(idx, m, p, usedPair) {
       if (idx === 4) {
-        const adjP = Math.min(p, need - m + (usedPair ? 0 : 1));
-        const sh = Math.max(-1, need * 2 - m * 2 - adjP - usedPair);
+        const adjP = Math.min(p, need - m);
+        const deficitSets = Math.max(0, need - m - adjP);
+        const tilesNeeded = deficitSets * 2 + adjP + (usedPair ? 0 : 1);
+        const sh = Math.max(-1, tilesNeeded - 1);
         if (sh < best) best = sh;
         return;
       }
@@ -11702,7 +12099,7 @@ function loadUiSettings() {
       }
     }
     dp(0, 0, 0, 0);
-    return Math.min(best, sevenSh);
+    return best;
   }
 
   const TW16_WIN_SUITS = ['m','p','s'];
@@ -12239,7 +12636,7 @@ function loadUiSettings() {
     return completeOwnKong(option, source);
   }
 
-  const TW16_SMART_AI_MONTE_CARLO_SAMPLES = 12;
+  const TW16_SMART_AI_MONTE_CARLO_SAMPLES = 40;
   let tw16MonteCarloPoolCache = { key: '', pool: [] };  // pool 快取，同一局面只建一次
   let tw16VisibleCountCache = null;        // ① 每回合 visibleCount 快取
   let tw16StrategyContextKeyCache = null;  // ② 每回合 strategy context key 快取
@@ -12392,15 +12789,6 @@ function loadUiSettings() {
       sevenPairsShanten: 99,
       isSevenPairsPath: false,
     };
-    if (need === 5 && clean.length === 13) {
-      const sevenShanten = Math.max(0, 6 - pairs);
-      best.sevenPairsShanten = sevenShanten;
-      if (sevenShanten < shanten) {
-        best.shanten = sevenShanten;
-        best.isSevenPairsPath = true;
-        best.value = Math.max(best.value, (need - sevenShanten) * 100 + pairs * 40);
-      }
-    }
     tw16SmartShapeCache.set(key, best);
     return best;
   }
@@ -12484,10 +12872,18 @@ function loadUiSettings() {
     return score;
   }
 
+
+  // tw16_ai_discard_shape_fix_20260619: 出牌建議強化孤張判斷；
+  // 同向聽下優先保留已成形順搭，孤張中張/死孤張優先棄出。
   function smartAiTileRoughDiscardValue(code, count, handCounts) {
     if (!code) return 0;
     let score = 0;
-    if (isHonorCode(code)) score += count === 1 ? 14 : -16;
+    const c = count || 1;
+    // 分數越高越傾向棄牌。修正重點：完全孤張的中張（例如 4筒）
+    // 不應因為是中張就被保留；沒有相鄰/間張連結時，應優先於已成形邊張棄出。
+    if (isHonorCode(code)) {
+      score += c === 1 ? 24 : -22;
+    }
     if (isSuitTile(code)) {
       const suit = code[0];
       const n = Number(code.slice(1));
@@ -12495,16 +12891,86 @@ function loadUiSettings() {
       const right1 = (handCounts[suit + (n + 1)] || 0) > 0;
       const left2 = (handCounts[suit + (n - 2)] || 0) > 0;
       const right2 = (handCounts[suit + (n + 2)] || 0) > 0;
-      // 端張進張面少（只能靠同張或一側），單獨時傾向先棄
-      if (n === 1 || n === 9) score += (left1 || right1 || left2 || right2) ? 2 : 10;
-      else if (n === 2 || n === 8) score += 3;
-      else score -= 2;
-      if (left1 || right1) score -= 9;
-      if (left2 || right2) score -= 4;
+      const adjacent = left1 || right1;
+      const gapped = left2 || right2;
+      const bothSide = left1 && right1;
+      const terminal = n === 1 || n === 9;
+      const nearTerminal = n === 2 || n === 8;
+      const middle = n >= 3 && n <= 7;
+      let live = 0;
+      try { live = Math.max(0, countDrawableWaitTiles(code)); } catch (e) { live = 0; }
+
+      if (c === 1) {
+        if (!adjacent && !gapped) {
+          // 完全孤張：中張雖理論進張多，但目前沒有任何牌型支撐，優先棄。
+          score += middle ? 36 : (nearTerminal ? 30 : 24);
+        } else if (!adjacent && gapped) {
+          // 僅有嵌搭/隔二連結，價值低於直接相鄰。
+          score += middle ? 14 : 10;
+        } else {
+          // 相鄰牌代表可形成順子/兩面/邊張，不輕易拆。
+          score -= bothSide ? 34 : 22;
+          if (gapped) score -= 6;
+        }
+        if (terminal && adjacent) score += 4;       // 12 或 89 邊搭略可拆
+        if (nearTerminal && !bothSide) score += 3;
+        if (middle && adjacent) score -= 4;
+        if (!adjacent && live <= 1) score += 6;     // 死孤張更該棄
+      } else {
+        // 對子/刻子通常保留當眼或刻子，不因孤立而亂拆。
+        score -= c === 2 ? 30 : 46;
+        if (c >= 4) score += 12;
+      }
     }
-    if (count >= 2) score -= 24;
-    if (count >= 3) score -= 18;
-    if (count >= 4) score += 10;
+    if (c >= 2) score -= 8;
+    if (c >= 3) score -= 8;
+    return score;
+  }
+
+
+  // tw16_ai_keep_meld_fix_20260619: 防止 AI 為保留孤張而拆掉已完成刻子/順子。
+  // 分數為「加到棄牌候選 score」；負分代表不鼓勵棄該牌。
+  function smartAiCompletedMeldDiscardAdjust(code, handCounts, potential, beforeShape) {
+    if (!code || !handCounts) return 0;
+    const count = handCounts[code] || 0;
+    let score = 0;
+    const beforeShanten = beforeShape && Number.isFinite(beforeShape.shanten) ? beforeShape.shanten : 9;
+    const afterShanten = potential && Number.isFinite(potential.shanten) ? potential.shanten : 9;
+    const improves = afterShanten < beforeShanten;
+    const reachesTing = afterShanten <= 0;
+
+    // 三張剛好成刻：拆掉會從「完整面子」退化為對子，除非能明確進聽/胡牌，否則重罰。
+    if (count === 3) {
+      score -= reachesTing ? 72 : (improves ? 96 : 156);
+    }
+    // 四張同牌：打一張仍留刻子，可作安全/效率選項，不重罰；但避免在可槓路線下過度拆。
+    else if (count >= 4) {
+      score -= reachesTing ? 0 : 10;
+    }
+    // 對子可當將，不輕易拆；但低於刻子保護。
+    else if (count === 2) {
+      score -= reachesTing ? 10 : (improves ? 18 : 38);
+    }
+
+    if (isSuitTile(code)) {
+      const suit = code[0];
+      const n = Number(code.slice(1));
+      const has = x => (handCounts[suit + x] || 0) > 0;
+      let completedSeq = 0;
+      if (n >= 3 && has(n - 2) && has(n - 1)) completedSeq += 1;
+      if (n >= 2 && n <= 8 && has(n - 1) && has(n + 1)) completedSeq += 1;
+      if (n <= 7 && has(n + 1) && has(n + 2)) completedSeq += 1;
+
+      if (completedSeq > 0) {
+        // 若同一張牌也在刻子內，刻子保護已處理；順子保護仍補一點，避免亂拆 123/234/345。
+        score -= completedSeq * (reachesTing ? 14 : (improves ? 22 : 42));
+      }
+
+      // 完全孤張、又不是拆面子時，讓它明顯優先於拆刻子。
+      const isolated = !has(n - 2) && !has(n - 1) && !has(n + 1) && !has(n + 2);
+      if (count === 1 && isolated) score += (n >= 3 && n <= 7) ? 44 : 30;
+    }
+
     return score;
   }
 
@@ -12545,22 +13011,17 @@ function loadUiSettings() {
         waitRemaining += drawable;
         liveRemaining += Math.max(0, countLiveWaitTiles(code, seat));
       }
-      // shanten 高時（≥3）跳過完整 shape 計算，改用快速估算是否值得算進張
-      // 這樣可以大幅減少 O(relevantCodes) × O(pairs) 的計算量
-      if (shape.shanten >= 3) {
-        // 快速估算：只看這張牌是否能形成新搭子
-        const drawable = Math.max(0, countDrawableWaitTiles(code));
-        if (drawable > 0) { effectiveRemaining += drawable; effectiveKinds += 1; }
-        return;
-      }
       const drawShape = smartAiApproxShape(withDraw, concealedSetsNeeded);
       const shantenDrop = shape.shanten - drawShape.shanten;
       const improves = shantenDrop > 0 || (shantenDrop === 0 && drawShape.value > shape.value + 14);
       if (improves) {
         const drawable = Math.max(0, countDrawableWaitTiles(code));
-        const weight = drawShape.shanten <= 0 ? 3 : (shantenDrop >= 2 ? 2 : 1);
+        // 進張的價值要看抽到後「還剩多遠」，不能只看這一步退步多少：
+        // 抽到後已聽牌/胡牌權重最高，還剩越多向聽權重越低，避免鬆散高向聽手牌
+        // 靠「隨便一張都能往前一步」的數量灌分蓋過向聽penalty本身。
+        const weight = drawShape.shanten <= 0 ? 3 : (drawShape.shanten === 1 ? 1.5 : (shantenDrop >= 2 ? 1 : 0.5));
         effectiveRemaining += drawable * weight;
-        if (drawable > 0) effectiveKinds += 1;
+        if (drawable > 0) effectiveKinds += weight;
       }
     });
     const wallLeft = (state.wall || []).length;
@@ -12721,6 +13182,7 @@ function loadUiSettings() {
     const waitScore = Math.min(potential.effectiveKinds || 0, 6) * 1.5 + Math.min(potential.effectiveRemaining || 0, 20) * 0.3;
     score += waitScore * (_anyTing ? 0.7 : 0.9);
     score += smartAiTileRoughDiscardValue(code, handCounts[code] || 1, handCounts);
+    score += smartAiCompletedMeldDiscardAdjust(code, handCounts, potential, _beforeShape);
     score += smartAiSafetyDiscardScore(seat, code);
     score += strategyLibraryDiscardBonus(seat, hand, tileObj);
     score += smartAiMonteCarloDiscardValue(seat, afterCodes, needed, potential, code);
@@ -12757,27 +13219,8 @@ function loadUiSettings() {
     // ⑥ 輸分壓力：領先時更保守（中張懲罰），落後時可以冒險
     const pressure = smartAiScorePressure(seat);
     if (isMiddleTile(code)) score -= pressure.discardRisk;
-    // ⑥ 棄牌訊號意識：優先棄「自己不需要、但讓對手以為危險」的牌型花色
-    // 若手牌已確定走某花色（清一色/混一色路線），故意先棄其他花色讓對手誤判
-    if (!endgame) {
-      const afterSuits = new Set(afterCodes.filter(c => c && isSuitPrefix(c[0])).map(c => c[0]));
-      const afterHonors = afterCodes.filter(c => isHonorCode(c)).length;
-      // 若棄牌後手牌仍只有單一花色（走清/混一色），此棄牌對應的花色是「要丟掉的花色」，正確
-      if (afterSuits.size === 1 && isSuitPrefix(code[0]) && !afterSuits.has(code[0])) {
-        // 棄的是不要的花色，加分（加速收窄手牌訊號，混淆對手）
-        score += 4;
-      }
-      // 對手手牌中某花色已副露多張 → 此花色對他們「看起來安全」，策略上先棄
-      SEATS.forEach(other => {
-        if (other === seat) return;
-        const otherMeldSuits = tw16MeldSuitsCache ? tw16MeldSuitsCache[other] :
-          new Set((state.melds[other] || []).flatMap(m => m.map(t => t.code && t.code[0])).filter(s => s && 'mps'.includes(s)));
-        if (isSuitPrefix(code[0]) && otherMeldSuits.has(code[0]) &&
-            Array.from(otherMeldSuits).filter(s => s === code[0]).length >= 2) {
-          score += 3;
-        }
-      });
-    }
+    // ⑥ 棄牌訊號意識（已移除）：原先嘗試用棄牌花色「誤導」對手判斷，
+    // 屬於缺乏實證效益的推測性心理戰，且會犧牲效率分數，故省略不計分。
     // ④ 吃牌後棄牌優化：筋牌危險感知
     if (isSuitTile(code)) {
       const suit = code[0];
@@ -12796,16 +13239,6 @@ function loadUiSettings() {
           else score -= 3;
         }
       });
-    }
-    if (!_anyTing) {
-      let _lookahead = 0;
-      SEATS.forEach(function(other) {
-        if (other === seat) return;
-        const _om = (state.melds[other] || []).length;
-        const _od = (tw16SeatDiscardSetCache && tw16SeatDiscardSetCache[other]) ? tw16SeatDiscardSetCache[other].size : (state.discards || []).filter(function(d) { return d && d.seat === other; }).length;
-        if (_om >= 2 && _od <= 5) { const _threat = smartAiThreatAwareDiscardRisk(seat, code); if (_threat > 5) _lookahead += _threat * 0.4; }
-      });
-      score -= _lookahead;
     }
     return { id: tileObj && tileObj.id || '', code: code || '', score, idx: index, analysis: potential };
   }
@@ -12970,7 +13403,7 @@ function loadUiSettings() {
     }
 
     // ── 混一色 ───────────────────────────────────────────────────────
-    if (suits.size === 1 && honors.length > 0 && !clean.some(c => isHonorCode(c) === false && clean.filter(d => d[0] === c[0]).length === 0)) {
+    if (suits.size === 1 && honors.length > 0) {
       bonus += 4;
     } else if (suits.size === 1 && honors.length === 0 && meldCount >= 1) {
       // 有副露且全同花色，混一色方向
@@ -13261,13 +13694,13 @@ function loadUiSettings() {
         const n = Number(code.slice(1));
         // ④ 正確判斷聽牌形態：從「摸進此牌後能組哪種順子」的角度判斷
         // 兩面聽：摸進 n，手牌有 n-1 和 n-2（n 作右端）或 n+1 和 n+2（n 作左端）
-        const isTwoSidedLeft = n <= 7 && (counts[suit+(n+1)]||0) > 0 && (counts[suit+(n+2)]||0) > 0;
-        const isTwoSidedRight = n >= 3 && (counts[suit+(n-1)]||0) > 0 && (counts[suit+(n-2)]||0) > 0;
+        const isTwoSidedLeft = n <= 6 && (counts[suit+(n+1)]||0) > 0 && (counts[suit+(n+2)]||0) > 0;
+        const isTwoSidedRight = n >= 4 && (counts[suit+(n-1)]||0) > 0 && (counts[suit+(n-2)]||0) > 0;
         // 嵌張聽：摸進 n，手牌有 n-1 和 n+1（n 作中間）
         const isKanchan = (counts[suit+(n-1)]||0) > 0 && (counts[suit+(n+1)]||0) > 0;
-        // 邊張聽：摸進 1 手有 2,3 或摸進 9 手有 7,8
-        const isEdge = (n === 1 && (counts[suit+'2']||0) > 0 && (counts[suit+'3']||0) > 0) ||
-                       (n === 9 && (counts[suit+'7']||0) > 0 && (counts[suit+'8']||0) > 0);
+        // 邊張聽：手牌有 1,2 只能靠 3（無法靠 0），或手牌有 8,9 只能靠 7（無法靠 10）
+        const isEdge = (n === 3 && (counts[suit+'1']||0) > 0 && (counts[suit+'2']||0) > 0) ||
+                       (n === 7 && (counts[suit+'8']||0) > 0 && (counts[suit+'9']||0) > 0);
         if (isTwoSidedLeft || isTwoSidedRight) score += 8;      // 兩面
         else if (isEdge) score -= 4;                              // 邊張
         else if (isKanchan) score += 1;                           // 嵌張輕微加分
@@ -14017,7 +14450,77 @@ function loadUiSettings() {
       driveSeat(reason);
     }, 10);
   }
+  
+  function normalizeAiMode(mode) {
+    return mode === 'greedy' ? 'greedy' : 'exact';
+  }
+
+  function seatAiMode(seat) {
+    ensureUiSettings();
+    if (state.battle && state.battle.seats && state.battle.seats[seat] && state.battle.seats[seat].aiMode) return normalizeAiMode(state.battle.seats[seat].aiMode);
+    return normalizeAiMode(state.uiSettings && state.uiSettings.aiMode);
+  }
+
   function chooseDiscardTile(seat) {
+    return seatAiMode(seat) === 'greedy' ? chooseGreedyDiscardTile(seat) : chooseExactDiscardTile(seat);
+  }
+
+  function chooseGreedyDiscardTile(seat) {
+    const hand = state.hands[seat] || [];
+    if (!hand.length) return '';
+    const candidates = hand.map((tile, idx) => ({ tile, idx })).filter(x => x.tile && x.tile.id && !isFlower(x.tile.code));
+    if (!candidates.length) return hand[hand.length - 1] && hand[hand.length - 1].id || '';
+    const allCodes = hand.map(t => t && t.code).filter(c => c && !isFlower(c));
+    const countInHand = Object.create(null);
+    allCodes.forEach(c => { countInHand[c] = (countInHand[c] || 0) + 1; });
+    function remainingCount(code) {
+      if (!code) return 0;
+      let visible = countInHand[code] || 0;
+      SEATS.forEach(s => (state.melds[s] || []).forEach(m => (m || []).forEach(t => { if (t && t.code === code) visible++; })));
+      (state.discards || []).forEach(d => { if (d && d.tile && d.tile.code === code) visible++; });
+      return Math.max(0, 4 - visible);
+    }
+    function neighborScore(code) {
+      if (!code || code[0] === 'z') return 0;
+      const n = Number(code.slice(1));
+      const suit = code[0];
+      let s = 0;
+      let adjacent = false;
+      let gapped = false;
+      [-2,-1,1,2].forEach(d => {
+        const k = suit + (n + d);
+        if (countInHand[k]) {
+          if (Math.abs(d) === 1) adjacent = true;
+          if (Math.abs(d) === 2) gapped = true;
+          s += Math.abs(d) === 1 ? 7 : 3;
+        }
+        s += remainingCount(k) * (Math.abs(d) === 1 ? 0.9 : 0.35);
+      });
+      if (!adjacent && !gapped) s -= (n >= 3 && n <= 7) ? 18 : 12;
+      else if (!adjacent && gapped) s -= 6;
+      if (n === 1 || n === 9) s -= 2;
+      if (n === 2 || n === 8) s -= .8;
+      return s;
+    }
+    let best = null;
+    candidates.forEach(({tile, idx}) => {
+      const code = tile.code;
+      const dup = countInHand[code] || 0;
+      let keep = 0;
+      keep += dup >= 3 ? 28 : dup === 2 ? 15 : 0;
+      keep += neighborScore(code);
+      keep += remainingCount(code) * 0.45;
+      if (state.declaredTing && Object.keys(state.declaredTing).some(o => o !== seat && state.declaredTing[o])) {
+        const seenByOpp = (state.discards || []).some(d => d && d.tile && d.tile.code === code);
+        if (seenByOpp) keep -= 7;
+      }
+      const discardScore = -keep + idx * 0.01;
+      if (!best || discardScore > best.score) best = { id: tile.id, score: discardScore };
+    });
+    return best ? best.id : (candidates[0] && candidates[0].tile.id || '');
+  }
+
+function chooseExactDiscardTile(seat) {
     const hand = state.hands[seat] || [];
     if (!hand.length) return '';
     if (state.openingDeal && state.openingDeal.active) return '';
@@ -14746,6 +15249,261 @@ function loadUiSettings() {
   }
 
 
+
+  function ensureBattleState() {
+    if (!state.battle || typeof state.battle !== 'object') state.battle = {};
+    const b = state.battle;
+    b.enabled = !!b.enabled;
+    b.startedAt = Number(b.startedAt) || 0;
+    b.handsAtStart = Number(b.handsAtStart) || 0;
+    b.redWins = Number(b.redWins) || 0;
+    b.greenWins = Number(b.greenWins) || 0;
+    b.drawHands = Number(b.drawHands) || 0;
+    b.initialRedChips = Number(b.initialRedChips) || 0;
+    b.initialGreenChips = Number(b.initialGreenChips) || 0;
+    b.lastHandId = Number(b.lastHandId) || 0;
+    b.statsCollapsed = !!b.statsCollapsed;
+    if (!b.statsPos || typeof b.statsPos !== 'object') b.statsPos = null;
+    if (b.statsPos) {
+      b.statsPos.left = Math.max(0, Number(b.statsPos.left) || 0);
+      b.statsPos.top = Math.max(0, Number(b.statsPos.top) || 0);
+    }
+    if (!b.seats || typeof b.seats !== 'object') b.seats = {};
+    SEATS.forEach((seat, idx) => {
+      if (!b.seats[seat] || typeof b.seats[seat] !== 'object') b.seats[seat] = {};
+      if (!['red','green'].includes(b.seats[seat].team)) b.seats[seat].team = idx % 2 === 0 ? 'red' : 'green';
+      b.seats[seat].aiMode = normalizeAiMode(b.seats[seat].aiMode || (idx % 2 === 0 ? 'exact' : 'greedy'));
+    });
+    return b;
+  }
+
+
+  function saveBattleConfig() {
+    try { localStorage.setItem('tw16BattleConfig', JSON.stringify(ensureBattleState())); } catch(e) {}
+  }
+
+  function applyBattleStatsPosition(el) {
+    const b = ensureBattleState();
+    if (!el) return;
+    if (b.statsPos && Number.isFinite(Number(b.statsPos.left)) && Number.isFinite(Number(b.statsPos.top))) {
+      const maxLeft = Math.max(0, window.innerWidth - el.offsetWidth - 4);
+      const maxTop = Math.max(0, window.innerHeight - el.offsetHeight - 4);
+      const left = Math.min(maxLeft, Math.max(4, Number(b.statsPos.left) || 4));
+      const top = Math.min(maxTop, Math.max(4, Number(b.statsPos.top) || 4));
+      el.style.left = left + 'px';
+      el.style.top = top + 'px';
+      el.style.right = 'auto';
+      el.style.bottom = 'auto';
+    } else {
+      el.style.left = '';
+      el.style.top = '';
+      el.style.right = '';
+      el.style.bottom = '';
+    }
+  }
+
+  function initBattleStatsDrag(el) {
+    if (!el || el.dataset.dragReady === '1') return;
+    el.dataset.dragReady = '1';
+    let drag = null;
+    const finish = ev => {
+      if (!drag) return;
+      try { if (el.releasePointerCapture && ev && ev.pointerId != null) el.releasePointerCapture(ev.pointerId); } catch(e) {}
+      el.classList.remove('dragging');
+      drag = null;
+      saveBattleConfig();
+    };
+    el.addEventListener('pointerdown', ev => {
+      if (!ev || ev.button && ev.button !== 0) return;
+      if (ev.target && ev.target.closest && ev.target.closest('.tw16-battle-stats-toggle')) return;
+      if (ev.target && ev.target.closest && !ev.target.closest('.tw16-battle-stats-head') && !el.classList.contains('collapsed')) return;
+      const rect = el.getBoundingClientRect();
+      drag = { pointerId: ev.pointerId, startX: ev.clientX, startY: ev.clientY, left: rect.left, top: rect.top };
+      el.style.left = rect.left + 'px';
+      el.style.top = rect.top + 'px';
+      el.style.right = 'auto';
+      el.style.bottom = 'auto';
+      el.classList.add('dragging');
+      try { if (el.setPointerCapture && ev.pointerId != null) el.setPointerCapture(ev.pointerId); } catch(e) {}
+      ev.preventDefault();
+      ev.stopPropagation();
+    }, { passive:false });
+    el.addEventListener('pointermove', ev => {
+      if (!drag || ev.pointerId !== drag.pointerId) return;
+      const maxLeft = Math.max(0, window.innerWidth - el.offsetWidth - 4);
+      const maxTop = Math.max(0, window.innerHeight - el.offsetHeight - 4);
+      const left = Math.min(maxLeft, Math.max(4, drag.left + ev.clientX - drag.startX));
+      const top = Math.min(maxTop, Math.max(4, drag.top + ev.clientY - drag.startY));
+      el.style.left = left + 'px';
+      el.style.top = top + 'px';
+      const b = ensureBattleState();
+      b.statsPos = { left, top };
+      ev.preventDefault();
+      ev.stopPropagation();
+    }, { passive:false });
+    el.addEventListener('pointerup', finish);
+    el.addEventListener('pointercancel', finish);
+  }
+
+  function openBattlePanel() {
+    ensureBattleState();
+    if (dom.resultPanel) { dom.resultPanel.classList.remove('settlement-open','history-open','utility-open'); dom.resultPanel.classList.add('menu-open'); }
+    const b = state.battle;
+    const row = seat => {
+      const cfg = b.seats[seat];
+      return '<div class="tw16-battle-seat-title">' + escapeHtml(SEAT_NAME[seat]) + '</div>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
+        + '<select id="battleTeam_' + seat + '"><option value="red"' + (cfg.team === 'red' ? ' selected' : '') + '>紅隊（攻）</option><option value="green"' + (cfg.team === 'green' ? ' selected' : '') + '>綠隊（守）</option></select>'
+        + '<select id="battleAi_' + seat + '"><option value="exact"' + (cfg.aiMode === 'exact' ? ' selected' : '') + '>精確AI</option><option value="greedy"' + (cfg.aiMode === 'greedy' ? ' selected' : '') + '>貪心AI</option></select>'
+        + '</div>';
+    };
+    dom.resultTitle.textContent = '對戰功能';
+    dom.resultText.innerHTML = '<div class="tw16-battle-grid">' + SEATS.map(row).join('') + '</div>'
+      + '<div class="menuGrid"><button class="btn" id="battleStartBtn">啟動對戰</button><button class="btn red" id="battleStopBtn">停止對戰</button>' + menuBackButtonHtml() + '</div>'
+      + '<div class="tw16-battle-note">啟動後四家自動托管，依各座位設定使用精確或貪心 AI，右下角會顯示對戰統計窗。</div>';
+    dom.resultNewBtn.style.display = 'none';
+    dom.resultCloseBtn.textContent = '關閉';
+    centerUtilityPanel();
+    dom.resultPanel.classList.add('show');
+    dom.resultText.querySelectorAll('[data-menu]').forEach(btn => btn.addEventListener('click', () => handleMenuAction(btn.dataset.menu)));
+    const save = () => {
+      ensureBattleState();
+      SEATS.forEach(seat => {
+        const t = byId('battleTeam_' + seat);
+        const a = byId('battleAi_' + seat);
+        state.battle.seats[seat].team = t && t.value === 'green' ? 'green' : 'red';
+        state.battle.seats[seat].aiMode = a && a.value === 'greedy' ? 'greedy' : 'exact';
+      });
+      saveBattleConfig();
+    };
+    SEATS.forEach(seat => {
+      const t = byId('battleTeam_' + seat); if (t) t.addEventListener('change', save);
+      const a = byId('battleAi_' + seat); if (a) a.addEventListener('change', save);
+    });
+    const start = byId('battleStartBtn');
+    if (start) start.addEventListener('click', () => { save(); startBattleMode(); });
+    const stop = byId('battleStopBtn');
+    if (stop) stop.addEventListener('click', () => { stopBattleMode(); });
+  }
+
+  function loadBattleConfig() {
+    ensureBattleState();
+    try {
+      const saved = JSON.parse(localStorage.getItem('tw16BattleConfig') || 'null');
+      if (saved && saved.seats) {
+        SEATS.forEach(seat => {
+          if (saved.seats[seat]) {
+            state.battle.seats[seat].team = saved.seats[seat].team === 'green' ? 'green' : 'red';
+            state.battle.seats[seat].aiMode = saved.seats[seat].aiMode === 'greedy' ? 'greedy' : 'exact';
+          }
+        });
+        state.battle.statsCollapsed = !!saved.statsCollapsed;
+        if (saved.statsPos && typeof saved.statsPos === 'object') {
+          state.battle.statsPos = { left: Number(saved.statsPos.left) || 0, top: Number(saved.statsPos.top) || 0 };
+        }
+      }
+    } catch(e) {}
+  }
+
+  function startBattleMode() {
+    loadBattleConfig();
+    const b = ensureBattleState();
+    b.enabled = true;
+    b.startedAt = Date.now();
+    b.handsAtStart = state.stats && Number(state.stats.hands) || 0;
+    b.redWins = 0; b.greenWins = 0; b.drawHands = 0; b.lastHandId = 0;
+    const battleInitialSum = team => SEATS.filter(seat => b.seats[seat].team === team).reduce((total, seat) => total + (Number(state.chips && state.chips[seat]) || 0), 0);
+    b.initialRedChips = battleInitialSum('red');
+    b.initialGreenChips = battleInitialSum('green');
+    SEATS.forEach(seat => setSeatAutoplay(seat, true, 'battle-start'));
+    clearTurnDeadline();
+    closeUtilityPanel();
+    ensureBattleStatsWindow();
+    updateBattleStatsWindow();
+    addLog('自動對戰啟動');
+    renderAll();
+    if (state.ended || !state.hands || !Object.keys(state.hands).length) newGame();
+    else scheduleDriveSeat('battle-start');
+  }
+
+  function stopBattleMode() {
+    ensureBattleState().enabled = false;
+    SEATS.forEach(seat => setSeatAutoplay(seat, seat !== state.viewSeat, 'battle-stop'));
+    updateBattleStatsWindow();
+    addLog('自動對戰停止');
+    closeUtilityPanel();
+    renderAll();
+  }
+
+  function ensureBattleStatsWindow() {
+    let el = byId('tw16BattleStats');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'tw16BattleStats';
+      el.className = 'tw16-battle-stats';
+      document.body.appendChild(el);
+    }
+    initBattleStatsDrag(el);
+    applyBattleStatsPosition(el);
+    return el;
+  }
+
+  function updateBattleCountersFromSettlement() {
+    const b = ensureBattleState();
+    const s = state.lastSettlement;
+    if (!b.enabled || !s || !s.id || b.lastSettlementId === s.id) return;
+    b.lastSettlementId = s.id;
+    const winner = s.winner || s.winSeat || s.seat || '';
+    if (winner && b.seats[winner]) {
+      if (b.seats[winner].team === 'red') b.redWins += 1;
+      else b.greenWins += 1;
+    } else if (s.type === 'draw' || !winner) b.drawHands += 1;
+  }
+
+  function updateBattleStatsWindow() {
+    const b = ensureBattleState();
+    const el = ensureBattleStatsWindow();
+    if (!b.enabled) { el.classList.remove('show'); return; }
+    updateBattleCountersFromSettlement();
+    const redSeats = SEATS.filter(s => b.seats[s].team === 'red');
+    const greenSeats = SEATS.filter(s => b.seats[s].team === 'green');
+    const sum = seats => seats.reduce((n, s) => n + (Number(state.chips && state.chips[s]) || 0), 0);
+    const redChips = sum(redSeats);
+    const greenChips = sum(greenSeats);
+    if (!b.initialRedChips && !b.initialGreenChips) {
+      b.initialRedChips = redChips;
+      b.initialGreenChips = greenChips;
+    }
+    const redDelta = redChips - (Number(b.initialRedChips) || 0);
+    const greenDelta = greenChips - (Number(b.initialGreenChips) || 0);
+    const fmtDelta = n => n > 0 ? '+' + String(n) : String(n);
+    const deltaClass = n => n > 0 ? 'plus' : n < 0 ? 'minus' : 'zero';
+    const deltaHtml = n => n === 0 ? '' : '<span class="tw16-battle-delta ' + deltaClass(n) + '">(' + fmtDelta(n) + ')</span>';
+    const leadDiff = redChips - greenChips;
+    const leadText = leadDiff > 0 ? '紅隊 +' + leadDiff : leadDiff < 0 ? '綠隊 +' + Math.abs(leadDiff) : '平手';
+    const hands = Math.max(0, (state.stats && Number(state.stats.hands) || 0) - (Number(b.handsAtStart) || 0));
+    el.innerHTML = '<div class="tw16-battle-stats-head"><div class="tw16-battle-stats-title">自動對戰統計</div><button type="button" class="tw16-battle-stats-toggle" id="tw16BattleStatsToggle">' + (b.statsCollapsed ? '打開' : '縮小') + '</button></div>'
+      + '<div class="tw16-battle-stats-row"><span>局數</span><b>' + hands + '</b></div>'
+      + '<div class="tw16-battle-stats-row tw16-battle-red"><span>紅隊勝局</span><b>' + b.redWins + '</b></div>'
+      + '<div class="tw16-battle-stats-row tw16-battle-green"><span>綠隊勝局</span><b>' + b.greenWins + '</b></div>'
+      + '<div class="tw16-battle-stats-row"><span>流局</span><b>' + b.drawHands + '</b></div>'
+      + '<div class="tw16-battle-stats-row tw16-battle-red"><span>紅隊籌碼</span><b>' + redChips + (redDelta === 0 ? '' : ' ' + deltaHtml(redDelta)) + '</b></div>'
+      + '<div class="tw16-battle-stats-row tw16-battle-green"><span>綠隊籌碼</span><b>' + greenChips + (greenDelta === 0 ? '' : ' ' + deltaHtml(greenDelta)) + '</b></div>'
+      + '<div class="tw16-battle-stats-row tw16-battle-leader"><span>目前領先</span><b>' + leadText + '</b></div>'
+      + '<div class="tw16-battle-stats-row"><span>目前AI</span><b>' + escapeHtml(SEAT_NAME[state.turn] || '') + '：' + (seatAiMode(state.turn) === 'greedy' ? '貪心' : '精確') + '</b></div>';
+    el.classList.toggle('collapsed', !!b.statsCollapsed);
+    initBattleStatsDrag(el);
+    applyBattleStatsPosition(el);
+    el.classList.add('show');
+    const toggle = byId('tw16BattleStatsToggle');
+    if (toggle) toggle.onclick = function(ev) {
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      ensureBattleState().statsCollapsed = !ensureBattleState().statsCollapsed;
+      saveBattleConfig();
+      updateBattleStatsWindow();
+    };
+  }
+
   function openSettingsPanel() {
     ensureUiSettings();
     if (dom.resultPanel) {
@@ -14763,6 +15521,7 @@ function loadUiSettings() {
       + '<label class="settingsRow"><span>螢幕常亮</span><input id="setScreenWakeLockEnabled" type="checkbox" ' + (state.uiSettings.screenWakeLockEnabled ? 'checked' : '') + '><b></b></label>'
       + '<label class="settingsRow"><span>輪到出牌時顯示手牌金框</span><input id="setTurnHandFrameEnabled" type="checkbox" ' + (state.uiSettings.turnHandFrameEnabled ? 'checked' : '') + '><b></b></label>'
       + '<label class="settingsRow"><span>聽牌輔助</span><input id="setTingAssistEnabled" type="checkbox" ' + (state.uiSettings.tingAssistEnabled ? 'checked' : '') + '><b></b></label>'
+      + '<label class="settingsRow"><span>AI方式</span><select id="setAiMode"><option value="exact"' + (state.uiSettings.aiMode === 'exact' ? ' selected' : '') + '>精確</option><option value="greedy"' + (state.uiSettings.aiMode === 'greedy' ? ' selected' : '') + '>貪心</option></select><b></b></label>'
       + '<label class="settingsRow"><span>顯示迷你儀表板</span><input id="setMiniDashboardEnabled" type="checkbox" ' + (state.uiSettings.miniDashboardEnabled ? 'checked' : '') + '><b></b></label>'
       + '<label class="settingsRow"><span>顯示座位頭像</span><input id="setAvatarEnabled" type="checkbox" ' + (state.uiSettings.avatarEnabled !== false ? 'checked' : '') + '><b></b></label>'
       + '<div class="menuGrid"><button class="btn" id="settingsApplyBtn">套用</button><button class="btn red" id="settingsDefaultBtn">恢復預設</button></div>'
@@ -14803,8 +15562,10 @@ function loadUiSettings() {
       state.uiSettings.screenWakeLockEnabled = !!byId('setScreenWakeLockEnabled').checked;
       state.uiSettings.turnHandFrameEnabled = !!byId('setTurnHandFrameEnabled').checked;
       state.uiSettings.tingAssistEnabled = !!byId('setTingAssistEnabled').checked;
+      if (byId('setAiMode')) state.uiSettings.aiMode = byId('setAiMode').value === 'greedy' ? 'greedy' : 'exact';
+      if (byId('setAiSuggestionEnabled')) state.uiSettings.aiSuggestionEnabled = !!byId('setAiSuggestionEnabled').checked;
       state.uiSettings.miniDashboardEnabled = !!byId('setMiniDashboardEnabled').checked;
-      if (isOnlineGuest()) try { localStorage.setItem('tw16GuestUiLocal', JSON.stringify({ turnHandFrameEnabled: state.uiSettings.turnHandFrameEnabled, tingAssistEnabled: state.uiSettings.tingAssistEnabled, miniDashboardEnabled: state.uiSettings.miniDashboardEnabled })); } catch(e) {}
+      if (isOnlineGuest()) try { localStorage.setItem('tw16GuestUiLocal', JSON.stringify({ turnHandFrameEnabled: state.uiSettings.turnHandFrameEnabled, tingAssistEnabled: state.uiSettings.tingAssistEnabled, aiSuggestionEnabled: state.uiSettings.aiSuggestionEnabled, miniDashboardEnabled: state.uiSettings.miniDashboardEnabled })); } catch(e) {}
       state.uiSettings.avatarEnabled = byId('setAvatarEnabled') ? !!byId('setAvatarEnabled').checked : false;
       const nameInput = byId('setPlayerName');
       if (nameInput) applyLocalPlayerName(nameInput.value, 'settings-apply');
@@ -15385,6 +16146,7 @@ function loadUiSettings() {
     dom.resultTitle.textContent = '選單';
     dom.resultText.innerHTML = '<div class="menuGrid">'
       + '<button class="btn" data-menu="settings">設定</button>'
+      + '<button class="btn" data-menu="battle">對戰功能</button>'
       + '<button class="btn" data-menu="reset-chips"' + resetDisabled + '>重置籌碼</button>'
       + '<button class="btn" data-menu="history">胡牌歷程</button>'
       + '<button class="btn" data-menu="submenu-save">儲存牌局</button>'
@@ -15507,6 +16269,7 @@ function loadUiSettings() {
     if (action === 'tile-skin-db') { pauseGameForTileManagement('tile-skin-db'); showCustomTileSkinDatabasePanel(); return; }
     if (action === 'preview-table-tiles') { showCurrentTableTileImagePreview(); return; }
     if (action === 'clear-tiles') { clearCustomTileImages(); return; }
+    if (action === 'battle') { openBattlePanel(); return; }
     if (action === 'settings') { openSettingsPanel(); return; }
     if (action === 'reset-chips') { if (isOnlineGuest()) { addLog('只有房主可重置籌碼'); openMainMenu(); return; } resetAllChips(); return; }
     if (action === 'stop-run') { stopContinuousRun('手動停止連跑'); return; }
@@ -17746,7 +18509,9 @@ function showIntegrityReport(precomputed) {
     renderLabels(map);
     renderArrow(map);
     renderActionPanel();
+    refreshAiSuggestFloatingLabels();
     updateInterface329Extras(map);
+    updateBattleStatsWindow();
     if (isGuestSyncRequired()) updateGuestSyncStatus('render');
     if (serial !== renderSerial) return;
     ensureAutoDrivenTurn('render');
@@ -17773,12 +18538,14 @@ function showIntegrityReport(precomputed) {
     const grid = dom.tw16MiniDashboardGrid || byId('tw16MiniDashboardGrid');
     if (!dash || !grid) return;
     if (!state.uiSettings || !state.uiSettings.miniDashboardEnabled) {
+      updateAiSuggestionMiniToggle();
+      updateDebugPauseToggle();
       if (dash.classList.contains('show')) dash.classList.remove('show');
       if (dash.getAttribute('aria-hidden') !== 'true') dash.setAttribute('aria-hidden', 'true');
       miniDashboardRenderKey = '';
       return;
     }
-    const renderKey = Number(state.tableMode || 4) + '|' + SEATS.map(seat => [
+    const renderKey = Number(state.tableMode || 4) + '|' + (state.debugPauseBy || '') + '|' + SEATS.map(seat => [
       seat,
       seat === state.turn ? 'active' : '',
       dealerDashboardPrefixText(seat),
@@ -17799,7 +18566,8 @@ function showIntegrityReport(precomputed) {
       SEATS.forEach(seat => {
         const card = document.createElement('div');
         const _deciding = !!(state.pending && pendingHumanSeats(state.pending).includes(seat));
-        card.className = 'tw16-mini-dashboard-card' + (seat === state.turn ? ' active' : '') + (!isSeatActiveInTable(seat) ? ' tw16-mini-dashboard-inactive' : '') + (_deciding ? ' deciding' : '');
+        const _pausedBy = state.debugPauseBy === seat;
+        card.className = 'tw16-mini-dashboard-card' + (seat === state.turn ? ' active' : '') + (!isSeatActiveInTable(seat) ? ' tw16-mini-dashboard-inactive' : '') + (_deciding ? ' deciding' : '') + (_pausedBy ? ' tw16-paused-by-card' : '');
         const name = document.createElement('div');
         name.className = 'tw16-mini-dashboard-seat';
         const dealerPrefix = dealerDashboardPrefixText(seat);
@@ -17821,6 +18589,12 @@ function showIntegrityReport(precomputed) {
           decidingBadge.className = 'tw16-mini-dashboard-deciding';
           decidingBadge.textContent = '吃碰槓聽';
           card.appendChild(decidingBadge);
+        }
+        if (_pausedBy) {
+          const pausedBadge = document.createElement('div');
+          pausedBadge.className = 'tw16-mini-dashboard-paused-by';
+          pausedBadge.textContent = '⏸暫停';
+          card.appendChild(pausedBadge);
         }
         card.dataset.seat = seat;
         if (prevPlus.has(seat)) {
@@ -17857,6 +18631,8 @@ function showIntegrityReport(precomputed) {
     }
     if (!dash.classList.contains('show')) dash.classList.add('show');
     if (dash.getAttribute('aria-hidden') !== 'false') dash.setAttribute('aria-hidden', 'false');
+    updateAiSuggestionMiniToggle();
+    updateDebugPauseToggle();
     refreshMiniDashboardCountdowns();
   }
 
@@ -18356,6 +19132,7 @@ function showIntegrityReport(precomputed) {
       if (shouldDiscard && canBottomSwipeDiscardTile(seat, tileId)) {
         bottomSwipeDiscardSuppressClick.tileId = tileId;
         bottomSwipeDiscardSuppressClick.until = Date.now() + 650;
+        if (isTileManagementPausingGame()) { requestDebugPauseToggle(false); }
         /* 滑動出牌前也檢查是否可以聽牌，若可以則彈出詢問鈕 */
         const tingOpts = getTingOptions(seat);
         const tingOpt = tingOpts.find(opt => opt.discardId === tileId);
@@ -18396,6 +19173,118 @@ function showIntegrityReport(precomputed) {
     return visible;
   }
 
+  function updateAiSuggestionMiniToggle() {
+    const btn = dom.tw16AiSuggestionToggleMini || byId('tw16AiSuggestionToggleMini');
+    if (!btn) return;
+    const enabled = !(state.uiSettings && state.uiSettings.aiSuggestionEnabled === false);
+    btn.textContent = enabled ? '☑AI建議' : '☐AI建議';
+    btn.classList.toggle('off', !enabled);
+    btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+    btn.title = enabled ? '點擊關閉AI建議' : '點擊開啟AI建議';
+  }
+
+  function updateDebugPauseToggle() {
+    const btn = dom.tw16DebugPauseToggle || byId('tw16DebugPauseToggle');
+    if (!btn) return;
+    const paused = isTileManagementPausingGame();
+    btn.textContent = paused ? '已暫停' : '暫停倒計時';
+    btn.classList.toggle('paused', paused);
+    btn.setAttribute('aria-pressed', paused ? 'true' : 'false');
+    btn.title = paused ? '點擊恢復出牌倒計時' : '點擊暫停出牌倒計時';
+    positionDebugPauseToggle();
+  }
+
+  function positionDebugPauseToggle() {
+    const btn = dom.tw16DebugPauseToggle || byId('tw16DebugPauseToggle');
+    const scoreLine = dom.scoreChipLine || byId('scoreChipLine');
+    if (!btn || !scoreLine || !scoreLine.getBoundingClientRect) return;
+    const rect = scoreLine.getBoundingClientRect();
+    if (!rect || (rect.width <= 0 && rect.height <= 0)) return;
+    const box = viewportBox();
+    const btnRect = btn.getBoundingClientRect ? btn.getBoundingClientRect() : null;
+    const btnW = btnRect && btnRect.width ? btnRect.width : 70;
+    const btnH = btnRect && btnRect.height ? btnRect.height : 14;
+    const desiredLeft = rect.right + 5;
+    const desiredTop = rect.top + (rect.height - btnH) / 2;
+    const left = clampLeftInBox(desiredLeft, btnW, box, 4);
+    const top = clampTopInBox(desiredTop, btnH, box, 4);
+    btn.style.setProperty('left', Math.round(left) + 'px', 'important');
+    btn.style.setProperty('top', Math.round(top) + 'px', 'important');
+  }
+  if (typeof window !== 'undefined') {
+    window.tw16RefreshDebugPauseToggle = positionDebugPauseToggle;
+  }
+
+  function renderStrategySuggestion() {
+    clearAiSuggestFloatingLabels();
+    if (typeof renderAll === 'function') {
+      renderAll();
+    }
+  }
+
+  function isAiSuggestionDisplayEnabled() {
+    return !(state.uiSettings && state.uiSettings.aiSuggestionEnabled === false);
+  }
+
+  function getHumanClaimAiAdviceTarget(seat, options, pending) {
+    if (!SEATS.includes(seat)) return null;
+    if (!canLocalHumanOperateSeat(seat)) return null;
+    if (state.seatAutoPlay && state.seatAutoPlay[seat]) return null;
+    if (!pending || (pending.kind !== 'claim' && pending.kind !== 'robkong')) return null;
+    const claimOptions = (Array.isArray(options) ? options : []).filter(option => option && option.seat === seat);
+    if (!claimOptions.length) return null;
+    const discardSeat = pending.discardSeat || pending.kongSeat;
+    const priority = GAME_RULES.claimPriority || {};
+    const scored = claimOptions.map(option => {
+      let verdict = null;
+      try {
+        verdict = option.type === 'win' ? { accept: true, score: 0 } : smartAiClaimCandidateScore(option, discardSeat);
+      } catch (e) {
+        verdict = null;
+      }
+      let taiBonus = 0;
+      if (option.type === 'win') {
+        try {
+          const estDetail = evaluateWinDetails(option.seat, 'ron', discardSeat, pending.tile, {});
+          taiBonus = (estDetail.tai || 1) * 8;
+        } catch (e) {
+          taiBonus = 8;
+        }
+      }
+      const accept = option.type === 'win' || !!(verdict && verdict.accept);
+      const score = (priority[option.type] || 0) + taiBonus + (verdict && Number.isFinite(verdict.score) ? verdict.score : 0);
+      return { option, accept, score };
+    });
+    const accepted = scored.filter(item => item.accept);
+    if (!accepted.length) return { kind: 'skip' };
+    accepted.sort((a, b) => {
+      const s = (b.score || 0) - (a.score || 0);
+      if (s) return s;
+      const dealerDistA = seatDistance(state.dealer, a.option.seat);
+      const dealerDistB = seatDistance(state.dealer, b.option.seat);
+      if (dealerDistA !== dealerDistB) return dealerDistA - dealerDistB;
+      return seatDistance(discardSeat, a.option.seat) - seatDistance(discardSeat, b.option.seat);
+    });
+    return { kind: 'claim', option: accepted[0].option };
+  }
+
+  function isSameClaimAdviceOption(a, b) {
+    return !!(a && b && a.seat === b.seat && a.type === b.type && sameTileIdList(a.tiles || [], b.tiles || []));
+  }
+
+  function createClaimAiAdviceLine(button, skipLine) {
+    if (!isAiSuggestionDisplayEnabled() || !button) return button;
+    /* AI建議標示改為按鈕內的絕對定位浮動標籤：
+       不再新增包裹列、不改 actionPanel 子節點排版、不影響吃碰槓跳過鈕原本位置。 */
+    button.classList.add('actionAiFloatingTarget');
+    if (skipLine) button.classList.add('actionAiFloatingSkipTarget');
+    const advice = document.createElement('span');
+    advice.className = skipLine ? 'claimAiSkipAdvice actionAiFloatingBadge' : 'claimAiBestAdvice actionAiFloatingBadge';
+    advice.textContent = 'AI建議';
+    button.appendChild(advice);
+    return button;
+  }
+
   function renderActionPanel() {
     const mySeat = localHumanSeat();
     if (canKeepTingChoicePanel(mySeat)) return;
@@ -18411,7 +19300,7 @@ function showIntegrityReport(precomputed) {
       newKey = 'selfwin:' + mySeat;
     } else if (pending && (pending.kind === 'claim' || pending.kind === 'robkong')) {
       const opts = pending.candidates.filter(c => canLocalHumanOperateSeat(c.seat));
-      if (opts.length) newKey = 'claim:' + opts.map(o => o.seat + '/' + o.type + '/' + o.label).join(',');
+      if (opts.length) newKey = 'claim:' + opts.map(o => o.seat + '/' + o.type + '/' + o.label).join(',') + ':ai' + (isAiSuggestionDisplayEnabled() ? '1' : '0');
     } else if (state.declaredTing[mySeat] && !state.ended && !pending && state.uiSettings && state.uiSettings.tingAssistEnabled) {
       newKey = 'tingassist:' + mySeat;
     } else if (state.turn === mySeat && canLocalHumanOperateSeat(mySeat) && state.phase === 'discard' && !state.locked && !state.ended) {
@@ -18421,7 +19310,9 @@ function showIntegrityReport(precomputed) {
 
     /* key 相同：panel 內容不變，只重新定位，不重建 DOM */
     if (newKey && newKey === _actionPanelContentKey && dom.actionPanel.classList.contains('action-panel-visible')) {
-      if (pending && (pending.kind === 'claim' || pending.kind === 'robkong' || pending.kind === 'selfwin')) {
+      if (pending && (pending.kind === 'claim' || pending.kind === 'robkong')) {
+        positionClaimActionPanelCentered();
+      } else if (pending && pending.kind === 'selfwin') {
         positionActionPanelNearHand(mySeat);
       } else if (state.declaredTing[mySeat]) {
         if (!positionTingAssistNearHand(mySeat)) positionActionPanelNearHand(mySeat);
@@ -18454,15 +19345,25 @@ function showIntegrityReport(precomputed) {
     if (pending && (pending.kind === 'claim' || pending.kind === 'robkong')) {
       const options = pending.candidates.filter(c => canLocalHumanOperateSeat(c.seat));
       if (!options.length) return;
+      const aiAdviceTarget = isAiSuggestionDisplayEnabled() ? getHumanClaimAiAdviceTarget(mySeat, options, pending) : null;
       options.forEach(option => {
         const tiles = claimOptionTilesForDisplay(option, pending);
-        dom.actionPanel.appendChild(createActionOptionButton(option.label, '', tiles, () => executeClaim(option, 'human')));
+        const optionBtn = createActionOptionButton(option.label, '', tiles, () => executeClaim(option, 'human'));
+        if (aiAdviceTarget && aiAdviceTarget.kind === 'claim' && isSameClaimAdviceOption(aiAdviceTarget.option, option)) {
+          dom.actionPanel.appendChild(createClaimAiAdviceLine(optionBtn, false));
+        } else {
+          dom.actionPanel.appendChild(optionBtn);
+        }
       });
       const skip = createActionOptionButton('跳過', '', null, skipHumanClaim);
       skip.classList.add('gray');
-      dom.actionPanel.appendChild(skip);
+      if (aiAdviceTarget && aiAdviceTarget.kind === 'skip') {
+        dom.actionPanel.appendChild(createClaimAiAdviceLine(skip, true));
+      } else {
+        dom.actionPanel.appendChild(skip);
+      }
       syncActionPanelVisibility();
-      positionActionPanelNearHand(mySeat);
+      positionClaimActionPanelCentered();
       return;
     }
     if (state.declaredTing[mySeat] && !state.ended && !state.pending && state.uiSettings && state.uiSettings.tingAssistEnabled) {
@@ -18586,6 +19487,33 @@ function showIntegrityReport(precomputed) {
     if (!rightHandRect) return viewMaxLeft;
     const limit = rightHandRect.left - Math.max(2, gap) - width;
     return Math.min(viewMaxLeft, limit);
+  }
+
+  function positionClaimActionPanelCentered() {
+    if (!dom.actionPanel || !dom.actionPanel.classList.contains('action-panel-visible')) return false;
+    const box = viewportBox();
+    const pad = 10;
+    dom.actionPanel.style.setProperty('position', 'fixed', 'important');
+    dom.actionPanel.style.setProperty('left', '50%', 'important');
+    dom.actionPanel.style.setProperty('right', 'auto', 'important');
+    dom.actionPanel.style.setProperty('top', '50%', 'important');
+    dom.actionPanel.style.setProperty('bottom', 'auto', 'important');
+    dom.actionPanel.style.setProperty('background', 'rgba(20,20,20,.88)', 'important');
+    dom.actionPanel.style.setProperty('border-radius', '12px', 'important');
+    dom.actionPanel.style.setProperty('padding', '8px 10px', 'important');
+    dom.actionPanel.style.setProperty('max-width', Math.max(120, Math.min(box.width - pad * 2, 320)) + 'px', 'important');
+    dom.actionPanel.style.setProperty('overflow', 'visible', 'important');
+    dom.actionPanel.style.setProperty('transform-origin', 'center center', 'important');
+    dom.actionPanel.style.setProperty('transform', 'translate(-50%, -50%) scale(1)', 'important');
+    const rect = dom.actionPanel.getBoundingClientRect();
+    const availH = Math.max(40, box.height - pad * 2);
+    const availW = Math.max(40, box.width - pad * 2);
+    let scale = 1;
+    if (rect.height > availH) scale = Math.min(scale, availH / rect.height);
+    if (rect.width > availW) scale = Math.min(scale, availW / rect.width);
+    scale = Math.max(0.4, Math.min(1, scale));
+    dom.actionPanel.style.setProperty('transform', 'translate(-50%, -50%) scale(' + scale + ')', 'important');
+    return true;
   }
 
   function positionActionPanelNearHand(seat) {
@@ -19018,7 +19946,8 @@ function showIntegrityReport(precomputed) {
       if (!handRow) return;
       const hand = state.hands[seat] || [];
       if (seat === state.viewSeat) {
-        const strategySuggestedTileId = suggestedStrategyDiscardTileId(seat);
+        const aiSuggestionVisible = isAiSuggestionDisplayEnabled();
+        const strategySuggestedTileId = aiSuggestionVisible ? suggestedStrategyDiscardTileId(seat) : '';
         hand.forEach((tileObj, idx) => {
           const node = createTileElement(tileObj, false);
           node.classList.toggle('drawn', shouldRenderActiveDrawnTile(seat, tileObj));
@@ -19038,6 +19967,7 @@ function showIntegrityReport(precomputed) {
             bindBottomHandSwipeDiscard(node, seat, tileObj, pos);
             node.addEventListener('click', ev => {
               if (consumeBottomSwipeDiscardClick(tileObj.id)) { ev.preventDefault(); ev.stopPropagation(); return; }
+              if (isTileManagementPausingGame()) { requestDebugPauseToggle(false); }
               const tingOpts = getTingOptions(seat);
               const tingOpt = tingOpts.find(opt => opt.discardId === tileObj.id);
               if (tingOpt && !state.declaredTing[seat]) { openTingChoicePanel(seat); } else { submitDiscard(seat, tileObj.id, 'human'); }
@@ -19051,6 +19981,7 @@ function showIntegrityReport(precomputed) {
             bindBottomHandSwipeDiscard(node, seat, tileObj, pos);
             node.addEventListener('click', ev => {
               if (consumeBottomSwipeDiscardClick(tileObj.id)) { ev.preventDefault(); ev.stopPropagation(); return; }
+              if (isTileManagementPausingGame()) { requestDebugPauseToggle(false); }
               const tingOpts = getTingOptions(seat);
               const tingOpt = tingOpts.find(opt => opt.discardId === tileObj.id);
               if (tingOpt && !state.declaredTing[seat]) { openTingChoicePanel(seat); } else { submitDiscard(seat, tileObj.id, 'human'); }
@@ -19078,6 +20009,51 @@ function showIntegrityReport(precomputed) {
         }
       }
     });
+  }
+
+  function aiSuggestFloatingLayer() {
+    let layer = document.querySelector('.ai-suggest-floating-layer');
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.className = 'ai-suggest-floating-layer';
+      layer.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(layer);
+    }
+    return layer;
+  }
+
+  function clearAiSuggestFloatingLabels() {
+    const layer = document.querySelector('.ai-suggest-floating-layer');
+    if (layer) layer.replaceChildren();
+  }
+
+  function refreshAiSuggestFloatingLabels() {
+    clearAiSuggestFloatingLabels();
+    if (!isAiSuggestionDisplayEnabled()) return;
+    const layer = aiSuggestFloatingLayer();
+    const box = viewportBox ? viewportBox() : { left: 0, top: 0, right: window.innerWidth || 0, bottom: window.innerHeight || 0, width: window.innerWidth || 0, height: window.innerHeight || 0 };
+    const suggestedTiles = Array.from(document.querySelectorAll('.ai-suggest-wrapper .strategy-discard-suggestion'));
+    suggestedTiles.forEach(tile => {
+      if (!tile || !tile.getBoundingClientRect) return;
+      const rect = tile.getBoundingClientRect();
+      if (!rect || rect.width <= 0 || rect.height <= 0) return;
+      const label = document.createElement('span');
+      label.className = 'ai-suggest-label';
+      label.textContent = 'AI建議';
+      layer.appendChild(label);
+      const labelRect = label.getBoundingClientRect();
+      const labelW = Math.max(1, labelRect.width || 28);
+      const labelH = Math.max(1, labelRect.height || 8);
+      /* 緊貼紅框左上角：用目前紅框牌面的即時 viewport 座標，避免手牌橫向捲動後文字停在舊位置。 */
+      const left = clampLeftInBox(rect.left, labelW, box, 1);
+      const top = clampTopInBox(rect.top - labelH + 1, labelH, box, 1);
+      label.style.setProperty('--ai-suggest-left', Math.round(left) + 'px');
+      label.style.setProperty('--ai-suggest-top', Math.round(top) + 'px');
+    });
+  }
+
+  if (typeof window !== 'undefined') {
+    window.tw16RefreshAiSuggestFloatingLabels = refreshAiSuggestFloatingLabels;
   }
 
   function renderMelds(map) {
@@ -19174,7 +20150,19 @@ function concealedKongOwnerOfMeld(meld) {
   }
 
   function renderDiscards() {
+    if (!dom.discardGrid) return;
     dom.discardGrid.replaceChildren();
+    const discardCount = Array.isArray(state.discards) ? state.discards.length : 0;
+    const openingActive = !!(state.openingDeal && state.openingDeal.active);
+    const dealerReadyToDiscardFirstTile = !openingActive && state.phase === 'discard';
+    const shouldShowPool = !openingActive && (dealerReadyToDiscardFirstTile || discardCount > 0);
+    if (!shouldShowPool) {
+      dom.discardGrid.style.setProperty('display', 'none', 'important');
+      dom.discardGrid.setAttribute('aria-hidden', 'true');
+      return;
+    }
+    dom.discardGrid.style.setProperty('display', 'block', 'important');
+    dom.discardGrid.setAttribute('aria-hidden', 'false');
     const map = displayMap();
     const buckets = {};
     const counts = { bottom: 0, top: 0, left: 0, right: 0 };
@@ -32424,6 +33412,27 @@ function concealedKongOwnerOfMeld(meld) {
     init();
   }
 })();
+
+  (function bindAiSuggestFloatingFollowEvents(){
+    let pending = false;
+    function scheduleAiSuggestRefresh(){
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(() => {
+        pending = false;
+        if (typeof window.tw16RefreshAiSuggestFloatingLabels === 'function') window.tw16RefreshAiSuggestFloatingLabels();
+        if (typeof window.tw16RefreshDebugPauseToggle === 'function') window.tw16RefreshDebugPauseToggle();
+      });
+    }
+    window.addEventListener('resize', scheduleAiSuggestRefresh, { passive: true });
+    window.addEventListener('scroll', scheduleAiSuggestRefresh, { passive: true, capture: true });
+    document.addEventListener('scroll', scheduleAiSuggestRefresh, { passive: true, capture: true });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', scheduleAiSuggestRefresh, { passive: true });
+      window.visualViewport.addEventListener('scroll', scheduleAiSuggestRefresh, { passive: true });
+    }
+  })();
+
 </script>
 
 <div id="tw16HistPanel"><div id="tw16HistBar"><h2>🀄 胡牌歷程</h2><span id="tw16HistBadge">0 筆</span><button id="tw16HistClose">✕</button></div><div id="tw16HistBody"><p style="text-align:center;color:#475569;padding:40px 0">尚無胡牌記錄</p></div></div>
