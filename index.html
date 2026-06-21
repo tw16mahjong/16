@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <title>台灣麻將｜縮放後立即左右拖動</title>
-<script type="text/javascript" nonce="27051f3f80694897a069039c375" src="//local.adguard.org?ts=1782001640530&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_00000000fa347207adb395b2858f77b9%26ts%3D495002%26p%3Dfs%26cid%3D1%26sig%3D0b3dcc855ff83b4444255f4f621d4d908db26ad36ccd1878ec194a91e514b15f%26v%3D0&amp;app=brave.exe&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-dnt"></script><script type="text/javascript" nonce="27051f3f80694897a069039c375" src="//local.adguard.org?ts=1782001640530&amp;name=AdGuard%20Assistant&amp;name=AdGuard%20Extra&amp;name=AdGuard%20Popup%20Blocker&amp;type=user-script"></script><link rel="preconnect" href="https://cdn.ably.com" crossorigin/>
+<link rel="preconnect" href="https://cdn.ably.com" crossorigin/>
 <link rel="dns-prefetch" href="https://realtime.ably.io"/>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#06111f;color:#fff;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;touch-action:manipulation;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.app{position:fixed;inset:0;background:linear-gradient(180deg,#1f68aa 0%,#1f3d7b 44%,#10254f 100%);overflow:hidden;contain:strict}.topbar{position:absolute;left:6px;right:6px;top:max(4px,env(safe-area-inset-top));z-index:20;display:flex;gap:8px;align-items:flex-start;pointer-events:none}.menu{pointer-events:auto;display:grid;gap:4px}.btn{border:0;border-radius:14px;color:white;font-weight:1000;cursor:pointer;background:linear-gradient(180deg,#2563eb,#1d4ed8);box-shadow:0 8px 16px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.18);padding:9px 14px;font-size:16px}.btn.red{background:linear-gradient(180deg,#ef4444,#b91c1c)}.btn.small{padding:7px 10px;font-size:13px}.status{pointer-events:none;border-radius:17px;background:rgba(3,10,25,.78);box-shadow:0 8px 18px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.14);padding:10px 14px;font-size:16px;font-weight:1000;white-space:nowrap}.roundStatusBlock{display:grid;gap:0;align-items:start;justify-items:start;pointer-events:none}.scoreChipLine{margin:0 0 0 2px;padding:0!important;border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important;color:#ff2020;font-size:10px;font-weight:1000;line-height:1.05;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.55),0 0 4px rgba(255,255,255,.22);pointer-events:none}.rightBtns{margin-left:auto;display:flex;gap:7px;pointer-events:auto}.iconBtn{width:58px;height:58px;border-radius:17px;font-size:28px;display:grid;place-items:center}.topbar{gap:0}.menu{gap:0}.topbar .btn{background:rgba(16,90,40,.72)!important;border:0!important;outline:0!important;box-shadow:none!important;border-radius:8px!important;color:#fff!important;padding:3px 6px!important;font-size:11px!important;line-height:1.02!important;min-width:0!important}.topbar .btn.small{padding:3px 6px!important;font-size:10px!important}.topbar .iconBtn{width:30px!important;height:30px!important;border-radius:9px!important;font-size:17px!important}.rightBtns{gap:0}.status{padding:5px 8px!important;font-size:12px!important;border-radius:12px!important}.scoreChipLine{font-size:10px!important;background:transparent!important;border:0!important;box-shadow:none!important}.room{position:absolute;left:6px;top:5px;z-index:21;font-size:14px;font-weight:900;text-shadow:0 2px 4px rgba(0,0,0,.45)}.table{position:absolute;inset:0;border:5px solid rgba(255,255,255,.14);border-radius:8px;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.05),rgba(0,0,0,.18) 42%,rgba(0,0,0,.28) 72%);contain:layout style}.center{position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);width:min(64vw,680px);height:min(54vh,560px);border-radius:15px;background:rgba(72,29,12,.34);box-shadow:inset 0 0 55px rgba(0,0,0,.22);overflow:hidden}.discardGrid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(36vw,330px);min-height:90px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;z-index:8;pointer-events:none}.seatLabel{position:absolute;z-index:8;text-align:center;font-weight:1000;line-height:1.08;text-shadow:0 2px 4px rgba(0,0,0,.55),0 0 8px rgba(255,255,255,.2);pointer-events:none}.seatLabel .name{font-size:20px}.seatLabel .score{margin-top:4px;font-size:24px;color:#ffe85a}.seatLabel .meta{margin-top:2px;font-size:14px;color:#fff6a8}.seatLabel.active .name,.seatLabel.active .score{color:#fff06a;text-shadow:0 0 12px rgba(255,232,90,.65),0 2px 5px rgba(0,0,0,.65)}.seatLabel.ting .name:after{content:' 聽';color:#ff3030;font-size:.9em}.seat-bottom{left:14%;bottom:13%;transform:translateX(-50%)}.seat-top{left:50%;top:12%;transform:translateX(-50%)}.seat-left{left:9%;top:43%;transform:translateY(-50%)}.seat-right{right:9%;top:43%;transform:translateY(-50%)}.hand{position:absolute;z-index:14;display:flex;gap:0;align-items:center;justify-content:center}.hand-bottom{left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:94vw;overflow:visible}.hand-top{left:50%;top:calc(62px + env(safe-area-inset-top));transform:translateX(-50%)}.hand-left{left:36px;top:50%;transform:translateY(-50%);flex-direction:column}.hand-right{right:36px;top:50%;transform:translateY(-50%);flex-direction:column}.melds{position:absolute;z-index:12;display:flex;gap:calc(var(--tw-tile-w) * .14)!important;align-items:flex-start!important;justify-content:flex-start!important}.meld-bottom{left:50%;bottom:88px;transform:translateX(-50%)}.meld-top{left:50%;top:112px;transform:translateX(-50%)}.meld-left{left:102px;top:50%;transform:translateY(-50%);flex-direction:column}.meld-right{right:102px;top:50%;transform:translateY(-50%);flex-direction:column}.tile{position:relative;flex:0 0 auto;width:28px;height:40px;border-radius:var(--tw-tile-radius,5px);background:linear-gradient(180deg,#fffef7 0%,#f1eadf 72%,#d6c7b3 100%);border:1px solid rgba(70,50,28,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 4px rgba(0,0,0,.24);display:grid;place-items:center;font-size:19px;font-weight:1000;color:#111;user-select:none}.tile .small{position:absolute;top:1px;right:2px;font-size:9px;color:#333}.tile.red{color:#c41414}.tile.green{color:#047857}.tile.blue{color:#255fd4}.tile.back{width:27px;height:39px;background:linear-gradient(180deg,#b7f0ff 0%,#7dd3fc 58%,#43a9d8 100%);border-color:rgba(35,84,114,.36);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 4px rgba(0,0,0,.24);color:transparent}.tile.face-image{padding:0;background:transparent!important;border:0!important;box-shadow:0 3px 6px rgba(0,0,0,.25)!important;color:transparent!important}.tile-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none}.tile-face img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;border-radius:0;user-select:none;-webkit-user-drag:none;pointer-events:none}.tile.kind-suit-s .tile-face img,.tile.kind-honor .tile-face img,.tile.kind-flower .tile-face img{transform:scale(1.04);transform-origin:center center}.tile.back.face-image{background:linear-gradient(180deg,#b7f0ff 0%,#7dd3fc 58%,#43a9d8 100%)!important;border:1px solid rgba(35,84,114,.36)!important}.hand-bottom .tile{cursor:pointer}.hand-bottom .tile:hover{transform:translateY(-4px)}.hand-bottom .tile.drawn{margin-left:5px}.discardGrid .tile{width:22px;height:32px;font-size:15px}.bigDiscard{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.5);opacity:0;z-index:14;pointer-events:none;transition:transform .16s ease,opacity .16s ease;will-change:transform,opacity}.bigDiscard.show{opacity:1;transform:translate(-50%,-50%) scale(2.6)}.arrow{display:none!important;position:absolute;z-index:-1;width:0;height:0;pointer-events:none}.arrow-bottom{left:50%;bottom:145px;transform:translateX(-50%);border-left:40px solid transparent;border-right:40px solid transparent;border-top:70px solid rgba(255,0,0,.88)}.arrow-top{left:50%;top:145px;transform:translateX(-50%);border-left:40px solid transparent;border-right:40px solid transparent;border-bottom:70px solid rgba(255,0,0,.88)}.arrow-left{left:165px;top:50%;transform:translateY(-50%);border-top:40px solid transparent;border-bottom:40px solid transparent;border-right:70px solid rgba(255,0,0,.88)}.arrow-right{right:165px;top:50%;transform:translateY(-50%);border-top:40px solid transparent;border-bottom:40px solid transparent;border-left:70px solid rgba(255,0,0,.88)}.wall{position:absolute;z-index:6;display:flex;gap:0;pointer-events:none}.wall-bottom{left:50%;bottom:122px;transform:translateX(-50%)}.wall-top{left:50%;top:105px;transform:translateX(-50%)}.wall-left{left:92px;top:50%;transform:translateY(-50%);flex-direction:column}.wall-right{right:92px;top:50%;transform:translateY(-50%);flex-direction:column}.wall .piece{width:12px;height:18px;border-radius:var(--tw-wall-piece-radius,3px);background:linear-gradient(180deg,#b7f0ff,#43a9d8);border:1px solid rgba(35,84,114,.25);margin:0}.wall-left .piece,.wall-right .piece{width:18px;height:12px}.hint{position:absolute;left:50%;bottom:28%;transform:translateX(-50%);z-index:1;max-width:82vw;border-radius:16px;background:rgba(15,23,42,.38);padding:13px 18px;text-align:center;font-size:18px;font-weight:900;color:rgba(255,255,255,.58);line-height:1.45;pointer-events:none}.log{display:none!important;}.result{position:fixed;left:50vw!important;top:50dvh!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%)!important;z-index:2147483300;display:none;width:min(92vw,720px);min-width:min(300px,92vw);max-width:calc(100vw - 16px);max-height:calc(100dvh - max(16px,env(safe-area-inset-top)) - max(16px,env(safe-area-inset-bottom)));overflow:hidden;border-radius:18px;padding:18px 18px 16px;background:linear-gradient(180deg,rgba(83,16,24,.98),rgba(31,5,10,.98));box-shadow:0 22px 50px rgba(0,0,0,.45);text-align:center;touch-action:auto;box-sizing:border-box;contain:layout}.result.dragging{transition:none;user-select:none}.result h2{cursor:default;touch-action:auto;user-select:text;-webkit-user-select:text;margin:0 0 10px;color:#ffe85a;flex:0 0 auto}.result h2:active{color:#fde68a}.result.show{display:flex;flex-direction:column}.result #resultText{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.result .buttons{display:flex;justify-content:center;gap:10px;margin-top:12px;flex:0 0 auto;flex-wrap:wrap}@media(max-width:700px){.status{font-size:13px;padding:6px 9px}.iconBtn{width:34px;height:34px}.center{width:68vw;height:48vh}.tile{width:24px;height:35px;font-size:17px}.discardGrid .tile{width:20px;height:29px}.hand-top .tile.back{width:22px;height:32px}.hand-left .tile.back,.hand-right .tile.back{width:22px;height:32px}.seatLabel .name{font-size:18px}.seatLabel .score{font-size:22px}.seat-left{left:10%}.seat-right{right:10%}.wall-left{left:84px}.wall-right{right:84px}}
@@ -1105,7 +1105,7 @@
   justify-items:start!important;
   place-items:start center!important;
   touch-action:pan-x!important;
-  scrollbar-width:thin!important;
+  scrollbar-width:none!important;
 }
 .hand-bottom.shared-hand-container.tw16-hand-scroll-x .hand-row{
   justify-content:flex-start!important;
@@ -1113,6 +1113,14 @@
 }
 .hand-bottom.shared-hand-container.tw16-hand-scroll-x .hand-tile-row .tile{
   touch-action:pan-x!important;
+}
+.hand-bottom.shared-hand-container.tw16-hand-scroll-x::-webkit-scrollbar{
+  width:0!important;
+  height:0!important;
+  display:none!important;
+}
+.hand-bottom.shared-hand-container.tw16-hand-scroll-x{
+  -ms-overflow-style:none!important;
 }
 .hand-bottom.shared-hand-container.tw16-hand-pinch-ready,
 .hand-bottom.shared-hand-container.tw16-hand-pinch-ready .hand-row,
@@ -1457,7 +1465,7 @@
   border-color:transparent!important;
   border-style:none!important;
 }
-.shared-hand-container > :not(.hand-row):not(.tw16-hand-scroll-indicator){
+.shared-hand-container > :not(.hand-row){
   display:none!important;
 }
 .shared-hand-container > .hand-row:nth-child(n+3){
@@ -1920,7 +1928,7 @@
   padding:0 3px!important;
   margin:0!important;
   border:2px solid #e60000!important;
-  border-radius:10px!important;
+  border-radius:5px!important;
   outline:0!important;
   background:rgba(202,211,151,.78)!important;
   box-shadow:none!important;
@@ -3925,7 +3933,7 @@ html body .table{
 
 
 
-/* settlement_showcase_fit_90: 結算窗內胡牌實例整列固定以結算窗寬度九成置中自適縮放。 */
+/* Clean Core settlement showcase: 依結算框寬度置中自適應。 */
 .result.settlement-open .settlement-tile-showcase{
   width:90%!important;
   max-width:90%!important;
@@ -3963,11 +3971,35 @@ html body .table{
   font-size:var(--tw-settlement-showcase-small-font,clamp(7px,.82vw,11px))!important;
 }
 
+
+/* Clean Core settlement layout: 結算窗內花牌、副露、手牌與右上控制鈕共用主體排版。 */
+.result.settlement-open .buttons{max-width:46%!important;flex-wrap:nowrap!important;}
+.result.settlement-open .buttons .btn{white-space:nowrap!important;box-sizing:border-box!important;border-radius:5px!important;overflow:visible!important;text-overflow:clip!important;}
+.result.settlement-open .settlement-tile-showcase{flex-direction:column!important;gap:2px!important;width:90%!important;max-width:90%!important;overflow:visible!important;}
+.result.settlement-open .settlement-tile-showcase-line{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;max-width:100%!important;overflow:visible!important;margin:0 auto!important;}
+.result.settlement-open .settlement-tile-showcase-line .tileStrip{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:center!important;width:max-content!important;max-width:none!important;min-width:0!important;overflow:visible!important;margin:0 auto!important;transform-origin:center center!important;}
+.result.settlement-open .settlement-exposed-showcase-line .tile,
+.result.settlement-open .settlement-hand-showcase-line .tile{width:var(--tw-settlement-showcase-tile-w,24px)!important;height:var(--tw-settlement-showcase-tile-h,35px)!important;min-width:var(--tw-settlement-showcase-tile-w,24px)!important;min-height:var(--tw-settlement-showcase-tile-h,35px)!important;max-width:var(--tw-settlement-showcase-tile-w,24px)!important;max-height:var(--tw-settlement-showcase-tile-h,35px)!important;font-size:var(--tw-settlement-showcase-font,16px)!important;flex:0 0 var(--tw-settlement-showcase-tile-w,24px)!important;}
+.result.settlement-open .settlement-exposed-showcase-line .tile .small,
+.result.settlement-open .settlement-hand-showcase-line .tile .small{font-size:var(--tw-settlement-showcase-small-font,8px)!important;}
+
 </style>
 </head>
 <body>
 <noscript>
   <style>body{display:flex;align-items:center;justify-content:center;height:100vh;background:#06111f;color:#fff;font-family:"Noto Sans TC",sans-serif;font-size:18px;text-align:center;}
+
+
+/* Clean Core settlement layout: 結算窗內花牌、副露、手牌與右上控制鈕共用主體排版。 */
+.result.settlement-open .buttons{max-width:46%!important;flex-wrap:nowrap!important;}
+.result.settlement-open .buttons .btn{white-space:nowrap!important;box-sizing:border-box!important;border-radius:5px!important;overflow:visible!important;text-overflow:clip!important;}
+.result.settlement-open .settlement-tile-showcase{flex-direction:column!important;gap:2px!important;width:90%!important;max-width:90%!important;overflow:visible!important;}
+.result.settlement-open .settlement-tile-showcase-line{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;max-width:100%!important;overflow:visible!important;margin:0 auto!important;}
+.result.settlement-open .settlement-tile-showcase-line .tileStrip{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:center!important;width:max-content!important;max-width:none!important;min-width:0!important;overflow:visible!important;margin:0 auto!important;transform-origin:center center!important;}
+.result.settlement-open .settlement-exposed-showcase-line .tile,
+.result.settlement-open .settlement-hand-showcase-line .tile{width:var(--tw-settlement-showcase-tile-w,24px)!important;height:var(--tw-settlement-showcase-tile-h,35px)!important;min-width:var(--tw-settlement-showcase-tile-w,24px)!important;min-height:var(--tw-settlement-showcase-tile-h,35px)!important;max-width:var(--tw-settlement-showcase-tile-w,24px)!important;max-height:var(--tw-settlement-showcase-tile-h,35px)!important;font-size:var(--tw-settlement-showcase-font,16px)!important;flex:0 0 var(--tw-settlement-showcase-tile-w,24px)!important;}
+.result.settlement-open .settlement-exposed-showcase-line .tile .small,
+.result.settlement-open .settlement-hand-showcase-line .tile .small{font-size:var(--tw-settlement-showcase-small-font,8px)!important;}
 
 </style>
   <p>此遊戲需要 JavaScript 才能執行，請啟用瀏覽器的 JavaScript 功能。</p>
@@ -6983,7 +7015,7 @@ html body .table{
     dom.newGameBtn.addEventListener('click', () => { if (isOnlineGuest()) { requestNetworkSync('guest-newgame-button'); return; } newGame(); });
     dom.resultBackBtn.addEventListener('click', () => handleResultBackButton());
     dom.resultNewBtn.addEventListener('click', () => { clearAutoNextTimer('manual-new-game'); if (isOnlineGuest()) { requestNetworkSync('guest-result-newgame'); return; } dom.resultNewBtn.style.display = ''; newGame(); });
-    dom.resultCloseBtn.addEventListener('click', () => { const visibleSettlementId = dom.resultPanel && dom.resultPanel.dataset ? String(dom.resultPanel.dataset.settlementId || '') : ''; clearAutoNextTimer('manual-close-settlement'); if (dom.resultPanel && dom.resultPanel.classList.contains('settlement-open')) { const closeId = visibleSettlementId || (state.lastSettlement && state.lastSettlement.id ? state.lastSettlement.id : ''); if (closeId) net.closedSettlementId = closeId; if (isOnlineGuest()) markGuestSettlementClosedLocally('manual-close-settlement', closeId); } dom.resultPanel.classList.remove('show'); dom.resultPanel.classList.remove('menu-open'); dom.resultPanel.classList.remove('settlement-open'); dom.resultPanel.classList.remove('history-open'); dom.resultPanel.classList.remove('utility-open'); dom.resultPanel.classList.remove('custom-tile-import-open'); if (dom.resultPanel.dataset) delete dom.resultPanel.dataset.settlementId; dom.resultNewBtn.style.display = ''; dom.resultNewBtn.disabled = false; dom.resultCloseBtn.textContent = '關閉'; resumeGameAfterTileManagement('result-close'); setUiPriorityMode(false, 'result-close'); });
+    dom.resultCloseBtn.addEventListener('click', () => { const visibleSettlementId = dom.resultPanel && dom.resultPanel.dataset ? String(dom.resultPanel.dataset.settlementId || '') : ''; clearAutoNextTimer('manual-close-settlement'); if (dom.resultPanel && dom.resultPanel.classList.contains('settlement-open')) { const closeId = visibleSettlementId || (state.lastSettlement && state.lastSettlement.id ? state.lastSettlement.id : ''); if (closeId) net.closedSettlementId = closeId; if (isOnlineGuest()) markGuestSettlementClosedLocally('manual-close-settlement', closeId); } dom.resultPanel.classList.remove('show'); dom.resultPanel.classList.remove('menu-open'); dom.resultPanel.classList.remove('settlement-open'); dom.resultPanel.classList.remove('history-open'); dom.resultPanel.classList.remove('utility-open'); dom.resultPanel.classList.remove('custom-tile-import-open'); if (dom.resultPanel.dataset) delete dom.resultPanel.dataset.settlementId; dom.resultNewBtn.style.display = ''; dom.resultNewBtn.disabled = false; dom.resultCloseBtn.textContent = '關閉'; resumeGameAfterTileManagement('result-close'); setUiPriorityMode(false, 'result-close') });
     dom.autoBtn.addEventListener('click', () => toggleBottomAutoplay());
     dom.fullBtn.addEventListener('click', () => toggleFullscreen());
     dom.menuBtn.addEventListener('click', () => openMainMenu());
@@ -6994,11 +7026,11 @@ html body .table{
     bindTableDoubleTapBroadcast();
     bindEnterKeyBroadcast();
     setupDraggableUtilityPanel();
-    window.addEventListener('resize', () => { clampUtilityPanelToViewport(); scheduleBottomHandViewportRefit('resize'); });
-    window.addEventListener('orientationchange', () => { scheduleBottomHandViewportRefit('orientationchange'); });
+    window.addEventListener('resize', () => { clampUtilityPanelToViewport(); scheduleBottomHandViewportRefit('resize'); scheduleSettlementTileShowcaseFit(); });
+    window.addEventListener('orientationchange', () => { scheduleBottomHandViewportRefit('orientationchange'); scheduleSettlementTileShowcaseFit(); });
     document.addEventListener('fullscreenchange', () => { scheduleBottomHandViewportRefit('fullscreenchange'); });
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', () => { scheduleBottomHandViewportRefit('visualViewport-resize'); }, { passive: true });
+      window.visualViewport.addEventListener('resize', () => { scheduleBottomHandViewportRefit('visualViewport-resize'); scheduleSettlementTileShowcaseFit(); }, { passive: true });
     }
     createInterface329Lobby();
     createInterface329Extras();
@@ -11002,6 +11034,10 @@ function loadUiSettings() {
     tileSerial = 1;
     applyNextRoundPlanIfNeeded();
     state.handId += 1;
+    bottomHandOpeningFitState.key = '';
+    bottomHandOpeningFitState.finalizedKey = '';
+    bottomHandPinchScaleState.key = '';
+    bottomHandPinchScaleState.userScale = 1;
     state.kongsThisHand = 0;
     tw16SmartShapeCache = new Map();
     tw16WinCheckCache = new Map();
@@ -13671,14 +13707,37 @@ function loadUiSettings() {
       && Object.keys(chiSequenceNeeds).every(code => (beforeCodeCounts[code] || 0) >= chiSequenceNeeds[code]);
     const isDirectMingKong = candidate.type === 'kong' && samePendingTileCount >= 3;
     const isWeakerPongWhenKongExists = candidate.type === 'pong' && samePendingTileCount >= 3;
+    const claimTileCode = pendingTileCode || '';
+    const claimTileIsHonor = !!(claimTileCode && isHonorCode(claimTileCode));
+    const claimSeatWind = ['E','S','W','N'][SEATS.indexOf(seat)] || '';
+    const claimRoundWind = ['E','S','W','N'][state.windRound % 4] || '';
+    const claimTileIsDragon = ['C','F','P'].includes(claimTileCode);
+    const claimTileIsSeatWind = !!(claimTileCode && claimTileCode === claimSeatWind);
+    const claimTileIsRoundWind = !!(claimTileCode && claimTileCode === claimRoundWind);
     let score = (before.shanten - after.shanten) * 160 + (after.effectiveRemaining - before.effectiveRemaining) * 5 + (after.waitRemaining - before.waitRemaining) * 22 + (after.value - before.value) * .18;
+    /* 吃碰槓主體評分：副露評估必須把「拿進來的棄牌形成的外露面子」一起估值。
+       原本 afterCodes 只剩暗手，尚未把碰出的刻子寫進 state.melds，因此南南碰南、三元牌碰牌等
+       役牌/風牌刻子會被低估成只是少兩張牌，導致 AI 建議跳過。 */
+    if (candidate.type === 'pong' && claimTileIsHonor) {
+      score += 76;
+      if (claimTileIsDragon) score += 38;
+      if (claimTileIsSeatWind) score += 34;
+      if (claimTileIsRoundWind) score += 34;
+      const windTripletsBefore = ['E','S','W','N'].filter(c => (beforeCodeCounts[c] || 0) >= 3).length;
+      const windPairsBefore = ['E','S','W','N'].filter(c => (beforeCodeCounts[c] || 0) >= 2).length;
+      if (['E','S','W','N'].includes(claimTileCode) && windPairsBefore >= 2) score += 18 + windTripletsBefore * 10;
+    }
+    if (candidate.type === 'kong' && claimTileIsHonor) {
+      score += 96;
+      if (claimTileIsDragon || claimTileIsSeatWind || claimTileIsRoundWind) score += 42;
+    }
     /* tw16_ai_claim_kong_over_pong_20260619:
        同一張棄牌同時可槓/碰時，槓是碰的上位動作：完成刻子已存在，槓可保留面子並補牌，
        不應被貪心評分器誤判成碰。此規則套用於精確版、貪心版、房主、來賓共用的吃碰槓主體評分。 */
     if (isDirectMingKong) score += 220;
     if (isWeakerPongWhenKongExists) score -= 160;
     if (candidate.type === 'kong') score += 42;
-    if (candidate.type === 'pong') score += 4;
+    if (candidate.type === 'pong') score += claimTileIsHonor ? 18 : 4;
     if (candidate.type === 'chi') score += 2;
     if (candidate.type === 'chi' && chiConsumesExistingCompleteSequence) score -= 170;
     if (SEATS.some(other => other !== seat && state.declaredTing && state.declaredTing[other])) score -= candidate.type === 'chi' ? 10 : 6;
@@ -13729,6 +13788,8 @@ function loadUiSettings() {
       if (chiConsumesExistingCompleteSequence && after.shanten >= before.shanten) accept = false;
     }
     if (isDirectMingKong && after.shanten <= before.shanten + 1) accept = true;
+    if (candidate.type === 'pong' && claimTileIsHonor && after.shanten <= before.shanten + 1 && score >= 10) accept = true;
+    if (candidate.type === 'kong' && claimTileIsHonor && after.shanten <= before.shanten + 1 && score >= 10) accept = true;
     if (isWeakerPongWhenKongExists && !accept) accept = false;
     return { accept, score, before, after, chiConsumesExistingCompleteSequence };
   }
@@ -15739,12 +15800,47 @@ function chooseExactDiscardTile(seat) {
     const winTile = payload.tile || null;
     const revealSeat = (payload.reveal || []).find(entry => entry && entry.seat === winner) || null;
     const hand = revealSeat && Array.isArray(revealSeat.hand) ? revealSeat.hand : [];
-    return '<div class="settlement-tile-showcase">' + buildTileStripHtml(hand, winTile) + '</div>';
+    const flowers = revealSeat && Array.isArray(revealSeat.flowers) ? revealSeat.flowers : [];
+    const meldTiles = [];
+    if (revealSeat && Array.isArray(revealSeat.melds)) {
+      revealSeat.melds.forEach(group => {
+        if (Array.isArray(group)) group.forEach(tile => { if (tile) meldTiles.push(tile); });
+      });
+    }
+    const exposedTiles = flowers.concat(meldTiles);
+    const exposedLine = exposedTiles.length
+      ? '<div class="settlement-tile-showcase-line settlement-exposed-showcase-line">' + buildTileStripHtml(exposedTiles, null) + '</div>'
+      : '';
+    return '<div class="settlement-tile-showcase">'
+      + exposedLine
+      + '<div class="settlement-tile-showcase-line settlement-hand-showcase-line">' + buildTileStripHtml(hand, winTile) + '</div>'
+      + '</div>';
   }
 
   function settlementChipDeltaForSeat(payload, seat) {
     const row = payload && Array.isArray(payload.seatRows) ? payload.seatRows.find(r => r && r.seat === seat) : null;
     return row ? Number(row.delta || 0) || 0 : 0;
+  }
+
+  function settlementTaiTypeNames(payload) {
+    if (!payload || !Array.isArray(payload.items)) return [];
+    const seen = new Set();
+    const names = [];
+    payload.items.forEach(item => {
+      let text = String(item || '').replace(/\s+/g, ' ').trim();
+      if (!text) return;
+      text = text.replace(/\s*[+＋]\s*\d+\s*$/g, '').trim();
+      text = text.replace(/\s*\([^)）]*\)\s*$/g, '').trim();
+      if (!text || seen.has(text)) return;
+      seen.add(text);
+      names.push(text);
+    });
+    return names;
+  }
+
+  function settlementTaiTypeNote(payload) {
+    const names = settlementTaiTypeNames(payload);
+    return names.length ? '（' + names.map(name => escapeHtml(name)).join('、') + '）' : '';
   }
 
   function buildSettlementHtml(payload) {
@@ -15759,7 +15855,7 @@ function chooseExactDiscardTile(seat) {
       + winTileHtml
       + (payload.kind === 'ron' && fromName ? '<span class="settlement-word">' + escapeHtml(fromName) + '放槍</span>' : '');
     const delta = settlementChipDeltaForSeat(payload, payload.winner);
-    const scoreLine = '+' + escapeHtml(String(payload.tai || 0)) + '台　籌碼' + signedNumber(delta);
+    const scoreLine = '+' + escapeHtml(String(payload.tai || 0)) + '台' + settlementTaiTypeNote(payload) + '　籌碼' + signedNumber(delta);
     return '<div class="settlement-content">'
       + '<div class="settlement-title-line">' + titleLine + '</div>'
       + '<div class="settlement-score-line">' + scoreLine + '</div>'
@@ -16005,71 +16101,175 @@ function chooseExactDiscardTile(seat) {
     const panel = dom.resultPanel;
     const content = panel.querySelector('.settlement-content');
     const box = panel.querySelector('.settlement-tile-showcase');
-    const strip = box ? box.querySelector('.tileStrip') : null;
-    if (!box || !strip) return;
+    const lines = box ? Array.from(box.querySelectorAll('.settlement-tile-showcase-line')) : [];
+    const strips = box ? Array.from(box.querySelectorAll('.tileStrip')) : [];
+    if (!content || !box || !strips.length) return;
 
-    /* 主體自適應：先解除舊的估算式縮放，再用實際渲染寬度反算比例。 */
-    if (content) {
-      content.style.boxSizing = 'border-box';
-      content.style.width = '100%';
-      content.style.maxWidth = '100%';
-      content.style.paddingLeft = '8px';
-      content.style.paddingRight = '8px';
-      content.style.overflow = 'hidden';
-    }
-    box.style.width = '90%';
-    box.style.maxWidth = '90%';
-    box.style.marginLeft = 'auto';
-    box.style.marginRight = 'auto';
-    box.style.display = 'flex';
-    box.style.alignItems = 'center';
-    box.style.justifyContent = 'center';
-    box.style.overflow = 'visible';
-    box.style.minWidth = '0';
-    strip.style.transform = 'none';
-    strip.style.transformOrigin = 'center center';
-    strip.style.marginLeft = 'auto';
-    strip.style.marginRight = 'auto';
-    strip.style.flexWrap = 'nowrap';
-    strip.style.width = 'max-content';
-    strip.style.maxWidth = 'none';
-    strip.style.justifyContent = 'center';
-    strip.style.alignItems = 'center';
-    strip.style.overflow = 'visible';
-
-    const tiles = Array.from(strip.querySelectorAll('.tile'));
-    const tileCount = Math.max(1, tiles.length);
-    const panelWidth = Math.max(1, Math.floor(panel.clientWidth || panel.getBoundingClientRect().width || window.innerWidth || 320));
-    const panelHeight = Math.max(1, Math.floor(panel.clientHeight || panel.getBoundingClientRect().height || window.innerHeight || 240));
-    const targetWidth = Math.max(80, Math.floor(panelWidth * 0.90));
-    const maxBaseTileW = Math.max(18, Math.min(34, Math.floor(panelWidth * 0.058)));
-    const baseTileW = Math.max(14, Math.min(maxBaseTileW, Math.floor(targetWidth / tileCount)));
-    const baseTileH = Math.max(20, Math.round(baseTileW * 1.47));
-    const font = Math.max(8, Math.round(baseTileW * 0.68));
-    const smallFont = Math.max(5, Math.round(baseTileW * 0.33));
-
-    box.style.setProperty('--tw-settlement-showcase-tile-w', baseTileW + 'px');
-    box.style.setProperty('--tw-settlement-showcase-tile-h', baseTileH + 'px');
-    box.style.setProperty('--tw-settlement-showcase-font', font + 'px');
-    box.style.setProperty('--tw-settlement-showcase-small-font', smallFont + 'px');
-    box.style.width = targetWidth + 'px';
-    box.style.maxWidth = targetWidth + 'px';
-
-    const applyScale = () => {
-      const naturalWidth = Math.max(1, strip.scrollWidth || Math.ceil(strip.getBoundingClientRect().width) || (baseTileW * tileCount));
-      const naturalHeight = Math.max(1, strip.scrollHeight || Math.ceil(strip.getBoundingClientRect().height) || baseTileH);
-      const heightLimit = Math.max(34, Math.floor(panelHeight * 0.22));
-      const widthScale = targetWidth / naturalWidth;
-      const heightScale = heightLimit / naturalHeight;
-      const scale = Math.max(0.38, Math.min(1.85, widthScale, heightScale));
-      strip.style.transform = 'scale(' + scale.toFixed(4) + ')';
-      box.style.height = Math.ceil(naturalHeight * scale + 10) + 'px';
-      box.style.minHeight = Math.ceil(naturalHeight * scale + 10) + 'px';
-      box.style.maxHeight = Math.ceil(naturalHeight * scale + 14) + 'px';
-      box.style.setProperty('--tw-settlement-showcase-scale', String(scale));
+    const important = (el, name, value) => {
+      if (el && el.style && value !== undefined && value !== null) el.style.setProperty(name, String(value), 'important');
     };
-    applyScale();
-    requestAnimationFrame(applyScale);
+    const clampLocal = (min, value, max) => Math.max(min, Math.min(max, Number(value) || 0));
+    const rect = panel.getBoundingClientRect ? panel.getBoundingClientRect() : null;
+    const panelWidth = Math.max(1, Math.floor(panel.clientWidth || (rect && rect.width) || window.innerWidth || 320));
+    const panelHeight = Math.max(1, Math.floor(panel.clientHeight || (rect && rect.height) || window.innerHeight || 240));
+    const targetWidth = Math.max(90, Math.floor(panelWidth * 0.90));
+    const padX = Math.max(3, Math.floor(panelWidth * 0.010));
+    const padY = Math.max(3, Math.floor(panelHeight * 0.012));
+    const title = panel.querySelector('.settlement-title-line');
+    const score = panel.querySelector('.settlement-score-line');
+    const counts = strips.map(strip => Math.max(1, strip.querySelectorAll('.tile').length));
+    const maxTileCount = counts.reduce((max, count) => Math.max(max, count), 1);
+
+    const buttons = panel.querySelector('.buttons');
+    let buttonReserveH = 0;
+    if (buttons) {
+      const buttonFont = clampLocal(12, Math.min(panelWidth * 0.024, panelHeight * 0.070), 18);
+      const buttonPadX = Math.max(2, Math.floor(buttonFont * 0.26));
+      const buttonPadY = Math.max(1, Math.floor(buttonFont * 0.10));
+      const buttonBorder = panelWidth < 420 ? 1 : 2;
+      important(buttons, 'right', Math.max(4, Math.floor(panelWidth * 0.012)) + 'px');
+      important(buttons, 'top', Math.max(4, Math.floor(panelHeight * 0.012)) + 'px');
+      important(buttons, 'max-width', Math.max(104, Math.floor(panelWidth * 0.38)) + 'px');
+      important(buttons, 'flex-wrap', 'nowrap');
+      important(buttons, 'gap', Math.max(2, Math.floor(panelWidth * 0.006)) + 'px');
+      important(buttons, 'align-items', 'flex-start');
+      Array.from(buttons.querySelectorAll('.btn')).forEach(btn => {
+        important(btn, 'font-size', buttonFont + 'px');
+        important(btn, 'line-height', '1.04');
+        important(btn, 'padding', buttonPadY + 'px ' + buttonPadX + 'px');
+        important(btn, 'border-width', buttonBorder + 'px');
+        important(btn, 'border-radius', Math.max(4, Math.min(6, Math.floor(buttonFont * 0.30))) + 'px');
+        important(btn, 'white-space', 'nowrap');
+        important(btn, 'overflow', 'visible');
+        important(btn, 'min-width', '0');
+        important(btn, 'min-height', '0');
+      });
+      const brect = buttons.getBoundingClientRect ? buttons.getBoundingClientRect() : null;
+      buttonReserveH = Math.ceil((brect && brect.height) || (buttonFont * 1.04 + buttonPadY * 2 + buttonBorder * 2));
+    }
+
+    const contentTopPad = Math.max(padY, buttonReserveH + Math.max(5, Math.floor(panelHeight * 0.018)));
+    important(content, 'box-sizing', 'border-box');
+    important(content, 'width', '100%');
+    important(content, 'max-width', '100%');
+    important(content, 'height', '100%');
+    important(content, 'min-height', '100%');
+    important(content, 'padding-left', padX + 'px');
+    important(content, 'padding-right', padX + 'px');
+    important(content, 'padding-top', contentTopPad + 'px');
+    important(content, 'padding-bottom', padY + 'px');
+    important(content, 'overflow', 'hidden');
+    important(content, 'display', 'flex');
+    important(content, 'flex-direction', 'column');
+    important(content, 'align-items', 'center');
+    important(content, 'justify-content', 'center');
+    important(content, 'margin', '0 auto');
+
+    let tileW = Math.floor((targetWidth / maxTileCount) * 100) / 100;
+    tileW = clampLocal(7, tileW, Math.max(18, Math.min(42, panelWidth * 0.075)));
+    let titleFont = clampLocal(13, Math.min(panelWidth * 0.044, panelHeight * 0.115), 30);
+    let scoreFont = clampLocal(12, Math.min(panelWidth * 0.036, panelHeight * 0.085), 24);
+
+    const applySizes = () => {
+      const tileH = Math.round(tileW * 1.47 * 100) / 100;
+      const font = Math.max(6, Math.round(tileW * 0.68 * 100) / 100);
+      const smallFont = Math.max(4, Math.round(tileW * 0.33 * 100) / 100);
+      important(box, '--tw-settlement-showcase-tile-w', tileW + 'px');
+      important(box, '--tw-settlement-showcase-tile-h', tileH + 'px');
+      important(box, '--tw-settlement-showcase-font', font + 'px');
+      important(box, '--tw-settlement-showcase-small-font', smallFont + 'px');
+      important(box, 'width', targetWidth + 'px');
+      important(box, 'max-width', targetWidth + 'px');
+      important(box, 'margin-left', 'auto');
+      important(box, 'margin-right', 'auto');
+      important(box, 'display', 'flex');
+      important(box, 'flex-direction', 'column');
+      important(box, 'align-items', 'center');
+      important(box, 'justify-content', 'center');
+      important(box, 'gap', '1px');
+      important(box, 'overflow', 'visible');
+      important(box, 'flex', '0 0 auto');
+      lines.forEach((line, index) => {
+        const count = counts[index] || 1;
+        const lineWidth = Math.min(targetWidth, Math.ceil(count * tileW));
+        important(line, 'width', targetWidth + 'px');
+        important(line, 'max-width', targetWidth + 'px');
+        important(line, 'height', tileH + 'px');
+        important(line, 'min-height', tileH + 'px');
+        important(line, 'display', 'flex');
+        important(line, 'align-items', 'center');
+        important(line, 'justify-content', 'center');
+        important(line, 'overflow', 'visible');
+        important(line, 'margin', '0 auto');
+        const strip = line.querySelector('.tileStrip');
+        if (strip) {
+          important(strip, 'width', lineWidth + 'px');
+          important(strip, 'max-width', lineWidth + 'px');
+          important(strip, 'min-width', lineWidth + 'px');
+          important(strip, 'height', tileH + 'px');
+          important(strip, 'display', 'flex');
+          important(strip, 'align-items', 'center');
+          important(strip, 'justify-content', 'center');
+          important(strip, 'flex-wrap', 'nowrap');
+          important(strip, 'gap', '0px');
+          important(strip, 'margin', '0 auto');
+          important(strip, 'transform', 'none');
+          important(strip, 'overflow', 'visible');
+        }
+      });
+      important(box, 'height', (lines.length * tileH + Math.max(0, lines.length - 1)) + 'px');
+      if (title) {
+        important(title, 'width', targetWidth + 'px');
+        important(title, 'max-width', targetWidth + 'px');
+        important(title, 'font-size', titleFont + 'px');
+        important(title, 'line-height', '1.10');
+        important(title, 'margin-left', 'auto');
+        important(title, 'margin-right', 'auto');
+        important(title, 'flex-wrap', 'nowrap');
+        important(title, 'white-space', 'nowrap');
+        important(title, 'overflow', 'visible');
+      }
+      if (score) {
+        important(score, 'width', targetWidth + 'px');
+        important(score, 'max-width', targetWidth + 'px');
+        important(score, 'font-size', scoreFont + 'px');
+        important(score, 'line-height', '1.12');
+        important(score, 'margin-left', 'auto');
+        important(score, 'margin-right', 'auto');
+        important(score, 'white-space', 'normal');
+        important(score, 'overflow', 'visible');
+      }
+    };
+
+    for (let i = 0; i < 8; i++) {
+      applySizes();
+      const titleOverflow = title ? Math.max(0, title.scrollWidth - targetWidth) : 0;
+      const scoreOverflow = score ? Math.max(0, score.scrollWidth - targetWidth) : 0;
+      if (titleOverflow > 1) titleFont = Math.max(10, Math.floor(titleFont * (targetWidth / Math.max(1, title.scrollWidth)) * 100) / 100);
+      if (scoreOverflow > 1) scoreFont = Math.max(9, Math.floor(scoreFont * (targetWidth / Math.max(1, score.scrollWidth)) * 100) / 100);
+
+      const tileH = tileW * 1.47;
+      const titleH = title ? title.getBoundingClientRect().height : titleFont * 1.10;
+      const scoreH = score ? score.getBoundingClientRect().height : scoreFont * 1.12;
+      const totalH = titleH + scoreH + lines.length * tileH + Math.max(0, lines.length - 1) + 6;
+      const availableH = Math.max(60, panelHeight - contentTopPad - padY);
+      const heightOverflow = Math.max(0, totalH - availableH);
+      if (titleOverflow <= 1 && scoreOverflow <= 1 && heightOverflow <= 1) break;
+      if (heightOverflow > 1) {
+        const hRatio = clampLocal(0.72, availableH / Math.max(1, totalH), 0.98);
+        tileW = Math.max(7, Math.floor(tileW * hRatio * 100) / 100);
+        titleFont = Math.max(10, Math.floor(titleFont * hRatio * 100) / 100);
+        scoreFont = Math.max(9, Math.floor(scoreFont * hRatio * 100) / 100);
+      }
+    }
+    applySizes();
+  }
+
+  function scheduleSettlementTileShowcaseFit() {
+    if (!dom.resultPanel || !dom.resultPanel.classList.contains('settlement-open')) return;
+    [0, 40, 120, 260, 520].forEach(delay => {
+      setTimeout(() => { try { fitSettlementTileShowcase(); } catch (e) {} }, delay);
+    });
   }
 
   function showSettlementPanelNow(payload, source) {
@@ -16094,7 +16294,7 @@ function chooseExactDiscardTile(seat) {
       ? ((SEAT_NAME[payload.winner] || '') + (payload.kind === 'self' ? ' 自摸' : ' 胡牌'))
       : '流局';
     dom.resultText.innerHTML = buildSettlementHtml(payload);
-    requestAnimationFrame(fitSettlementTileShowcase);
+    scheduleSettlementTileShowcaseFit();
     dom.resultNewBtn.style.display = '';
     dom.resultNewBtn.disabled = isOnlineGuest();
     dom.resultNewBtn.textContent = '再來一局';
@@ -16103,7 +16303,7 @@ function chooseExactDiscardTile(seat) {
     dom.resultCloseBtn.disabled = false;
     dom.resultCloseBtn.textContent = '關閉';
     dom.resultPanel.classList.add('show');
-    requestAnimationFrame(fitSettlementTileShowcase);
+    scheduleSettlementTileShowcaseFit();
     scheduleAutoplaySettlementNextHand(source || 'settlement');
     return true;
   }
@@ -20053,7 +20253,7 @@ function showIntegrityReport(precomputed) {
 
   const bottomHandOpeningFitState = {
     key: '',
-    applied: false
+    finalizedKey: ''
   };
 
   function bottomHandVisibleGameWidth() {
@@ -20106,18 +20306,16 @@ function showIntegrityReport(precomputed) {
 
   function computeBottomHandBaseScaleFromTable(tileW, tileH, vw, vh) {
     let count = 17;
-    let drawnExtra = 0;
     try {
       const map = displayMap();
       const seat = bottomDisplaySeat(map);
       const hand = seat && state.hands ? (state.hands[seat] || []) : [];
       count = Math.max(1, hand.length || 17);
-      /* 剛摸進的牌只做標示與間距，不再參與倍率計算，避免摸牌後改變手牌尺寸。 */
-      drawnExtra = 0;
     } catch (e) {}
     const screenW = Math.max(1, Number(vw) || bottomHandVisibleGameWidth() || 300);
     const targetW = Math.max(1, screenW * 0.90);
-    const naturalW = Math.max(1, (Number(tileW) || cssPixelNumber('--tw-tile-w', 18)) * (count + drawnExtra));
+    const baseTileW = Number(tileW) || cssPixelNumber('--tw-tile-w', 18);
+    const naturalW = Math.max(1, baseTileW * count);
     return clampNumber(0.45, targetW / naturalW, 4.60);
   }
 
@@ -20130,13 +20328,13 @@ function showIntegrityReport(precomputed) {
       bottomHandPinchScaleState.currentScale = bottomHandPinchScaleState.baseScale;
       bottomHandPinchScaleState.active = false;
     }
-    const scale = clampNumber(0.45, bottomHandPinchScaleState.baseScale * bottomHandPinchScaleState.userScale, 3.80);
+    const scale = clampNumber(0.45, bottomHandPinchScaleState.baseScale * bottomHandPinchScaleState.userScale, 6.50);
     bottomHandPinchScaleState.currentScale = scale;
     return scale;
   }
 
   function applyBottomHandPinchScale(scale) {
-    const value = clampNumber(0.45, Number(scale) || 1, 3.80);
+    const value = clampNumber(0.45, Number(scale) || 1, 6.50);
     bottomHandPinchScaleState.currentScale = value;
     const root = document.documentElement;
     if (root && root.style) root.style.setProperty('--tw-bottom-seat-touch-scale', value.toFixed(3));
@@ -20157,7 +20355,7 @@ function showIntegrityReport(precomputed) {
     /* 主體重排：底部手牌倍率改變時，手牌容器、花牌副露列、牌牆、中央棄牌池與四家棄牌位置必須同一輪重新定位。
        這裡不改牌局資料，只讓房主與來賓共用的顯示座標依最新手牌高度往上壓縮，避免手牌向下撐出桌面底邊。 */
     try {
-      if (!applyBottomHandPinchScale.layoutRaf) {
+      if (!bottomHandPinchScaleState.active && !applyBottomHandPinchScale.layoutRaf) {
         applyBottomHandPinchScale.layoutRaf = requestAnimationFrame(() => {
           applyBottomHandPinchScale.layoutRaf = 0;
           try { positionTileContainers(displayMap()); } catch (e) {}
@@ -20173,6 +20371,21 @@ function showIntegrityReport(precomputed) {
     let seat = '';
     try { seat = bottomDisplaySeat(displayMap()) || ''; } catch (e) {}
     return [state.handId || 0, seat || '', bottomHandScaleViewportKey(bottomHandVisibleGameWidth(), bottomHandVisibleGameHeight())].join('|');
+  }
+
+  function refitBottomHandBaseScaleToScreenNinety(reason) {
+    const handEl = dom.handBottom || byId('handBottom');
+    if (!handEl) return;
+    const tileW = cssPixelNumber('--tw-tile-w', 22);
+    const tileH = cssPixelNumber('--tw-tile-h', 32);
+    const vw = bottomHandVisibleGameWidth();
+    const vh = bottomHandVisibleGameHeight();
+    const baseScale = computeBottomHandBaseScaleFromTable(tileW, tileH, vw, vh);
+    bottomHandPinchScaleState.key = bottomHandScaleContentKey(tileW, tileH, vw, vh);
+    bottomHandPinchScaleState.baseScale = baseScale;
+    bottomHandPinchScaleState.userScale = 1;
+    bottomHandPinchScaleState.active = false;
+    applyBottomHandPinchScale(baseScale);
   }
 
   function centerBottomHandScrollToCurrentView(forceOpening) {
@@ -20196,68 +20409,26 @@ function showIntegrityReport(precomputed) {
   }
 
   function fitBottomHandToTableWidthAfterOpening() {
-    /* 主體校準：開局發牌/補花完成後，房主與來賓底部視角手牌必須以「實際量到的整排手牌寬度」貼合可視遊戲寬90%，並在校正完成後強制置中一次。
-       修正重點：手機橫擺全螢幕時，viewport、CSS 變數、容器寬度會分數幀才穩定；因此不能只套公式，必須量實際 row 寬、修正倍率、重新排版、最後置中。
-       仍只在新局/直橫擺/全螢幕 viewport 變動後允許自動校準；摸牌、出牌、吃碰槓、補花、同步、結算不准改手牌倍率。 */
+    /* 下方座位手牌主體縮放規則：
+       1) 開新局/發牌流程中，依目前下方座位實際手牌數重算到螢幕寬 90%。
+       2) 開局完成後再以最終手牌列重算一次，之後摸打、吃碰槓、補花不再自動改玩家雙指縮放倍率。
+       3) 手機直橫擺或視窗尺寸改變時，viewport key 會改變，重新套用 90%。 */
     const handEl = dom.handBottom || byId('handBottom');
-    if (!handEl || !handEl.querySelector) return;
-    if (state.phase === 'opening' || (state.openingDeal && state.openingDeal.active)) return;
-    if (!shouldEnlargeBottomSeatTiles(displayMap())) return;
-    const row = handEl.querySelector('.hand-tile-row');
-    if (!row) return;
-    const tileCount = row.querySelectorAll('.tile').length;
-    if (tileCount < 8) return;
-    const key = bottomHandOpeningFitKey();
-    if (bottomHandOpeningFitState.key === key && bottomHandOpeningFitState.applied) return;
-
-    const targetWidth = Math.max(120, (bottomHandVisibleGameWidth() || 300) * 0.90);
-    const currentScale = Math.max(0.1, Number(bottomHandPinchScaleState.currentScale) || cssPixelNumber('--tw-bottom-seat-touch-scale', 1) || 1);
-    const rowRect = row.getBoundingClientRect ? row.getBoundingClientRect() : null;
-    if (!rowRect || rowRect.width <= 0) return;
-
-    const naturalWidth = Math.max(1, rowRect.width / currentScale);
-    let nextScale = clampNumber(0.36, targetWidth / naturalWidth, 4.60);
-
-    bottomHandPinchScaleState.key = bottomHandScaleContentKey(cssPixelNumber('--tw-tile-w', 18), cssPixelNumber('--tw-tile-h', 26), bottomHandVisibleGameWidth(), bottomHandVisibleGameHeight());
-    bottomHandPinchScaleState.baseScale = nextScale;
-    bottomHandPinchScaleState.userScale = 1;
-    bottomHandPinchScaleState.currentScale = nextScale;
-    bottomHandOpeningFitState.key = key;
-    bottomHandOpeningFitState.applied = true;
-    bottomHandScrollCenterState.userDragged = false;
-    bottomHandScrollCenterState.dragBaseDrawKey = '';
-    applyBottomHandPinchScale(nextScale);
-
-    const refine = (left) => {
-      try {
-        const r = row.getBoundingClientRect ? row.getBoundingClientRect() : null;
-        const actual = r && r.width ? Number(r.width) : 0;
-        const freshTarget = Math.max(120, (bottomHandVisibleGameWidth() || 300) * 0.90);
-        let scaleChanged = false;
-        if (actual > 0) {
-          const ratio = freshTarget / actual;
-          if (Math.abs(1 - ratio) > 0.010) {
-            nextScale = clampNumber(0.36, (Number(bottomHandPinchScaleState.currentScale) || nextScale) * ratio, 4.60);
-            bottomHandPinchScaleState.baseScale = nextScale;
-            bottomHandPinchScaleState.currentScale = nextScale;
-            applyBottomHandPinchScale(nextScale);
-            scaleChanged = true;
-          }
-        }
-        /* 倍率修正後必須重跑主排版，讓 handEl 實際寬度回到 row 的 90% 寬度，再做 scroll 置中；否則全螢幕橫擺會出現「寬度對了但整排偏右」。 */
-        if (scaleChanged && typeof renderAll === 'function') {
-          try { renderAll(); } catch (e) {}
-        }
-        centerBottomHandScrollToCurrentView(true);
-        positionBottomHandScrollIndicator(handEl);
-      } catch (e) {}
-      if (left > 0) requestAnimationFrame(() => refine(left - 1));
-    };
-    requestAnimationFrame(() => refine(5));
+    if (!handEl) return;
+    const roundViewportKey = bottomHandOpeningFitKey();
+    const openingActive = !!(state.openingDeal && state.openingDeal.active) || state.phase === 'opening';
+    if (openingActive || bottomHandOpeningFitState.finalizedKey !== roundViewportKey) {
+      refitBottomHandBaseScaleToScreenNinety(openingActive ? 'opening' : 'opening-final');
+      if (!openingActive) bottomHandOpeningFitState.finalizedKey = roundViewportKey;
+      bottomHandOpeningFitState.key = roundViewportKey;
+    }
+    try { updateBottomHandScrollMode(handEl, chainContentBox(handEl, 'bottom', 'hand'), bottomHandViewportLayoutBox(chainContentBox(handEl, 'bottom', 'hand'), viewportBox(), 4)); } catch (e) {}
+    try { centerBottomHandScrollToCurrentView(false); } catch (e) {}
+    try { positionBottomHandScrollIndicator(handEl); } catch (e) {}
   }
 
   function scheduleBottomHandPinchScale(scale) {
-    bottomHandPinchScaleState.pendingScale = clampNumber(0.45, Number(scale) || 1, 3.80);
+    bottomHandPinchScaleState.pendingScale = clampNumber(0.45, Number(scale) || 1, 6.50);
     if (bottomHandPinchScaleState.raf) return;
     bottomHandPinchScaleState.raf = requestAnimationFrame(() => {
       bottomHandPinchScaleState.raf = 0;
@@ -20268,12 +20439,9 @@ function showIntegrityReport(precomputed) {
   }
 
   function resetBottomHandPinchScaleForViewportChange() {
-    /* 直橫擺/視窗尺寸變化時允許重新以螢幕寬90%建立底部手牌倍率；
-       其它摸牌、出牌、吃碰槓、補花、同步、結算仍不可呼叫此重置。 */
+    /* 直橫擺/全螢幕切換時，清掉本輪最終套用記錄，讓下方手牌以新螢幕寬重新回到 90%。 */
     bottomHandPinchScaleState.active = false;
-    bottomHandPinchScaleState.key = '';
-    bottomHandOpeningFitState.key = '';
-    bottomHandOpeningFitState.applied = false;
+    bottomHandOpeningFitState.finalizedKey = '';
     if (bottomHandPinchScaleState.raf) {
       cancelAnimationFrame(bottomHandPinchScaleState.raf);
       bottomHandPinchScaleState.raf = 0;
@@ -20281,13 +20449,13 @@ function showIntegrityReport(precomputed) {
   }
 
   function scheduleBottomHandViewportRefit(reason) {
-    /* 全螢幕切換與手機橫直擺後，瀏覽器 viewport 會分數幀才穩定；
-       因此只在這些合法時機清空倍率，並延遲多次重算，確保開新局手牌最後仍為可視遊戲寬90%。 */
+    /* 直橫擺/全螢幕後只重排座標與捲動狀態，不改底部座位手牌倍率。 */
     resetBottomHandPinchScaleForViewportChange();
-    [0, 80, 180, 360, 700].forEach(delay => {
+    [0, 80, 180, 360].forEach(delay => {
       setTimeout(() => {
         try { renderAll(); } catch (e) {}
         try { fitBottomHandToTableWidthAfterOpening(); } catch (e) {}
+        try { if (dom.resultPanel && dom.resultPanel.classList.contains('settlement-open')) fitSettlementTileShowcase(); } catch (e) {}
       }, delay);
     });
   }
@@ -20364,7 +20532,7 @@ function showIntegrityReport(precomputed) {
       if (!bottomHandPinchScaleState.active || !ev || !ev.touches || ev.touches.length < 2) return;
       const dist = bottomHandTouchDistance(ev.touches);
       if (!(dist > 0) || !(bottomHandPinchScaleState.startDistance > 0)) return;
-      const nextUserScale = clampNumber(0.45, bottomHandPinchScaleState.startUserScale * (dist / bottomHandPinchScaleState.startDistance), 3.00);
+      const nextUserScale = clampNumber(0.35, bottomHandPinchScaleState.startUserScale * (dist / bottomHandPinchScaleState.startDistance), 6.00);
       bottomHandPinchScaleState.userScale = nextUserScale;
       scheduleBottomHandPinchScale(bottomHandPinchScaleState.baseScale * nextUserScale);
       try { if (ev.cancelable) ev.preventDefault(); } catch (e) {}
@@ -20376,7 +20544,11 @@ function showIntegrityReport(precomputed) {
       bottomHandPinchScaleState.startDistance = 0;
       try { if (ev && ev.cancelable && ev.touches && ev.touches.length >= 2) ev.preventDefault(); } catch (e) {}
       refreshBottomHandPanState();
-      requestAnimationFrame(refreshBottomHandPanState);
+      try { positionTileContainers(displayMap()); } catch (e) {}
+      requestAnimationFrame(() => {
+        refreshBottomHandPanState();
+        try { positionTileContainers(displayMap()); } catch (e) {}
+      });
     };
 
     document.addEventListener('touchend', finish, { passive: false, capture: true });
@@ -21296,19 +21468,13 @@ function showIntegrityReport(precomputed) {
     const previousChildren = Array.from(handEl.children || []);
     let meldRow = previousChildren.find(child => child && child.classList && child.classList.contains('hand-meld-row')) || null;
     let handRow = previousChildren.find(child => child && child.classList && child.classList.contains('hand-tile-row')) || null;
-    let scrollIndicator = previousChildren.find(child => child && child.classList && child.classList.contains('tw16-hand-scroll-indicator')) || null;
     if (!meldRow) meldRow = document.createElement('div');
     if (!handRow) handRow = document.createElement('div');
-    if (!scrollIndicator) scrollIndicator = document.createElement('div');
     meldRow.className = 'hand-row hand-meld-row hand-meld-row-' + pos;
     handRow.className = 'hand-row hand-tile-row hand-tile-row-' + pos;
-    scrollIndicator.className = 'tw16-hand-scroll-indicator';
-    scrollIndicator.textContent = '←→';
-    scrollIndicator.setAttribute('aria-hidden', 'true');
-    scrollIndicator.dataset.pos = pos;
     meldRow.dataset.pos = pos;
     handRow.dataset.pos = pos;
-    handEl.replaceChildren(meldRow, handRow, scrollIndicator);
+    handEl.replaceChildren(meldRow, handRow);
     return { handEl, meldRow, handRow };
   }
 
@@ -22010,23 +22176,8 @@ function concealedKongOwnerOfMeld(meld) {
   }
 
   function positionBottomHandScrollIndicator(handEl) {
-    if (!handEl) return;
-    const indicator = handEl.querySelector ? handEl.querySelector(':scope > .tw16-hand-scroll-indicator') : null;
-    if (!indicator) return;
-    const active = !!(handEl.classList && handEl.classList.contains('tw16-hand-scroll-x'));
-    if (!active || !handEl.getBoundingClientRect) {
-      indicator.style.setProperty('left', '-9999px', 'important');
-      indicator.style.setProperty('top', '-9999px', 'important');
-      return;
-    }
-    const rect = handEl.getBoundingClientRect();
-    if (!rect || !Number.isFinite(rect.left) || !Number.isFinite(rect.top)) {
-      indicator.style.setProperty('left', '-9999px', 'important');
-      indicator.style.setProperty('top', '-9999px', 'important');
-      return;
-    }
-    indicator.style.setProperty('left', px(rect.left + 3), 'important');
-    indicator.style.setProperty('top', px(rect.top + 2), 'important');
+    /* 主體修正：下方座位手牌列不再顯示上下/左右拉桿或方向提示；保留函數入口供捲動與縮放流程呼叫。 */
+    return;
   }
 
   let bottomHandScrollFocusKey = '';
