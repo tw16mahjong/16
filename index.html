@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <title>台灣麻將｜縮放後立即左右拖動</title>
-<link rel="preconnect" href="https://cdn.ably.com" crossorigin/>
+<script type="text/javascript" nonce="27051f3f80694897a069039c375" src="//local.adguard.org?ts=1782001640530&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_00000000fa347207adb395b2858f77b9%26ts%3D495002%26p%3Dfs%26cid%3D1%26sig%3D0b3dcc855ff83b4444255f4f621d4d908db26ad36ccd1878ec194a91e514b15f%26v%3D0&amp;app=brave.exe&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-dnt"></script><script type="text/javascript" nonce="27051f3f80694897a069039c375" src="//local.adguard.org?ts=1782001640530&amp;name=AdGuard%20Assistant&amp;name=AdGuard%20Extra&amp;name=AdGuard%20Popup%20Blocker&amp;type=user-script"></script><link rel="preconnect" href="https://cdn.ably.com" crossorigin/>
 <link rel="dns-prefetch" href="https://realtime.ably.io"/>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#06111f;color:#fff;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;touch-action:manipulation;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.app{position:fixed;inset:0;background:linear-gradient(180deg,#1f68aa 0%,#1f3d7b 44%,#10254f 100%);overflow:hidden;contain:strict}.topbar{position:absolute;left:6px;right:6px;top:max(4px,env(safe-area-inset-top));z-index:20;display:flex;gap:8px;align-items:flex-start;pointer-events:none}.menu{pointer-events:auto;display:grid;gap:4px}.btn{border:0;border-radius:14px;color:white;font-weight:1000;cursor:pointer;background:linear-gradient(180deg,#2563eb,#1d4ed8);box-shadow:0 8px 16px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.18);padding:9px 14px;font-size:16px}.btn.red{background:linear-gradient(180deg,#ef4444,#b91c1c)}.btn.small{padding:7px 10px;font-size:13px}.status{pointer-events:none;border-radius:17px;background:rgba(3,10,25,.78);box-shadow:0 8px 18px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.14);padding:10px 14px;font-size:16px;font-weight:1000;white-space:nowrap}.roundStatusBlock{display:grid;gap:0;align-items:start;justify-items:start;pointer-events:none}.scoreChipLine{margin:0 0 0 2px;padding:0!important;border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important;color:#ff2020;font-size:10px;font-weight:1000;line-height:1.05;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.55),0 0 4px rgba(255,255,255,.22);pointer-events:none}.rightBtns{margin-left:auto;display:flex;gap:7px;pointer-events:auto}.iconBtn{width:58px;height:58px;border-radius:17px;font-size:28px;display:grid;place-items:center}.topbar{gap:0}.menu{gap:0}.topbar .btn{background:rgba(16,90,40,.72)!important;border:0!important;outline:0!important;box-shadow:none!important;border-radius:8px!important;color:#fff!important;padding:3px 6px!important;font-size:11px!important;line-height:1.02!important;min-width:0!important}.topbar .btn.small{padding:3px 6px!important;font-size:10px!important}.topbar .iconBtn{width:30px!important;height:30px!important;border-radius:9px!important;font-size:17px!important}.rightBtns{gap:0}.status{padding:5px 8px!important;font-size:12px!important;border-radius:12px!important}.scoreChipLine{font-size:10px!important;background:transparent!important;border:0!important;box-shadow:none!important}.room{position:absolute;left:6px;top:5px;z-index:21;font-size:14px;font-weight:900;text-shadow:0 2px 4px rgba(0,0,0,.45)}.table{position:absolute;inset:0;border:5px solid rgba(255,255,255,.14);border-radius:8px;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.05),rgba(0,0,0,.18) 42%,rgba(0,0,0,.28) 72%);contain:layout style}.center{position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);width:min(64vw,680px);height:min(54vh,560px);border-radius:15px;background:rgba(72,29,12,.34);box-shadow:inset 0 0 55px rgba(0,0,0,.22);overflow:hidden}.discardGrid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(36vw,330px);min-height:90px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;z-index:8;pointer-events:none}.seatLabel{position:absolute;z-index:8;text-align:center;font-weight:1000;line-height:1.08;text-shadow:0 2px 4px rgba(0,0,0,.55),0 0 8px rgba(255,255,255,.2);pointer-events:none}.seatLabel .name{font-size:20px}.seatLabel .score{margin-top:4px;font-size:24px;color:#ffe85a}.seatLabel .meta{margin-top:2px;font-size:14px;color:#fff6a8}.seatLabel.active .name,.seatLabel.active .score{color:#fff06a;text-shadow:0 0 12px rgba(255,232,90,.65),0 2px 5px rgba(0,0,0,.65)}.seatLabel.ting .name:after{content:' 聽';color:#ff3030;font-size:.9em}.seat-bottom{left:14%;bottom:13%;transform:translateX(-50%)}.seat-top{left:50%;top:12%;transform:translateX(-50%)}.seat-left{left:9%;top:43%;transform:translateY(-50%)}.seat-right{right:9%;top:43%;transform:translateY(-50%)}.hand{position:absolute;z-index:14;display:flex;gap:0;align-items:center;justify-content:center}.hand-bottom{left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:94vw;overflow:visible}.hand-top{left:50%;top:calc(62px + env(safe-area-inset-top));transform:translateX(-50%)}.hand-left{left:36px;top:50%;transform:translateY(-50%);flex-direction:column}.hand-right{right:36px;top:50%;transform:translateY(-50%);flex-direction:column}.melds{position:absolute;z-index:12;display:flex;gap:calc(var(--tw-tile-w) * .14)!important;align-items:flex-start!important;justify-content:flex-start!important}.meld-bottom{left:50%;bottom:88px;transform:translateX(-50%)}.meld-top{left:50%;top:112px;transform:translateX(-50%)}.meld-left{left:102px;top:50%;transform:translateY(-50%);flex-direction:column}.meld-right{right:102px;top:50%;transform:translateY(-50%);flex-direction:column}.tile{position:relative;flex:0 0 auto;width:28px;height:40px;border-radius:var(--tw-tile-radius,5px);background:linear-gradient(180deg,#fffef7 0%,#f1eadf 72%,#d6c7b3 100%);border:1px solid rgba(70,50,28,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 4px rgba(0,0,0,.24);display:grid;place-items:center;font-size:19px;font-weight:1000;color:#111;user-select:none}.tile .small{position:absolute;top:1px;right:2px;font-size:9px;color:#333}.tile.red{color:#c41414}.tile.green{color:#047857}.tile.blue{color:#255fd4}.tile.back{width:27px;height:39px;background:linear-gradient(180deg,#b7f0ff 0%,#7dd3fc 58%,#43a9d8 100%);border-color:rgba(35,84,114,.36);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 4px rgba(0,0,0,.24);color:transparent}.tile.face-image{padding:0;background:transparent!important;border:0!important;box-shadow:0 3px 6px rgba(0,0,0,.25)!important;color:transparent!important}.tile-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none}.tile-face img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;border-radius:0;user-select:none;-webkit-user-drag:none;pointer-events:none}.tile.kind-suit-s .tile-face img,.tile.kind-honor .tile-face img,.tile.kind-flower .tile-face img{transform:scale(1.04);transform-origin:center center}.tile.back.face-image{background:linear-gradient(180deg,#b7f0ff 0%,#7dd3fc 58%,#43a9d8 100%)!important;border:1px solid rgba(35,84,114,.36)!important}.hand-bottom .tile{cursor:pointer}.hand-bottom .tile:hover{transform:translateY(-4px)}.hand-bottom .tile.drawn{margin-left:5px}.discardGrid .tile{width:22px;height:32px;font-size:15px}.bigDiscard{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.5);opacity:0;z-index:14;pointer-events:none;transition:transform .16s ease,opacity .16s ease;will-change:transform,opacity}.bigDiscard.show{opacity:1;transform:translate(-50%,-50%) scale(2.6)}.arrow{display:none!important;position:absolute;z-index:-1;width:0;height:0;pointer-events:none}.arrow-bottom{left:50%;bottom:145px;transform:translateX(-50%);border-left:40px solid transparent;border-right:40px solid transparent;border-top:70px solid rgba(255,0,0,.88)}.arrow-top{left:50%;top:145px;transform:translateX(-50%);border-left:40px solid transparent;border-right:40px solid transparent;border-bottom:70px solid rgba(255,0,0,.88)}.arrow-left{left:165px;top:50%;transform:translateY(-50%);border-top:40px solid transparent;border-bottom:40px solid transparent;border-right:70px solid rgba(255,0,0,.88)}.arrow-right{right:165px;top:50%;transform:translateY(-50%);border-top:40px solid transparent;border-bottom:40px solid transparent;border-left:70px solid rgba(255,0,0,.88)}.wall{position:absolute;z-index:6;display:flex;gap:0;pointer-events:none}.wall-bottom{left:50%;bottom:122px;transform:translateX(-50%)}.wall-top{left:50%;top:105px;transform:translateX(-50%)}.wall-left{left:92px;top:50%;transform:translateY(-50%);flex-direction:column}.wall-right{right:92px;top:50%;transform:translateY(-50%);flex-direction:column}.wall .piece{width:12px;height:18px;border-radius:var(--tw-wall-piece-radius,3px);background:linear-gradient(180deg,#b7f0ff,#43a9d8);border:1px solid rgba(35,84,114,.25);margin:0}.wall-left .piece,.wall-right .piece{width:18px;height:12px}.hint{position:absolute;left:50%;bottom:28%;transform:translateX(-50%);z-index:1;max-width:82vw;border-radius:16px;background:rgba(15,23,42,.38);padding:13px 18px;text-align:center;font-size:18px;font-weight:900;color:rgba(255,255,255,.58);line-height:1.45;pointer-events:none}.log{display:none!important;}.result{position:fixed;left:50vw!important;top:50dvh!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%)!important;z-index:2147483300;display:none;width:min(92vw,720px);min-width:min(300px,92vw);max-width:calc(100vw - 16px);max-height:calc(100dvh - max(16px,env(safe-area-inset-top)) - max(16px,env(safe-area-inset-bottom)));overflow:hidden;border-radius:18px;padding:18px 18px 16px;background:linear-gradient(180deg,rgba(83,16,24,.98),rgba(31,5,10,.98));box-shadow:0 22px 50px rgba(0,0,0,.45);text-align:center;touch-action:auto;box-sizing:border-box;contain:layout}.result.dragging{transition:none;user-select:none}.result h2{cursor:default;touch-action:auto;user-select:text;-webkit-user-select:text;margin:0 0 10px;color:#ffe85a;flex:0 0 auto}.result h2:active{color:#fde68a}.result.show{display:flex;flex-direction:column}.result #resultText{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.result .buttons{display:flex;justify-content:center;gap:10px;margin-top:12px;flex:0 0 auto;flex-wrap:wrap}@media(max-width:700px){.status{font-size:13px;padding:6px 9px}.iconBtn{width:34px;height:34px}.center{width:68vw;height:48vh}.tile{width:24px;height:35px;font-size:17px}.discardGrid .tile{width:20px;height:29px}.hand-top .tile.back{width:22px;height:32px}.hand-left .tile.back,.hand-right .tile.back{width:22px;height:32px}.seatLabel .name{font-size:18px}.seatLabel .score{font-size:22px}.seat-left{left:10%}.seat-right{right:10%}.wall-left{left:84px}.wall-right{right:84px}}
@@ -1863,54 +1863,53 @@
 
 .result.settlement-open{
   position:fixed!important;
-  left:0!important;
-  top:0!important;
-  right:0!important;
-  bottom:0!important;
-  transform:none!important;
-  width:100vw!important;
-  height:100dvh!important;
-  min-width:0!important;
-  max-width:100vw!important;
-  max-height:100dvh!important;
-  border-radius:0!important;
-  padding:max(48px,calc(env(safe-area-inset-top) + 42px)) 8px max(8px,env(safe-area-inset-bottom))!important;
-  z-index:2147483647!important;
+  left:50vw!important;
+  top:var(--tw-table-center-y,51%)!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:translate(-50%,-50%)!important;
+  width:var(--tw-center-w,64vw)!important;
+  height:var(--tw-center-h,54vh)!important;
+  min-width:min(260px,calc(100vw - 16px))!important;
+  min-height:min(160px,calc(100dvh - 16px))!important;
+  max-width:calc(100vw - 16px)!important;
+  max-height:calc(100dvh - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom)))!important;
+  border-radius:22px!important;
+  padding:28px 8px 8px!important;
+  z-index:2147482900!important;
   overflow:hidden!important;
   box-sizing:border-box!important;
+  background:rgba(202,211,151,.84)!important;
+  border:3px solid #e60000!important;
+  outline:0!important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.16),0 8px 20px rgba(0,0,0,.18)!important;
+  color:#e60000!important;
+  text-align:center!important;
+  contain:layout style!important;
 }
 .result.settlement-open h2{
-  position:absolute!important;
-  left:50%!important;
-  top:max(8px,env(safe-area-inset-top))!important;
-  right:auto!important;
-  transform:translateX(-50%)!important;
-  width:calc(100vw - 190px)!important;
-  margin:0!important;
-  text-align:center!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
+  display:none!important;
 }
 .result.settlement-open .buttons{
   position:absolute!important;
-  right:max(8px,env(safe-area-inset-right))!important;
-  top:max(6px,env(safe-area-inset-top))!important;
-  z-index:2147483647!important;
+  right:4px!important;
+  top:4px!important;
+  z-index:2147482901!important;
   display:flex!important;
   flex-direction:row!important;
   align-items:center!important;
   justify-content:flex-end!important;
-  gap:10px!important;
+  gap:4px!important;
   margin:0!important;
   padding:0!important;
   background:transparent!important;
   border:0!important;
-  border-radius:0!important;
+  border-radius:14px!important;
   outline:0!important;
   box-shadow:none!important;
   pointer-events:auto!important;
 }
+.result.settlement-open #resultBackBtn{display:none!important;}
 .result.settlement-open .buttons .btn{
   appearance:none!important;
   -webkit-appearance:none!important;
@@ -1918,20 +1917,20 @@
   height:auto!important;
   min-width:0!important;
   min-height:0!important;
-  padding:0!important;
+  padding:0 3px!important;
   margin:0!important;
-  border:0!important;
-  border-radius:0!important;
+  border:2px solid #e60000!important;
+  border-radius:10px!important;
   outline:0!important;
-  background:transparent!important;
+  background:rgba(202,211,151,.78)!important;
   box-shadow:none!important;
   backdrop-filter:none!important;
   -webkit-backdrop-filter:none!important;
-  color:#ef4444!important;
-  font-size:16px!important;
+  color:#e60000!important;
+  font-size:clamp(15px,3.2vw,25px)!important;
   font-weight:1000!important;
-  line-height:1.1!important;
-  text-shadow:0 1px 2px rgba(0,0,0,.35)!important;
+  line-height:1.05!important;
+  text-shadow:none!important;
   transform:none!important;
   transition:none!important;
   overflow:visible!important;
@@ -1941,11 +1940,7 @@
 .result.settlement-open .buttons .btn:active,
 .result.settlement-open .buttons .btn:focus,
 .result.settlement-open .buttons .btn:focus-visible{
-  padding:0!important;
-  border:0!important;
-  border-radius:0!important;
   outline:0!important;
-  background:transparent!important;
   box-shadow:none!important;
   transform:none!important;
 }
@@ -1955,47 +1950,46 @@
   cursor:not-allowed!important;
 }
 .result.settlement-open #resultText{
-  flex:1 1 auto!important;
-  min-height:0!important;
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  top:0!important;
+  bottom:0!important;
   width:100%!important;
-  overflow:auto!important;
+  height:100%!important;
+  overflow:hidden!important;
   overscroll-behavior:contain!important;
   -webkit-overflow-scrolling:touch!important;
-  padding:0 4px 10px!important;
+  padding:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  pointer-events:none!important;
 }
-.settlement-content{display:grid;gap:10px;text-align:center;width:min(980px,100%);margin:0 auto;color:#f8fafc;}
-.settlement-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;align-items:stretch;}
-.settlement-summary>div,.settlement-table,.settlement-reveal-seat{border-radius:12px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.10);padding:8px;}
-.settlement-summary b{display:block;color:#93c5fd;font-size:12px;margin-bottom:4px;}
-.settlement-summary span{font-weight:1000;color:#fde68a;}
+.result.settlement-open #resultText .settlement-content,
+.result.settlement-open #resultText .settlement-draw-only{
+  pointer-events:none!important;
+}
+.settlement-content{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;text-align:center;width:100%;height:100%;margin:0 auto;color:#e60000;overflow:hidden;padding:10px 58px 10px 10px;box-sizing:border-box;}
+.settlement-title-line{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.18em;font-size:clamp(19px,3.4vw,40px);font-weight:1000;line-height:1.18;color:#e60000;text-shadow:0 1px 0 rgba(255,255,255,.25);white-space:normal;text-align:center;}
+.settlement-score-line{font-size:clamp(18px,3.1vw,36px);font-weight:1000;line-height:1.12;color:#e60000;text-shadow:0 1px 0 rgba(255,255,255,.25);white-space:normal;text-align:center;}
+.settlement-tile-showcase{display:flex;align-items:center;justify-content:center;width:100%;max-width:100%;overflow:hidden;margin:0 auto;min-width:0;}
+.settlement-tile-showcase .tileStrip{display:flex!important;flex-wrap:nowrap!important;gap:0!important;align-items:center!important;justify-content:center!important;min-width:0!important;width:max-content!important;max-width:none!important;overflow:visible!important;transform-origin:center center!important;margin:0 auto!important;}
+.settlement-tile-showcase .tile{width:clamp(18px,2.45vw,34px)!important;height:clamp(26px,3.58vw,50px)!important;font-size:clamp(12px,1.65vw,22px)!important;border-radius:var(--tw-tile-radius,6px)!important;}
+.settlement-tile-showcase .tile.win-tile{border:2px solid #ff2020!important;outline:0!important;box-shadow:inset 0 0 0 1px rgba(255,32,32,.72),0 0 5px rgba(255,32,32,.45)!important;overflow:visible!important;}
+.settlement-tile-showcase .tile.win-tile::before{content:'胡牌';position:absolute;left:-1px;top:-1.25em;color:#fff;background:#e60000;border-radius:2px;padding:0 2px;font-size:clamp(8px,1.1vw,12px);font-weight:1000;line-height:1.15;white-space:nowrap;z-index:5;}
+.settlement-draw-only{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:clamp(56px,11vw,118px);font-weight:1000;color:#e60000;line-height:1;text-shadow:0 1px 0 rgba(255,255,255,.25);}
+.settlement-summary,.settlement-table,.settlement-reveal-block,.settlement-section-title,.settlement-items,.settlement-next{display:none!important;}
 .settlement-win-tile{display:flex;justify-content:center;align-items:center;min-height:48px;}
-.settlement-win-tile .tile{width:34px!important;height:50px!important;font-size:22px!important;}
-.settlement-content .tile.win-tile{border:1px solid #ff2020!important;outline:0!important;box-shadow:inset 0 0 0 1px rgba(255,32,32,.72)!important;}
-.settlement-section-title{font-weight:1000;color:#fde68a;margin-top:2px;}
-.settlement-items{line-height:1.45;color:#e5e7eb;font-weight:800;}
-.settlement-table{display:grid;gap:2px;padding:6px;}
-.settlement-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;align-items:center;padding:5px 4px;border-radius:8px;font-weight:900;background:rgba(2,6,23,.20);}
-.settlement-row.head{color:#bfdbfe;background:rgba(15,23,42,.52);}
-.settlement-row.plus span:nth-child(3){color:#86efac;}
-.settlement-row.minus span:nth-child(3){color:#fca5a5;}
-.settlement-row.zero span:nth-child(3){color:#cbd5e1;}
-.settlement-reveal-block{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:none!important;overflow:visible!important;text-align:left!important;}
-.settlement-reveal-line{display:grid;grid-template-columns:clamp(58px,7.2vw,76px) minmax(0,1fr);gap:4px;align-items:start;margin-top:3px;}
-.settlement-reveal-line b{color:#bfdbfe;font-size:clamp(10px,2.2vw,12px);line-height:30px;white-space:nowrap;word-break:keep-all;letter-spacing:0;width:100%;text-align:left;}
-.settlement-hand-line .tileStrip,.settlement-lower-line-wrap .tileStrip{flex:0 0 auto;flex-wrap:nowrap!important;gap:0!important;min-width:max-content;}
-.settlement-hand-line .tileStrip{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:1px;}
-.settlement-lower-line-wrap{display:flex;align-items:flex-start;justify-content:flex-start;gap:0;min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:1px;}
-.settlement-lower-line-wrap .settlement-empty{flex:0 0 auto;}
-.settlement-meld-list{display:flex;flex:0 0 auto;flex-wrap:nowrap;align-items:flex-start;justify-content:flex-start;gap:0;margin-left:0;min-width:max-content;}
-.settlement-meld-list .tileStrip{flex:0 0 auto;flex-wrap:nowrap!important;gap:0!important;margin-left:0!important;min-width:max-content;}
-.settlement-empty{color:#94a3b8;font-weight:800;font-size:12px;line-height:30px;}
-.settlement-next{font-weight:1000;color:#fde68a;padding:8px 0 2px;}
+.settlement-win-tile .tile{width:clamp(22px,2.75vw,36px)!important;height:clamp(32px,4.0vw,53px)!important;font-size:clamp(15px,1.9vw,24px)!important;border-radius:var(--tw-tile-radius,6px)!important;}
+.settlement-title-line .settlement-win-tile{display:inline-flex!important;vertical-align:middle!important;min-height:0!important;margin:0 .06em!important;transform:translateY(.03em)!important;}
+.settlement-title-line .settlement-win-tile .tile{box-shadow:0 2px 4px rgba(0,0,0,.22)!important;border:2px solid #e60000!important;}
+
+.settlement-title-line .settlement-word{display:inline-flex;align-items:center;justify-content:center;}
+.settlement-title-line .settlement-win-tile .tile-face,.settlement-title-line .settlement-win-tile .tile-face img{border-radius:inherit!important;}
 @media(max-width:760px){
-  .result.settlement-open{padding-top:max(46px,calc(env(safe-area-inset-top) + 40px))!important;}
-  .result.settlement-open h2{width:calc(100vw - 170px)!important;font-size:18px!important;}
-  .settlement-reveal-block{grid-template-columns:1fr;}
-  .settlement-row{grid-template-columns:1.05fr 1.05fr .95fr .95fr;font-size:12px;gap:3px;}
-  .settlement-summary{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .result.settlement-open{width:var(--tw-center-w,68vw)!important;height:var(--tw-center-h,50vh)!important;padding:24px 6px 6px!important;}
+  .settlement-content{padding:10px 50px 10px 10px;gap:6px;}
 }
 
 .actionPanel.ting-choice-active{
@@ -3929,6 +3923,46 @@ html body .table{
 }
 
 
+
+
+/* settlement_showcase_fit_90: 結算窗內胡牌實例整列固定以結算窗寬度九成置中自適縮放。 */
+.result.settlement-open .settlement-tile-showcase{
+  width:90%!important;
+  max-width:90%!important;
+  margin:0 auto!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:visible!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+.result.settlement-open .settlement-tile-showcase .tileStrip{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:max-content!important;
+  max-width:none!important;
+  min-width:0!important;
+  margin:0 auto!important;
+  overflow:visible!important;
+  transform:none!important;
+}
+.result.settlement-open .settlement-tile-showcase .tile{
+  width:var(--tw-settlement-showcase-tile-w,clamp(18px,2.45vw,34px))!important;
+  height:var(--tw-settlement-showcase-tile-h,clamp(26px,3.58vw,50px))!important;
+  min-width:var(--tw-settlement-showcase-tile-w,clamp(18px,2.45vw,34px))!important;
+  min-height:var(--tw-settlement-showcase-tile-h,clamp(26px,3.58vw,50px))!important;
+  max-width:var(--tw-settlement-showcase-tile-w,clamp(18px,2.45vw,34px))!important;
+  max-height:var(--tw-settlement-showcase-tile-h,clamp(26px,3.58vw,50px))!important;
+  font-size:var(--tw-settlement-showcase-font,clamp(12px,1.65vw,22px))!important;
+  flex:0 0 var(--tw-settlement-showcase-tile-w,clamp(18px,2.45vw,34px))!important;
+}
+.result.settlement-open .settlement-tile-showcase .tile .small{
+  font-size:var(--tw-settlement-showcase-small-font,clamp(7px,.82vw,11px))!important;
+}
+
 </style>
 </head>
 <body>
@@ -4053,6 +4087,8 @@ html body .table{
   let _tw16ClaimFlash = null;
   let _tw16WinFlash = null;
   let tw16HistViewing = false;  // 本機獨立旗標：觀看胡牌歷程時暫停本機AI排程，不寫入state，不同步給其他人
+  let tw16UiPriorityMode = false;  // 本機 UI 優先旗標：選單/設定/歷程開啟時暫停托管排程，不寫入state，不同步給其他人
+  let tw16AiDriveRunning = false;
   let claimTimer = null;
   let autoNextTimer = null;
   let miniDashboardCountdownTimer = null;
@@ -6947,7 +6983,7 @@ html body .table{
     dom.newGameBtn.addEventListener('click', () => { if (isOnlineGuest()) { requestNetworkSync('guest-newgame-button'); return; } newGame(); });
     dom.resultBackBtn.addEventListener('click', () => handleResultBackButton());
     dom.resultNewBtn.addEventListener('click', () => { clearAutoNextTimer('manual-new-game'); if (isOnlineGuest()) { requestNetworkSync('guest-result-newgame'); return; } dom.resultNewBtn.style.display = ''; newGame(); });
-    dom.resultCloseBtn.addEventListener('click', () => { const visibleSettlementId = dom.resultPanel && dom.resultPanel.dataset ? String(dom.resultPanel.dataset.settlementId || '') : ''; clearAutoNextTimer('manual-close-settlement'); if (dom.resultPanel && dom.resultPanel.classList.contains('settlement-open')) { const closeId = visibleSettlementId || (state.lastSettlement && state.lastSettlement.id ? state.lastSettlement.id : ''); if (closeId) net.closedSettlementId = closeId; if (isOnlineGuest()) markGuestSettlementClosedLocally('manual-close-settlement', closeId); } dom.resultPanel.classList.remove('show'); dom.resultPanel.classList.remove('menu-open'); dom.resultPanel.classList.remove('settlement-open'); dom.resultPanel.classList.remove('history-open'); dom.resultPanel.classList.remove('utility-open'); dom.resultPanel.classList.remove('custom-tile-import-open'); if (dom.resultPanel.dataset) delete dom.resultPanel.dataset.settlementId; dom.resultNewBtn.style.display = ''; dom.resultNewBtn.disabled = false; dom.resultCloseBtn.textContent = '關閉'; resumeGameAfterTileManagement('result-close'); });
+    dom.resultCloseBtn.addEventListener('click', () => { const visibleSettlementId = dom.resultPanel && dom.resultPanel.dataset ? String(dom.resultPanel.dataset.settlementId || '') : ''; clearAutoNextTimer('manual-close-settlement'); if (dom.resultPanel && dom.resultPanel.classList.contains('settlement-open')) { const closeId = visibleSettlementId || (state.lastSettlement && state.lastSettlement.id ? state.lastSettlement.id : ''); if (closeId) net.closedSettlementId = closeId; if (isOnlineGuest()) markGuestSettlementClosedLocally('manual-close-settlement', closeId); } dom.resultPanel.classList.remove('show'); dom.resultPanel.classList.remove('menu-open'); dom.resultPanel.classList.remove('settlement-open'); dom.resultPanel.classList.remove('history-open'); dom.resultPanel.classList.remove('utility-open'); dom.resultPanel.classList.remove('custom-tile-import-open'); if (dom.resultPanel.dataset) delete dom.resultPanel.dataset.settlementId; dom.resultNewBtn.style.display = ''; dom.resultNewBtn.disabled = false; dom.resultCloseBtn.textContent = '關閉'; resumeGameAfterTileManagement('result-close'); setUiPriorityMode(false, 'result-close'); });
     dom.autoBtn.addEventListener('click', () => toggleBottomAutoplay());
     dom.fullBtn.addEventListener('click', () => toggleFullscreen());
     dom.menuBtn.addEventListener('click', () => openMainMenu());
@@ -6976,6 +7012,23 @@ html body .table{
     const sel = byId('tw16LobbyTableMode');
     const v = sel ? Number(sel.value) : 4;
     state.tableMode = (v === 2 || v === 3) ? v : 4;
+  }
+
+  function assignOfflineRandomViewSeat(reason) {
+    /* 離線直接開始：只隨機安排本機玩家的操作/顯示座位，莊家與單機房主權限不跟著移動。
+       權限仍依 offline 本機流程處理，不套用來賓限制；因此玩家就算不是東家，也可開局與操作全局設定。 */
+    if (isNetworked()) return state.viewSeat;
+    const seats = activeSeats();
+    const candidates = seats.length ? seats : ['east'];
+    const picked = candidates[Math.floor(Math.random() * candidates.length)] || 'east';
+    state.viewSeat = picked;
+    net.assignedSeat = '';
+    net.role = 'offline';
+    net.connected = false;
+    net.connecting = false;
+    net.connectionState = 'offline';
+    recordNetworkEvent('offline-random-seat', '離線隨機安排本機座位', { reason: reason || '', seat: picked });
+    return picked;
   }
 
   function createInterface329Lobby() {
@@ -7073,6 +7126,7 @@ html body .table{
       saveLastInputs();
       applyLobbyTableModeSelection();
       if (isNetworked()) disconnectAbly(false);
+      assignOfflineRandomViewSeat('lobby-offline');
       applyLocalPlayerName(nameValue(), 'lobby-offline');
       hideInterface329Lobby();
       newGame();
@@ -7355,7 +7409,6 @@ html body .table{
     dom.resultNewBtn.style.display = 'none';
     dom.resultNewBtn.disabled = false;
     dom.resultCloseBtn.textContent = '關閉';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
     clampUtilityPanelToViewport();
   }
@@ -14668,11 +14721,32 @@ function loadUiSettings() {
     }
     return false;
   }
+  function setUiPriorityMode(enabled, reason) {
+    tw16UiPriorityMode = !!enabled;
+    if (tw16UiPriorityMode) {
+      clearTimeout(autoplayTimer);
+      autoplayTimer = null;
+    } else if (!tw16HistViewing && !isTileManagementPausingGame()) {
+      scheduleDriveSeat(reason || 'ui-priority-release');
+    }
+    return tw16UiPriorityMode;
+  }
+
+  function isUiPriorityModeActive() {
+    return !!tw16UiPriorityMode || !!tw16HistViewing || isTileManagementPausingGame();
+  }
+
+  async function yieldForUiPriorityFrame() {
+    await new Promise(resolve => requestAnimationFrame(() => resolve()));
+  }
+
   async function driveSeat(reason) {
-    if (tw16HistViewing) return;
-    if (isTileManagementPausingGame()) return;
+    if (isUiPriorityModeActive()) return;
+    if (tw16AiDriveRunning) return;
     if (isOnlineGuest()) return;
     if (state.openingDeal && state.openingDeal.active) return;
+    tw16AiDriveRunning = true;
+    try {
     const readyForGameStep = await waitForHostReliableAckBeforeGameStep('drive-entry:' + (reason || ''), () => !state.ended && !(state.openingDeal && state.openingDeal.active));
     if (!readyForGameStep) return;
     await waitForGameVoiceBeforeAutoplay('drive-entry:' + (reason || ''));
@@ -14711,8 +14785,11 @@ function loadUiSettings() {
       }
       if (!drawn || state.ended || state.locked || state.pending) return;
       // 預熱 AI 快取：摸牌後立刻計算最佳棄牌，discard 階段直接命中快取
-      if (isSeatAutoDrivenBySystem(seat) || state.seatAutoPlay[seat]) {
-        try { chooseDiscardTile(seat); } catch (e) {}
+      if (!isUiPriorityModeActive() && (isSeatAutoDrivenBySystem(seat) || state.seatAutoPlay[seat])) {
+        await yieldForUiPriorityFrame();
+        if (!isUiPriorityModeActive()) {
+          try { chooseDiscardTile(seat); } catch (e) {}
+        }
       }
     }
 
@@ -14774,6 +14851,8 @@ function loadUiSettings() {
       }
     }
 
+    await yieldForUiPriorityFrame();
+    if (isUiPriorityModeActive()) return;
     const tileId = chooseDiscardTile(seat);
     if (tileId && canDiscard(seat)) {
       submitDiscard(seat, tileId, 'auto:' + reason);
@@ -14789,17 +14868,18 @@ function loadUiSettings() {
       clearTimeout(autoplayTimer);
       autoplayTimer = setTimeout(() => scheduleDriveSeat('auto-driven-retry'), 200);
     }
+    } finally {
+      tw16AiDriveRunning = false;
+    }
   }
 
   function scheduleDriveSeat(reason) {
     clearTimeout(autoplayTimer);
-    if (tw16HistViewing) { autoplayTimer = null; return; }
-    if (isTileManagementPausingGame()) {
-      autoplayTimer = null;
-      return;
-    }
+    if (isUiPriorityModeActive()) { autoplayTimer = null; return; }
     autoplayTimer = setTimeout(async () => {
+      if (isUiPriorityModeActive()) return;
       await waitForGameVoiceBeforeAutoplay('drive:' + (reason || ''));
+      if (isUiPriorityModeActive()) return;
       driveSeat(reason);
     }, 10);
   }
@@ -15653,29 +15733,37 @@ function chooseExactDiscardTile(seat) {
     return tileObj ? '<div class="settlement-win-tile">' + tileMiniHtml(tileObj, true) + '</div>' : '<span class="settlement-no-tile">無</span>';
   }
 
+  function compactSettlementWinnerHandHtml(payload) {
+    if (!payload || payload.type !== 'win') return '';
+    const winner = payload.winner;
+    const winTile = payload.tile || null;
+    const revealSeat = (payload.reveal || []).find(entry => entry && entry.seat === winner) || null;
+    const hand = revealSeat && Array.isArray(revealSeat.hand) ? revealSeat.hand : [];
+    return '<div class="settlement-tile-showcase">' + buildTileStripHtml(hand, winTile) + '</div>';
+  }
+
+  function settlementChipDeltaForSeat(payload, seat) {
+    const row = payload && Array.isArray(payload.seatRows) ? payload.seatRows.find(r => r && r.seat === seat) : null;
+    return row ? Number(row.delta || 0) || 0 : 0;
+  }
+
   function buildSettlementHtml(payload) {
     if (!payload || typeof payload !== 'object') return '';
-    const next = payload.nextRoundPlan ? WIND_NAME[payload.nextRoundPlan.windRound] + payload.nextRoundPlan.handNo + '局，莊：' + SEAT_NAME[payload.nextRoundPlan.dealer] : '';
-    const head = payload.type === 'win'
-      ? '<div class="settlement-summary"><div><b>胡牌座位</b><span>' + escapeHtml(SEAT_NAME[payload.winner] || '') + '</span></div>'
-        + '<div><b>胡牌方式</b><span>' + escapeHtml(payload.kind === 'self' ? '自摸' : (SEAT_NAME[payload.fromSeat] + '放槍')) + '</span></div>'
-        + '<div><b>胡哪支牌</b>' + settlementTileHtml(payload.tile) + '</div>'
-        + '<div><b>台數</b><span>' + escapeHtml(String(payload.tai || 0)) + '台</span></div></div>'
-      : '<div class="settlement-summary"><div><b>結果</b><span>流局</span></div><div><b>剩餘牌</b><span>' + escapeHtml(String(payload.wallLeft || 0)) + '張</span></div></div>';
-    const items = payload.type === 'win' && payload.items && payload.items.length
-      ? '<div class="settlement-section-title">計台明細</div><div class="settlement-items">' + payload.items.map(escapeHtml).join('／') + '</div>'
-      : '';
-    const rows = (payload.seatRows || []).map(row => {
-      const cls = row.delta > 0 ? 'plus' : (row.delta < 0 ? 'minus' : 'zero');
-      const baseText = formatSettlementUnitText(row);
-      return '<div class="settlement-row ' + cls + '"><span>' + escapeHtml(row.name || SEAT_NAME[row.seat] || '') + '</span><span>' + escapeHtml(baseText) + '</span><span>' + escapeHtml(signedNumber(row.delta)) + '</span><span>' + escapeHtml(String(row.after || 0)) + '</span></div>';
-    }).join('');
-    const reveal = buildSettlementRevealHtml(payload);
-    return '<div class="settlement-content">' + head + items
-      + '<div class="settlement-section-title">籌碼結算</div>'
-      + '<div class="settlement-table"><div class="settlement-row head"><span>座位</span><span>底/台</span><span>本局</span><span>結餘</span></div>' + rows + '</div>'
-      + reveal
-      + (next ? '<div class="settlement-next">下一局：' + escapeHtml(next) + '</div>' : '')
+    if (payload.type === 'draw') return '<div class="settlement-draw-only">流局</div>';
+    if (payload.type !== 'win') return '';
+    const winnerName = SEAT_NAME[payload.winner] || '';
+    const fromName = payload.kind === 'ron' ? (SEAT_NAME[payload.fromSeat] || '') : '';
+    const winTileHtml = payload.tile ? settlementTileHtml(payload.tile) : '<span class="settlement-no-tile">無</span>';
+    const titleLine = '<span class="settlement-word">' + escapeHtml(winnerName) + '</span>'
+      + '<span class="settlement-word">' + (payload.kind === 'self' ? '自摸' : '胡') + '</span>'
+      + winTileHtml
+      + (payload.kind === 'ron' && fromName ? '<span class="settlement-word">' + escapeHtml(fromName) + '放槍</span>' : '');
+    const delta = settlementChipDeltaForSeat(payload, payload.winner);
+    const scoreLine = '+' + escapeHtml(String(payload.tai || 0)) + '台　籌碼' + signedNumber(delta);
+    return '<div class="settlement-content">'
+      + '<div class="settlement-title-line">' + titleLine + '</div>'
+      + '<div class="settlement-score-line">' + scoreLine + '</div>'
+      + compactSettlementWinnerHandHtml(payload)
       + '</div>';
   }
 
@@ -15912,6 +16000,78 @@ function chooseExactDiscardTile(seat) {
     }
   }
 
+  function fitSettlementTileShowcase() {
+    if (!dom.resultPanel || !dom.resultPanel.classList.contains('settlement-open')) return;
+    const panel = dom.resultPanel;
+    const content = panel.querySelector('.settlement-content');
+    const box = panel.querySelector('.settlement-tile-showcase');
+    const strip = box ? box.querySelector('.tileStrip') : null;
+    if (!box || !strip) return;
+
+    /* 主體自適應：先解除舊的估算式縮放，再用實際渲染寬度反算比例。 */
+    if (content) {
+      content.style.boxSizing = 'border-box';
+      content.style.width = '100%';
+      content.style.maxWidth = '100%';
+      content.style.paddingLeft = '8px';
+      content.style.paddingRight = '8px';
+      content.style.overflow = 'hidden';
+    }
+    box.style.width = '90%';
+    box.style.maxWidth = '90%';
+    box.style.marginLeft = 'auto';
+    box.style.marginRight = 'auto';
+    box.style.display = 'flex';
+    box.style.alignItems = 'center';
+    box.style.justifyContent = 'center';
+    box.style.overflow = 'visible';
+    box.style.minWidth = '0';
+    strip.style.transform = 'none';
+    strip.style.transformOrigin = 'center center';
+    strip.style.marginLeft = 'auto';
+    strip.style.marginRight = 'auto';
+    strip.style.flexWrap = 'nowrap';
+    strip.style.width = 'max-content';
+    strip.style.maxWidth = 'none';
+    strip.style.justifyContent = 'center';
+    strip.style.alignItems = 'center';
+    strip.style.overflow = 'visible';
+
+    const tiles = Array.from(strip.querySelectorAll('.tile'));
+    const tileCount = Math.max(1, tiles.length);
+    const panelWidth = Math.max(1, Math.floor(panel.clientWidth || panel.getBoundingClientRect().width || window.innerWidth || 320));
+    const panelHeight = Math.max(1, Math.floor(panel.clientHeight || panel.getBoundingClientRect().height || window.innerHeight || 240));
+    const targetWidth = Math.max(80, Math.floor(panelWidth * 0.90));
+    const maxBaseTileW = Math.max(18, Math.min(34, Math.floor(panelWidth * 0.058)));
+    const baseTileW = Math.max(14, Math.min(maxBaseTileW, Math.floor(targetWidth / tileCount)));
+    const baseTileH = Math.max(20, Math.round(baseTileW * 1.47));
+    const font = Math.max(8, Math.round(baseTileW * 0.68));
+    const smallFont = Math.max(5, Math.round(baseTileW * 0.33));
+
+    box.style.setProperty('--tw-settlement-showcase-tile-w', baseTileW + 'px');
+    box.style.setProperty('--tw-settlement-showcase-tile-h', baseTileH + 'px');
+    box.style.setProperty('--tw-settlement-showcase-font', font + 'px');
+    box.style.setProperty('--tw-settlement-showcase-small-font', smallFont + 'px');
+    box.style.width = targetWidth + 'px';
+    box.style.maxWidth = targetWidth + 'px';
+
+    const applyScale = () => {
+      const naturalWidth = Math.max(1, strip.scrollWidth || Math.ceil(strip.getBoundingClientRect().width) || (baseTileW * tileCount));
+      const naturalHeight = Math.max(1, strip.scrollHeight || Math.ceil(strip.getBoundingClientRect().height) || baseTileH);
+      const heightLimit = Math.max(34, Math.floor(panelHeight * 0.22));
+      const widthScale = targetWidth / naturalWidth;
+      const heightScale = heightLimit / naturalHeight;
+      const scale = Math.max(0.38, Math.min(1.85, widthScale, heightScale));
+      strip.style.transform = 'scale(' + scale.toFixed(4) + ')';
+      box.style.height = Math.ceil(naturalHeight * scale + 10) + 'px';
+      box.style.minHeight = Math.ceil(naturalHeight * scale + 10) + 'px';
+      box.style.maxHeight = Math.ceil(naturalHeight * scale + 14) + 'px';
+      box.style.setProperty('--tw-settlement-showcase-scale', String(scale));
+    };
+    applyScale();
+    requestAnimationFrame(applyScale);
+  }
+
   function showSettlementPanelNow(payload, source) {
     if (!payload || !dom.resultPanel) return false;
     const settlementId = settlementCountdownIdFromPayload(payload);
@@ -15934,6 +16094,7 @@ function chooseExactDiscardTile(seat) {
       ? ((SEAT_NAME[payload.winner] || '') + (payload.kind === 'self' ? ' 自摸' : ' 胡牌'))
       : '流局';
     dom.resultText.innerHTML = buildSettlementHtml(payload);
+    requestAnimationFrame(fitSettlementTileShowcase);
     dom.resultNewBtn.style.display = '';
     dom.resultNewBtn.disabled = isOnlineGuest();
     dom.resultNewBtn.textContent = '再來一局';
@@ -15941,8 +16102,8 @@ function chooseExactDiscardTile(seat) {
     dom.resultCloseBtn.style.display = '';
     dom.resultCloseBtn.disabled = false;
     dom.resultCloseBtn.textContent = '關閉';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
+    requestAnimationFrame(fitSettlementTileShowcase);
     scheduleAutoplaySettlementNextHand(source || 'settlement');
     return true;
   }
@@ -16187,7 +16348,6 @@ function chooseExactDiscardTile(seat) {
       + '<div class="tw16-battle-note">啟動後四家自動托管，依各座位設定使用精確或貪心 AI，右下角會顯示對戰統計窗。</div>';
     dom.resultNewBtn.style.display = 'none';
     dom.resultCloseBtn.textContent = '關閉';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
     dom.resultText.querySelectorAll('[data-menu]').forEach(btn => btn.addEventListener('click', () => handleMenuAction(btn.dataset.menu)));
     const save = () => {
@@ -16329,6 +16489,7 @@ function chooseExactDiscardTile(seat) {
   }
 
   function openSettingsPanel() {
+    setUiPriorityMode(true, 'open-settings-panel');
     ensureUiSettings();
     if (dom.resultPanel) {
       dom.resultPanel.classList.remove('menu-open', 'settlement-open', 'history-open');
@@ -16355,7 +16516,6 @@ function chooseExactDiscardTile(seat) {
       + '</div>';
     dom.resultNewBtn.style.display = 'none';
     dom.resultCloseBtn.textContent = '關閉';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
     const bindRange = (id, label, suffix) => {
       const input = byId(id); const out = byId(label);
@@ -16435,7 +16595,6 @@ function chooseExactDiscardTile(seat) {
       + '</div>';
     dom.resultNewBtn.style.display = 'none';
     dom.resultCloseBtn.textContent = '關閉';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
     byId('diagSyncBtn').addEventListener('click', () => { requestNetworkSync('diagnostics'); closeUtilityPanel(); });
     byId('diagSnapshotBtn').addEventListener('click', () => showStateSummaryPanel());
@@ -16458,7 +16617,6 @@ function chooseExactDiscardTile(seat) {
       + '</div>';
     dom.resultNewBtn.style.display = 'none';
     dom.resultCloseBtn.textContent = '關閉';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
   }
 
@@ -16729,7 +16887,6 @@ function chooseExactDiscardTile(seat) {
       + '<input id="strategyLibraryImportFile" type="file" accept="application/json,.json,text/plain,.txt" style="display:none!important">';
     dom.resultNewBtn.style.display = 'none';
     dom.resultCloseBtn.textContent = '關閉';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
     const pickBtn = byId('strategyPickFileBtn');
     const createBtn = byId('strategyCreateFileBtn');
@@ -16952,6 +17109,7 @@ function chooseExactDiscardTile(seat) {
   }
 
   function openMenuSubmenu(title, buttonsHtml, hint, options) {
+    setUiPriorityMode(true, 'open-menu-submenu');
     const submenuOptions = options && typeof options === 'object' ? options : {};
     const includeBackButton = submenuOptions.includeBackButton !== false;
     if (dom.resultPanel) { dom.resultPanel.classList.remove('settlement-open'); dom.resultPanel.classList.remove('history-open'); dom.resultPanel.classList.remove('utility-open'); dom.resultPanel.classList.add('menu-open'); }
@@ -16961,14 +17119,23 @@ function chooseExactDiscardTile(seat) {
     dom.resultNewBtn.style.display = 'none';
     dom.resultNewBtn.disabled = false;
     dom.resultCloseBtn.textContent = '關閉';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
     dom.resultText.querySelectorAll('[data-menu]').forEach(btn => btn.addEventListener('click', () => handleMenuAction(btn.dataset.menu)));
   }
 
   function openMainMenu() {
+    setUiPriorityMode(true, 'open-main-menu');
     clearTimeout(claimTimer);
-    if (dom.resultPanel) { dom.resultPanel.classList.remove('settlement-open'); dom.resultPanel.classList.remove('history-open'); dom.resultPanel.classList.remove('utility-open'); dom.resultPanel.classList.add('menu-open'); }
+    if (dom.resultPanel) {
+      if (dom.resultPanel.parentNode !== document.body) document.body.appendChild(dom.resultPanel);
+      dom.resultPanel.classList.remove('settlement-open');
+      dom.resultPanel.classList.remove('history-open');
+      dom.resultPanel.classList.remove('utility-open');
+      dom.resultPanel.classList.add('menu-open');
+      dom.resultPanel.style.setProperty('z-index', '2147483647', 'important');
+      dom.resultPanel.style.setProperty('isolation', 'isolate', 'important');
+      dom.resultPanel.style.setProperty('pointer-events', 'auto', 'important');
+    }
     centerUtilityPanel();
     const resetDisabled = isOnlineGuest() ? ' disabled title="只有房主可重置籌碼"' : '';
     dom.resultTitle.textContent = '選單';
@@ -16982,15 +17149,12 @@ function chooseExactDiscardTile(seat) {
       + '<button class="btn" data-menu="rules">規則說明</button>'
       + '<button class="btn" data-menu="voice-events-toggle">語音播報：' + (state.uiSettings.voiceEventEnabled ? '開' : '關') + '</button>'
       + '<button class="btn" data-menu="perspective3d-toggle">3D立體視角：' + (state.uiSettings.perspective3d ? '開' : '關') + '</button>'
-      + '<button class="btn" data-menu="mc-level2-toggle">蒙地卡羅Top3：' + (state.uiSettings.aiMonteCarloLevel2 ? '開' : '關') + '</button>'
-      + '<button class="btn" data-menu="mc-full-toggle">完整蒙地卡羅：' + (state.uiSettings.aiMonteCarloFull ? '開' : '關') + '</button>'
       + '<button class="btn" data-menu="submenu-tiles">牌圖管理</button>'
       + '<button class="btn red" data-menu="exit-lobby">退出至大廳</button>'
       + '</div>';
     dom.resultNewBtn.style.display = 'none';
     dom.resultNewBtn.disabled = false;
     dom.resultCloseBtn.textContent = '關閉';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
     dom.resultText.querySelectorAll('[data-menu]').forEach(btn => btn.addEventListener('click', () => handleMenuAction(btn.dataset.menu)));
   }
@@ -17140,12 +17304,22 @@ function chooseExactDiscardTile(seat) {
 
   function closeUtilityPanel() {
     clearAutoNextTimer('close-utility-panel');
-    if (dom.resultPanel) { dom.resultPanel.classList.remove('menu-open'); dom.resultPanel.classList.remove('settlement-open'); dom.resultPanel.classList.remove('history-open'); dom.resultPanel.classList.remove('utility-open'); dom.resultPanel.classList.remove('custom-tile-import-open'); }
+    if (dom.resultPanel) {
+      dom.resultPanel.classList.remove('menu-open');
+      dom.resultPanel.classList.remove('settlement-open');
+      dom.resultPanel.classList.remove('history-open');
+      dom.resultPanel.classList.remove('utility-open');
+      dom.resultPanel.classList.remove('custom-tile-import-open');
+      dom.resultPanel.style.removeProperty('z-index');
+      dom.resultPanel.style.removeProperty('isolation');
+      dom.resultPanel.style.removeProperty('pointer-events');
+    }
     dom.resultNewBtn.style.display = '';
     dom.resultNewBtn.disabled = false;
     dom.resultCloseBtn.textContent = '關閉';
     dom.resultPanel.classList.remove('show');
     resumeGameAfterTileManagement('close-utility-panel');
+    setUiPriorityMode(false, 'close-utility-panel');
   }
 
 
@@ -17560,6 +17734,7 @@ function chooseExactDiscardTile(seat) {
   }
 
 function showWinHistory() {
+    setUiPriorityMode(true, 'open-win-history');
     _tw16HistInit();
     const panel=document.getElementById('tw16HistPanel');
     if(!panel)return;
@@ -17592,7 +17767,7 @@ function showWinHistory() {
     close.addEventListener('click',()=>{
       panel.classList.remove('show');
       tw16HistViewing = false;
-      scheduleDriveSeat('win-history-closed');
+      setUiPriorityMode(false, 'win-history-closed');
     });
     let drag=null;
     function onMove(cx,cy){if(!drag)return;let nx=drag.ox+cx-drag.sx,ny=drag.oy+cy-drag.sy;nx=Math.max(0,Math.min(window.innerWidth-panel.offsetWidth,nx));ny=Math.max(0,Math.min(window.innerHeight-panel.offsetHeight,ny));panel.style.left=nx+'px';panel.style.top=ny+'px';panel.style.transform='none';}
@@ -17626,7 +17801,6 @@ function showWinHistory() {
     if (!state.handRecord.length) dom.resultText.innerHTML = '目前沒有牌譜紀錄。';
     else dom.resultText.innerHTML = '<div class="recordList">' + state.handRecord.map(item => '<div class="recordItem"><div class="recordNo">#' + item.no + '</div><div>' + escapeHtml(item.text) + '</div></div>').join('') + '</div>';
     dom.resultNewBtn.style.display = 'none';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
   }
 
@@ -17649,7 +17823,6 @@ function showWinHistory() {
       + '<div class="reportCard"><b>' + state.wall.length + '</b>目前剩餘牌牆</div>'
       + '</div>';
     dom.resultNewBtn.style.display = 'none';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
   }
 
@@ -17791,7 +17964,6 @@ function showWinHistory() {
     html += '</div>';
     dom.resultText.innerHTML = html;
     dom.resultNewBtn.style.display = 'none';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
   }
 
@@ -17914,7 +18086,6 @@ function showIntegrityReport(precomputed) {
       + '<h3 style="color:#fde68a">重複牌檢查</h3>' + duplicateHtml
       + '</div>';
     dom.resultNewBtn.style.display = 'none';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
   }
 
@@ -17923,7 +18094,6 @@ function showIntegrityReport(precomputed) {
     dom.resultTitle.textContent = '匯出牌局 JSON';
     dom.resultText.innerHTML = '<textarea class="jsonBox" readonly id="exportJsonBox">' + escapeHtml(JSON.stringify(payload, null, 2)) + '</textarea>';
     dom.resultNewBtn.style.display = 'none';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
     setTimeout(() => {
       const box = byId('exportJsonBox');
@@ -17939,7 +18109,6 @@ function showIntegrityReport(precomputed) {
       + '<div style="font-size:12px;color:#cbd5e1">匯入會取代目前牌局狀態，並重新檢查 tile id。</div>'
       + '</div>';
     dom.resultNewBtn.style.display = 'none';
-    centerUtilityPanel();
     dom.resultPanel.classList.add('show');
     const btn = byId('applyImportJsonBtn');
     if (btn) btn.addEventListener('click', () => {
