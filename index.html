@@ -3245,6 +3245,13 @@ html body .hand .hand-row .tile.face-image.settlement-hand-win-tile::before{
   text-shadow:0 0 2px rgba(255,255,255,.95),0 1px 1px rgba(255,255,255,.85)!important;
   box-shadow:none!important;
 }
+.ai-suggest-floating-layer .danger-suggest-label.most-danger-suggest-label{
+  animation:tw16MostDangerLabelBlink .56s steps(2,end) infinite!important;
+}
+@keyframes tw16MostDangerLabelBlink{
+  0%,49%{opacity:1;filter:brightness(1.35);}
+  50%,100%{opacity:.18;filter:brightness(.72);}
+}
 
 
 
@@ -12072,6 +12079,20 @@ function loadUiSettings() {
     return !!(pending && Array.isArray(pending.candidates) && pending.candidates.some(c => c && c.type === 'win'));
   }
 
+  function gameVoiceClaimActionText(type, fallbackLabel) {
+    if (type === 'chi') return '吃';
+    if (type === 'pong') return '碰';
+    if (type === 'kong') return '槓';
+    if (type === 'win') return '胡牌';
+    const label = String(fallbackLabel || '').replace(/undefined|undefine|null|NaN|on\s*define|under\s*mind/ig, '').replace(/(吃|碰|槓|聽)牌/g, '$1').trim();
+    return label || '動作';
+  }
+
+  function gameVoiceClaimText(seat, type, fallbackLabel) {
+    const seatText = SEAT_NAME[seat] || '玩家';
+    return seatText + gameVoiceClaimActionText(type, fallbackLabel);
+  }
+
   function executeClaim(candidate, source) {
     if (isOnlineGuest() && source !== 'remote' && candidate && candidate.seat === net.assignedSeat) return publishNetworkIntent({ action: 'claim', claimType: candidate.type, tiles: candidate.tiles || [] });
     const pending = state.pending;
@@ -12135,7 +12156,7 @@ function loadUiSettings() {
       const supplement = drawSupplementTile(candidate.seat);
       sortHand(candidate.seat, supplement && supplement.id);
       addLog(SEAT_NAME[candidate.seat] + candidate.label + ' ' + tileText(pending.tile.code));
-      emitGameVoiceEvent(SEAT_NAME[candidate.seat] + candidate.label, 'claim:' + state.handId + ':' + pending.actionId + ':' + candidate.seat + ':' + candidate.type, { kind: 'claim', seat: candidate.seat });
+      emitGameVoiceEvent(gameVoiceClaimText(candidate.seat, candidate.type, candidate.label), 'claim:' + state.handId + ':' + pending.actionId + ':' + candidate.seat + ':' + candidate.type, { kind: 'claim', seat: candidate.seat });
       _tw16ClaimFlash = { seat: candidate.seat, type: 'kong', until: Date.now() + 1000 };
       setTimeout(function() { try { tw16ClaimFloat(); } catch(e) {} }, 1050);
       if (openSelfWinWindow(candidate.seat, supplement, 'kong-supplement')) {
@@ -12147,7 +12168,7 @@ function loadUiSettings() {
       clearActiveDrawnTile(candidate.seat);
       sortHand(candidate.seat);
       addLog(SEAT_NAME[candidate.seat] + candidate.label + ' ' + tileText(pending.tile.code));
-      emitGameVoiceEvent(SEAT_NAME[candidate.seat] + candidate.label, 'claim:' + state.handId + ':' + pending.actionId + ':' + candidate.seat + ':' + candidate.type, { kind: 'claim', seat: candidate.seat });
+      emitGameVoiceEvent(gameVoiceClaimText(candidate.seat, candidate.type, candidate.label), 'claim:' + state.handId + ':' + pending.actionId + ':' + candidate.seat + ':' + candidate.type, { kind: 'claim', seat: candidate.seat });
       _tw16ClaimFlash = { seat: candidate.seat, type: candidate.type, until: Date.now() + 1000 };
       setTimeout(function() { try { tw16ClaimFloat(); } catch(e) {} }, 1050);
       ensureStatsObject();
@@ -18797,11 +18818,12 @@ function showIntegrityReport(precomputed) {
   function tw16NormalizeGameVoiceText(text) {
     let body = String(text || '').trim();
     if (!body) return '';
-    body = body.replace(/undefined|null|NaN|under\s*mind/ig, '');
+    body = body.replace(/undefined|undefine|null|NaN|under\s*mind|on\s*define/ig, '');
     body = body.replace(/([1-9])萬/g, (_, n) => tw16ChineseVoiceNumber(n) + '萬');
     body = body.replace(/([1-9])筒/g, (_, n) => tw16ChineseVoiceNumber(n) + '筒');
     body = body.replace(/([1-9])索/g, (_, n) => tw16ChineseVoiceNumber(n) + '索');
     body = body.replace(/白\s*板/g, '白板').replace(/紅\s*中/g, '紅中').replace(/發\s*財/g, '發財');
+    body = body.replace(/(吃|碰|槓|聽)牌/g, '$1');
     body = body.replace(/\s+/g, '').replace(/^，+|，+$/g, '').trim();
     return body;
   }
@@ -18952,7 +18974,7 @@ function showIntegrityReport(precomputed) {
     if (!gameVoiceEnabled()) return false;
     if (settlementVoiceIsStopped()) return false;
     const body = sanitizeGameVoiceText(text);
-    if (!body) return false;
+    if (!body || /^(undefined|undefine|ondefine|on define|null|nan)$/i.test(body)) return false;
     const eventKey = key || body;
     if (eventKey && lastGameVoiceKey === eventKey) return false;
     lastGameVoiceKey = eventKey || '';
@@ -21054,6 +21076,7 @@ function showIntegrityReport(precomputed) {
 
   function renderActionPanel() {
     const mySeat = localHumanSeat();
+    const tingAssistSeat = localTingAssistSeat();
     if (canKeepTingChoicePanel(mySeat)) return;
     const pending = state.pending;
 
@@ -21068,8 +21091,8 @@ function showIntegrityReport(precomputed) {
     } else if (pending && (pending.kind === 'claim' || pending.kind === 'robkong')) {
       const opts = visiblePendingCandidates(pending).filter(c => canLocalHumanOperateSeat(c.seat));
       if (opts.length) newKey = 'claim:' + opts.map(o => o.seat + '/' + o.type + '/' + o.label).join(',') + ':ai' + (isAiSuggestionDisplayEnabled() ? '1' : '0');
-    } else if (state.declaredTing[mySeat] && !state.ended && !pending && state.uiSettings && state.uiSettings.tingAssistEnabled) {
-      newKey = 'tingassist:' + mySeat;
+    } else if (tingAssistSeat && state.declaredTing[tingAssistSeat] && !state.ended && !pending && state.uiSettings && state.uiSettings.tingAssistEnabled) {
+      newKey = 'tingassist:' + tingAssistSeat;
     } else if (state.turn === mySeat && canLocalHumanOperateSeat(mySeat) && state.phase === 'discard' && !state.locked && !state.ended) {
       const ownKongs = getOwnKongOptions(mySeat);
       if (ownKongs.length) newKey = 'ownkong:' + ownKongs.map(o => o.type + '/' + o.label).join(',');
@@ -21081,8 +21104,8 @@ function showIntegrityReport(precomputed) {
         positionClaimActionPanelCentered();
       } else if (pending && pending.kind === 'selfwin') {
         positionActionPanelNearHand(mySeat);
-      } else if (state.declaredTing[mySeat]) {
-        if (!positionTingAssistNearHand(mySeat)) positionActionPanelNearHand(mySeat);
+      } else if (tingAssistSeat && state.declaredTing[tingAssistSeat]) {
+        if (!positionTingAssistNearHand(tingAssistSeat)) positionActionPanelNearHand(tingAssistSeat);
       } else {
         positionActionPanelNearHand(mySeat);
       }
@@ -21134,10 +21157,10 @@ function showIntegrityReport(precomputed) {
       positionClaimActionPanelCentered();
       return;
     }
-    if (state.declaredTing[mySeat] && !state.ended && !state.pending && state.uiSettings && state.uiSettings.tingAssistEnabled) {
-      if (renderTingWaitAssist(mySeat, dom.actionPanel)) {
+    if (tingAssistSeat && state.declaredTing[tingAssistSeat] && !state.ended && !state.pending && state.uiSettings && state.uiSettings.tingAssistEnabled) {
+      if (renderTingWaitAssist(tingAssistSeat, dom.actionPanel)) {
         syncActionPanelVisibility();
-        if (!positionTingAssistNearHand(mySeat)) positionActionPanelNearHand(mySeat);
+        if (!positionTingAssistNearHand(tingAssistSeat)) positionActionPanelNearHand(tingAssistSeat);
       } else {
         syncActionPanelVisibility();
       }
@@ -21659,7 +21682,15 @@ function showIntegrityReport(precomputed) {
   }
 
   function canRevealTingWaitDetails(seat) {
-    return !!seat && canLocalHumanOperateSeat(seat);
+    if (!seat || !SEATS.includes(seat)) return false;
+    if (canLocalHumanOperateSeat(seat)) return true;
+    return seat === state.viewSeat && isSeatLocalHuman(seat) && !state.seatAutoPlay[seat];
+  }
+
+  function localTingAssistSeat() {
+    if (canRevealTingWaitDetails(state.viewSeat)) return state.viewSeat;
+    const seat = localHumanSeat();
+    return canRevealTingWaitDetails(seat) ? seat : '';
   }
 
   function renderTingWaitAssist(seat, container) {
@@ -21738,8 +21769,8 @@ function showIntegrityReport(precomputed) {
     return Math.max(0, riskScore);
   }
 
-  function aiDangerDiscardCodeSet(seat, hand) {
-    const out = new Set();
+  function aiDangerDiscardScoreMap(seat, hand) {
+    const out = new Map();
     if (!aiDangerDiscardSuggestionVisible(seat)) return out;
     if (!Array.isArray(hand) || !hand.length) return out;
     if (!aiDangerDiscardSeatHasTingThreat(seat)) return out;
@@ -21749,9 +21780,13 @@ function showIntegrityReport(precomputed) {
       if (!code || isFlower(code) || seen.has(code)) return;
       seen.add(code);
       const danger = aiDangerDiscardScore(seat, code);
-      if (danger >= 18) out.add(code);
+      if (Number.isFinite(danger) && danger >= 18) out.set(code, danger);
     });
     return out;
+  }
+
+  function aiDangerDiscardCodeSet(seat, hand) {
+    return new Set(aiDangerDiscardScoreMap(seat, hand).keys());
   }
 
   function bindFaceUpHandTileDiscardAction(node, seat, tileObj, pos) {
@@ -21767,7 +21802,7 @@ function showIntegrityReport(precomputed) {
     });
   }
 
-  function decorateFaceUpHandTile(node, seat, pos, tileObj, revealHand, strategySuggestedTileId, dangerCodeSet) {
+  function decorateFaceUpHandTile(node, seat, pos, tileObj, revealHand, strategySuggestedTileId, dangerCodeSet, dangerScoreMap, maxDangerScore) {
     if (!node || !tileObj) return false;
     const settlementTileId = state.lastSettlement && state.lastSettlement.tile && state.lastSettlement.tile.id ? String(state.lastSettlement.tile.id) : '';
     const isSettlementWinTile = !!(revealHand && state.ended && state.lastSettlement && state.lastSettlement.type === 'win' && state.lastSettlement.winner === seat && tileObj && (tileObj.settlementWinTile || (settlementTileId && String(tileObj.id) === settlementTileId)));
@@ -21812,10 +21847,16 @@ function showIntegrityReport(precomputed) {
     node.classList.toggle('drawn', shouldRenderActiveDrawnTile(seat, tileObj));
     node.classList.toggle('tw16-drawn-mark', !!(activeDrawnTileId(seat) && String(tileObj.id) === activeDrawnTileId(seat) && !state.ended));
     const isDanger = !!(dangerCodeSet && tileObj.code && dangerCodeSet.has(tileObj.code));
+    const dangerScore = isDanger && dangerScoreMap && typeof dangerScoreMap.get === 'function' ? Number(dangerScoreMap.get(tileObj.code) || 0) : 0;
+    const isMostDanger = !!(isDanger && maxDangerScore > 0 && dangerScore === maxDangerScore);
     node.classList.toggle('tw16-danger-discard-suggestion', isDanger);
+    node.classList.toggle('tw16-most-danger-discard-suggestion', isMostDanger);
     if (isDanger) {
-      const dangerText = '危險牌：' + tileText(tileObj.code);
+      node.dataset.dangerScore = String(Math.round(dangerScore * 100) / 100);
+      const dangerText = (isMostDanger ? '最危險牌：' : '危險牌：') + tileText(tileObj.code);
       node.title = node.title ? node.title + '；' + dangerText : dangerText;
+    } else {
+      delete node.dataset.dangerScore;
     }
     const isStrategySuggested = !!(strategySuggestedTileId && tileObj && String(tileObj.id) === String(strategySuggestedTileId));
     node.classList.toggle('strategy-discard-suggestion', isStrategySuggested);
@@ -21855,10 +21896,12 @@ function showIntegrityReport(precomputed) {
       if (shouldRenderSeatHandFaceUp(seat)) {
         const aiSuggestionVisible = !state.ended && seat === state.viewSeat && isAiSuggestionDisplayEnabled();
         const strategySuggestedTileId = aiSuggestionVisible ? suggestedStrategyDiscardTileId(seat) : '';
-        const dangerCodeSet = aiSuggestionVisible ? aiDangerDiscardCodeSet(seat, hand) : new Set();
+        const dangerScoreMap = aiSuggestionVisible ? aiDangerDiscardScoreMap(seat, hand) : new Map();
+        const dangerCodeSet = new Set(dangerScoreMap.keys());
+        const maxDangerScore = dangerScoreMap.size ? Math.max(...Array.from(dangerScoreMap.values())) : 0;
         hand.forEach((tileObj) => {
           const node = createTileElement(tileObj, false);
-          const decorated = decorateFaceUpHandTile(node, seat, pos, tileObj, revealHand, strategySuggestedTileId, dangerCodeSet);
+          const decorated = decorateFaceUpHandTile(node, seat, pos, tileObj, revealHand, strategySuggestedTileId, dangerCodeSet, dangerScoreMap, maxDangerScore);
           handRow.appendChild(decorated || node);
         });
       } else {
@@ -21927,7 +21970,8 @@ function showIntegrityReport(precomputed) {
       const rect = tile.getBoundingClientRect();
       if (!rect || rect.width <= 0 || rect.height <= 0) return;
       const label = document.createElement('span');
-      label.className = 'danger-suggest-label';
+      const isMostDanger = tile.classList && tile.classList.contains('tw16-most-danger-discard-suggestion');
+      label.className = isMostDanger ? 'danger-suggest-label most-danger-suggest-label' : 'danger-suggest-label';
       label.textContent = '危險牌';
       layer.appendChild(label);
       const labelRect = label.getBoundingClientRect();
