@@ -3678,6 +3678,18 @@ html body .app.perspective3d .discardSeat .tile::before {
 #tw16HistClose{border:0;border-radius:8px;background:rgba(255,255,255,.08);color:#94a3b8;font-size:16px;width:28px;height:28px;cursor:pointer;display:grid;place-items:center;flex-shrink:0;}
 #tw16HistBody{flex:1 1 auto;overflow-y:auto;padding:6px 10px 16px;}
 #tw16HistBody .historyList{max-height:none;}
+#tw16HistTools{display:flex;gap:4px;align-items:center;flex:0 0 auto;}
+#tw16HistTools button{border:1px solid rgba(255,255,255,.18);border-radius:7px;background:rgba(255,255,255,.08);color:#e2e8f0;font-size:11px;font-weight:1000;line-height:1;padding:6px 7px;cursor:pointer;white-space:nowrap;}
+#tw16HistTools button.red{border-color:rgba(239,68,68,.55);color:#fecaca;background:rgba(127,29,29,.36);}
+.historyTime{color:#93c5fd;font-size:11px;font-weight:1000;}
+.tw16HistPickLabel{display:inline-flex;align-items:center;gap:3px;color:#fde68a;font-weight:1000;}
+.tw16HistPick{width:15px;height:15px;accent-color:#f59e0b;}
+.historyChipDeltaLine{display:flex;flex-wrap:wrap;gap:4px;margin:3px 0 4px;}
+.historyChipDelta{display:inline-flex;border-radius:999px;padding:1px 5px;font-size:11px;font-weight:1000;line-height:1.35;background:rgba(148,163,184,.14);color:#e2e8f0;}
+.historyChipDelta.plus{color:#ff3030;background:rgba(127,29,29,.24);}
+.historyChipDelta.minus{color:#34d399;background:rgba(6,78,59,.22);}
+.historyChipDelta.zero{color:#94a3b8;}
+
 
 .tw16-btn-hint-wrap{position:relative;display:inline-flex;flex:0 0 auto;}
 .tw16-btn-hint-top{position:absolute;left:50%;top:-1.3em;transform:translateX(-50%);font-size:8px;font-weight:900;color:#ef4444;white-space:nowrap;line-height:1;pointer-events:none;z-index:30;background:rgba(3,10,25,.55);padding:1px 3px;border-radius:4px;}
@@ -4146,7 +4158,7 @@ html body .table{
     minLiveWallTilesByMode: { 4: 16, 3: 12, 2: 8 },
     scoreBaseChip: 100,
     scoreTaiChip: 10,
-    winHistoryLimit: 10
+    winHistoryLimit: Infinity
   };
 
   const dom = {};
@@ -15774,20 +15786,81 @@ function chooseExactDiscardTile(seat) {
   }
 
 
+  const WIN_HISTORY_STORAGE_KEY = 'tw16_win_history_full_v1';
+  let tw16HistFilterText = '';
+
   function winHistoryLimit() {
-    return Math.max(1, Number(GAME_RULES.winHistoryLimit) || 10);
+    return Infinity;
+  }
+
+  function formatTaipeiDateTime(ts) {
+    const d = new Date(Number(ts) || Date.now());
+    const parts = new Intl.DateTimeFormat('zh-TW', {
+      timeZone: 'Asia/Taipei',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).formatToParts(d).reduce((acc, part) => { acc[part.type] = part.value; return acc; }, {});
+    return (parts.year || '0000') + '-' + (parts.month || '00') + '-' + (parts.day || '00') + ' ' + (parts.hour || '00') + ':' + (parts.minute || '00') + ':' + (parts.second || '00');
+  }
+
+  function normalizeHistoryWinnerReveal(item) {
+    if (!item || typeof item !== 'object') return item;
+    const winner = item.winner || '';
+    const cloned = clonePlain(item);
+    if (cloned && Object.prototype.hasOwnProperty.call(cloned, 'taipeiTime')) delete cloned.taipeiTime;
+    if (Array.isArray(cloned.reveal)) {
+      cloned.reveal = cloned.reveal.filter(entry => entry && entry.seat === winner).map(entry => clonePlain(entry));
+    } else {
+      cloned.reveal = [];
+    }
+    return cloned;
   }
 
   function normalizeWinHistoryList(list) {
     if (!Array.isArray(list)) return [];
-    const limit = winHistoryLimit();
-    const normalized = list.filter(item => item && typeof item === 'object').map(item => clonePlain(item));
-    return normalized.length > limit ? normalized.slice(normalized.length - limit) : normalized;
+    const normalized = list.filter(item => item && typeof item === 'object').map(item => normalizeHistoryWinnerReveal(item));
+    const seen = new Set();
+    return normalized.filter(item => {
+      const key = winHistoryEntryKey(item);
+      if (!key) return true;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   function trimWinHistory() {
     state.winHistory = normalizeWinHistoryList(state.winHistory);
     return state.winHistory;
+  }
+
+  function saveWinHistoryToStorage() {
+    const list = trimWinHistory();
+    try {
+      localStorage.setItem(WIN_HISTORY_STORAGE_KEY, JSON.stringify(list));
+      addLog('已貯存胡牌歷程 ' + list.length + ' 筆');
+      return true;
+    } catch (e) {
+      addLog('胡牌歷程貯存失敗：' + (e && e.message ? e.message : String(e)));
+      return false;
+    }
+  }
+
+  function loadWinHistoryFromStorage() {
+    try {
+      const raw = localStorage.getItem(WIN_HISTORY_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      state.winHistory = normalizeWinHistoryList(parsed);
+      return state.winHistory;
+    } catch (e) {
+      state.winHistory = normalizeWinHistoryList(state.winHistory);
+      return state.winHistory;
+    }
   }
 
   function winHistoryEntryKey(entry) {
@@ -15815,12 +15888,24 @@ function chooseExactDiscardTile(seat) {
     if (existingIndex >= 0) state.winHistory[existingIndex] = Object.assign({}, state.winHistory[existingIndex], normalized);
     else state.winHistory.push(normalized);
     trimWinHistory();
+    saveWinHistoryToStorage();
     return true;
   }
 
   function winHistoryEntryFromSettlementPayload(payload) {
     if (!payload || payload.type !== 'win' || !SEATS.includes(payload.winner)) return null;
     const winTile = payload.tile ? clonePlain(payload.tile) : null;
+    const createdAt = Number(payload.createdAt || payload.settledAt || Date.now()) || Date.now();
+    const winnerReveal = Array.isArray(payload.reveal)
+      ? clonePlain(payload.reveal.filter(entry => entry && entry.seat === payload.winner))
+      : [];
+    const chipRows = Array.isArray(payload.seatRows) ? payload.seatRows : [];
+    const chipDeltas = activeSeats().map(seat => {
+      const row = chipRows.find(r => r && r.seat === seat) || null;
+      const before = row ? Number(row.before) || 0 : Number(payload.chipsBefore && payload.chipsBefore[seat]) || 0;
+      const after = row ? Number(row.after) || 0 : Number(payload.chipsAfter && payload.chipsAfter[seat]) || 0;
+      return { seat, name: SEAT_NAME[seat], before, after, delta: after - before };
+    });
     return {
       settlementId: payload.id || '',
       handId: Number(payload.handId || state.handId || 0) || 0,
@@ -15832,7 +15917,9 @@ function chooseExactDiscardTile(seat) {
       tile: winTile ? winTile.code : '',
       winTile,
       items: Array.isArray(payload.items) ? payload.items.slice() : [],
-      reveal: Array.isArray(payload.reveal) ? clonePlain(payload.reveal) : []
+      reveal: winnerReveal,
+      chipDeltas,
+      createdAt
     };
   }
 
@@ -15863,6 +15950,7 @@ function chooseExactDiscardTile(seat) {
     return {
       id: ['settle', state.handId || 0, state.lastActionId || 0, winner, kind, winTile && winTile.id || Date.now()].join(':'),
       type: 'win',
+      createdAt: Date.now(),
       handId: state.handId || 0,
       round: WIND_NAME[state.windRound] + state.handNo + '局',
       winner,
@@ -18056,25 +18144,42 @@ function chooseExactDiscardTile(seat) {
   function buildWinHistoryRevealHtml(historyItem) {
     if (!historyItem || !Array.isArray(historyItem.reveal) || !historyItem.reveal.length) {
       const fallbackTile = historyItem && (historyItem.winTile || (historyItem.tile ? { code: historyItem.tile, id: 'history-win-' + historyItem.tile } : null));
-      return fallbackTile ? '<div class="historyReveal"><div class="historyRevealSeat"><div class="historyRevealHead"><span>胡牌</span></div>' + buildHistoryTileStripHtml([fallbackTile], fallbackTile, fallbackTile.code) + '</div></div>' : '';
+      return fallbackTile ? '<div class="historyReveal"><div class="historyRevealSeat"><div class="historyRevealHead"><span>胡牌座位實體牌</span></div>' + buildHistoryTileStripHtml([fallbackTile], fallbackTile, fallbackTile.code) + '</div></div>' : '';
     }
     const winTile = historyItem.winTile || null;
     const winCode = historyItem.tile || (winTile && winTile.code) || '';
     const winner = historyItem.winner;
-    const rows = historyItem.reveal.map(entry => {
-      const hand = entry.hand || [];
-      const flowers = entry.flowers || [];
-      const melds = entry.melds || [];
-      const useHighlight = entry.seat === winner;
-      const meldHtml = melds.length ? melds.map(group => buildHistoryTileStripHtml(group || [], useHighlight ? winTile : null, useHighlight ? winCode : '')).join('') : '<span class="historyEmpty">無</span>';
-      return '<div class="historyRevealSeat"><div class="historyRevealHead"><span>' + escapeHtml(entry.name || SEAT_NAME[entry.seat] || '') + (entry.seat === winner ? '（胡牌）' : '') + '</span><span>' + escapeHtml(String(entry.chips || 0)) + ' 籌碼</span></div>'
-        + '<div class="historyRevealLine"><b>手牌</b>' + buildHistoryTileStripHtml(hand, useHighlight ? winTile : null, useHighlight ? winCode : '') + '</div>'
-        + '<div class="historyRevealLine"><b>花牌</b>' + (flowers.length ? buildHistoryTileStripHtml(flowers, null, '') : '<span class="historyEmpty">無</span>') + '</div>'
-        + '<div class="historyRevealLine"><b>副露</b><div class="historyMeldList">' + meldHtml + '</div></div>'
-        + '</div>';
-    }).join('');
-    return '<div class="historyReveal">' + rows + '</div>';
+    const winnerEntry = historyItem.reveal.find(entry => entry && entry.seat === winner) || historyItem.reveal[0];
+    if (!winnerEntry) return '';
+    const hand = winnerEntry.hand || [];
+    const flowers = winnerEntry.flowers || [];
+    const melds = winnerEntry.melds || [];
+    const meldHtml = melds.length ? melds.map(group => buildHistoryTileStripHtml(group || [], winTile, winCode)).join('') : '<span class="historyEmpty">無</span>';
+    return '<div class="historyReveal"><div class="historyRevealSeat"><div class="historyRevealHead"><span>' + escapeHtml(winnerEntry.name || SEAT_NAME[winnerEntry.seat] || SEAT_NAME[winner] || '') + '（胡牌座位實體牌）</span><span>' + escapeHtml(String(winnerEntry.chips || 0)) + ' 籌碼</span></div>'
+      + '<div class="historyRevealLine"><b>手牌</b>' + buildHistoryTileStripHtml(hand, winTile, winCode) + '</div>'
+      + '<div class="historyRevealLine"><b>花牌</b>' + (flowers.length ? buildHistoryTileStripHtml(flowers, null, '') : '<span class="historyEmpty">無</span>') + '</div>'
+      + '<div class="historyRevealLine"><b>副露</b><div class="historyMeldList">' + meldHtml + '</div></div>'
+      + '</div></div>';
   }
+
+  function buildWinHistoryChipDeltaHtml(historyItem) {
+    const rows = Array.isArray(historyItem && historyItem.chipDeltas) ? historyItem.chipDeltas : [];
+    if (!rows.length) return '';
+    return '<div class="historyChipDeltaLine">' + rows.map(row => {
+      const delta = Number(row && row.delta) || 0;
+      const cls = delta > 0 ? 'plus' : (delta < 0 ? 'minus' : 'zero');
+      return '<span class="historyChipDelta ' + cls + '">' + escapeHtml(row.name || SEAT_NAME[row.seat] || '') + ' ' + escapeHtml(signedNumber(delta)) + '</span>';
+    }).join('') + '</div>';
+  }
+
+  function tw16HistoryMatchesFilter(item, filterText) {
+    const q = String(filterText || '').trim();
+    if (!q) return true;
+    const time = formatTaipeiDateTime(item.createdAt || Date.now());
+    const hay = [time, item.round || '', SEAT_NAME[item.winner] || '', SEAT_NAME[item.fromSeat] || '', String(item.tai || ''), Array.isArray(item.items) ? item.items.join(' ') : ''].join(' ');
+    return hay.indexOf(q) >= 0;
+  }
+
 
 function showWinHistory() {
     setUiPriorityMode(true, 'open-win-history');
@@ -18107,6 +18212,29 @@ function showWinHistory() {
     if(_tw16HistInited)return;_tw16HistInited=true;
     const panel=document.getElementById('tw16HistPanel'),bar=document.getElementById('tw16HistBar'),close=document.getElementById('tw16HistClose');
     if(!panel||!bar||!close)return;
+    const saveBtn = document.getElementById('tw16HistSave');
+    const queryBtn = document.getElementById('tw16HistQuery');
+    const allBtn = document.getElementById('tw16HistAll');
+    const delBtn = document.getElementById('tw16HistDelete');
+    if (saveBtn) saveBtn.addEventListener('click', e => { e.stopPropagation(); saveWinHistoryToStorage(); tw16RenderHistPanel(); });
+    if (queryBtn) queryBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const input = prompt('輸入要查詢的時間或關鍵字，例如 2026-06-22、14:30、東1局、南家。', tw16HistFilterText || '');
+      if (input === null) return;
+      tw16HistFilterText = String(input || '').trim();
+      tw16RenderHistPanel();
+    });
+    if (allBtn) allBtn.addEventListener('click', e => { e.stopPropagation(); tw16HistFilterText = ''; loadWinHistoryFromStorage(); tw16RenderHistPanel(); });
+    if (delBtn) delBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const checked = Array.from(document.querySelectorAll('#tw16HistBody .tw16HistPick:checked')).map(el => el.value).filter(Boolean);
+      if (!checked.length) { alert('請先勾選要刪除的歷程。'); return; }
+      if (!confirm('刪除已勾選的 ' + checked.length + ' 筆胡牌歷程？')) return;
+      const set = new Set(checked);
+      state.winHistory = trimWinHistory().filter(item => !set.has(winHistoryEntryKey(item)));
+      saveWinHistoryToStorage();
+      tw16RenderHistPanel();
+    });
     close.addEventListener('click',()=>{
       panel.classList.remove('show');
       tw16HistViewing = false;
@@ -18123,16 +18251,21 @@ function showWinHistory() {
   }
   function tw16RenderHistPanel(){
     const panel=document.getElementById('tw16HistPanel'),body=document.getElementById('tw16HistBody'),badge=document.getElementById('tw16HistBadge');
-    if(!body)return;const items=trimWinHistory();
-    if(badge)badge.textContent=items.length+' 筆';
-    if(!items.length){body.innerHTML='<p style="text-align:center;color:#475569;padding:40px 0">尚無胡牌記錄</p>';return;}
+    if(!body)return;
+    if (!Array.isArray(state.winHistory) || !state.winHistory.length) loadWinHistoryFromStorage();
+    const allItems=trimWinHistory();
+    const items=allItems.filter(item => tw16HistoryMatchesFilter(item, tw16HistFilterText));
+    if(badge)badge.textContent=items.length+' / '+allItems.length+' 筆';
+    if(!items.length){body.innerHTML='<p style="text-align:center;color:#475569;padding:40px 0">'+(tw16HistFilterText?'查無符合歷程':'尚無胡牌記錄')+'</p>';return;}
     setTimeout(()=>{
       if(!panel||!panel.classList.contains('show'))return;
       body.innerHTML='<div class="historyList">'+items.slice().reverse().map((h,i)=>{
-        const line=(h.round||'')+'　'+SEAT_NAME[h.winner]+(h.kind==='self'?'自摸':'胡 '+SEAT_NAME[h.fromSeat])+'　'+h.tai+'台';
+        const key = winHistoryEntryKey(h);
+        const time = formatTaipeiDateTime(h.createdAt || Date.now());
+        const line=(h.round||'')+'　'+(SEAT_NAME[h.winner]||'')+(h.kind==='self'?'自摸':'胡 '+(SEAT_NAME[h.fromSeat]||''))+'　'+h.tai+'台';
         const wt=h.winTile||h.tile?'<span class="historyWinTileInline">'+tileMiniHtml(h.winTile||h.tile,true)+'</span>':'';
         const sub=Array.isArray(h.items)?h.items.join('／'):'';
-        return '<div class="historyItem"><b>#'+(items.length-i)+'</b> '+escapeHtml(line)+wt+'<br><span style="color:#fde68a">'+escapeHtml(sub)+'</span>'+buildWinHistoryRevealHtml(h)+'</div>';
+        return '<div class="historyItem"><label class="tw16HistPickLabel"><input type="checkbox" class="tw16HistPick" value="'+escapeHtml(key)+'"> <b>#'+(allItems.length-i)+'</b></label> <span class="historyTime">'+escapeHtml(time)+'</span><br>'+escapeHtml(line)+wt+'<br>'+buildWinHistoryChipDeltaHtml(h)+'<span style="color:#fde68a">'+escapeHtml(sub)+'</span>'+buildWinHistoryRevealHtml(h)+'</div>';
       }).join('')+'</div>';body.scrollTop=0;
     },0);
   }
@@ -18220,7 +18353,7 @@ function showWinHistory() {
     if (!state.handRecord.length) lines.push('（無）');
     else state.handRecord.forEach(item => lines.push('#' + item.no + ' ' + item.text));
     lines.push('');
-    lines.push('胡牌歷程（最近 ' + winHistoryLimit() + ' 次）：');
+    lines.push('胡牌歷程（全部）：');
     const winHistoryItems = trimWinHistory();
     if (!winHistoryItems.length) lines.push('（無）');
     else winHistoryItems.forEach((h, i) => {
@@ -35497,7 +35630,7 @@ function concealedKongOwnerOfMeld(meld) {
 
 </script>
 
-<div id="tw16HistPanel"><div id="tw16HistBar"><h2>🀄 胡牌歷程</h2><span id="tw16HistBadge">0 筆</span><button id="tw16HistClose">✕</button></div><div id="tw16HistBody"><p style="text-align:center;color:#475569;padding:40px 0">尚無胡牌記錄</p></div></div>
+<div id="tw16HistPanel"><div id="tw16HistBar"><h2>🀄 胡牌歷程</h2><div id="tw16HistTools"><button id="tw16HistSave">貯存</button><button id="tw16HistQuery">查詢</button><button id="tw16HistAll">全部</button><button id="tw16HistDelete" class="red">刪除</button></div><span id="tw16HistBadge">0 筆</span><button id="tw16HistClose">✕</button></div><div id="tw16HistBody"><p style="text-align:center;color:#475569;padding:40px 0">尚無胡牌記錄</p></div></div>
 </body>
 </html>
 
