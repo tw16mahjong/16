@@ -3218,6 +3218,35 @@ html body .hand .hand-row .tile.face-image.settlement-hand-win-tile::before{
   box-shadow:0 0 4px rgba(255,32,32,.72)!important;
 }
 
+/* tw16_ai_danger_discard_small_text_20260622:
+   危險牌只在「AI建議」開啟時標小黑字；不加框、不遮牌、不改牌大小與位置。 */
+.hand .hand-tile-row .tile.tw16-danger-discard-suggestion{
+  position:relative!important;
+  z-index:91!important;
+}
+.ai-suggest-floating-layer .danger-suggest-label{
+  position:fixed!important;
+  display:block!important;
+  left:var(--danger-suggest-left,0px)!important;
+  top:var(--danger-suggest-top,0px)!important;
+  bottom:auto!important;
+  transform:none!important;
+  z-index:2147483647!important;
+  padding:0 1px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#000!important;
+  font-size:clamp(5px,calc(var(--tw-tile-w,28px) * .18),6px)!important;
+  font-weight:1000!important;
+  line-height:1.05!important;
+  white-space:nowrap!important;
+  pointer-events:none!important;
+  text-shadow:0 0 2px rgba(255,255,255,.95),0 1px 1px rgba(255,255,255,.85)!important;
+  box-shadow:none!important;
+}
+
+
 
 /* Current table tile image preview in tile management menu. */
 .currentTileImagePreview{--current-preview-tile-w:clamp(20px,7.2vw,38px);display:grid;gap:7px;width:min(100%,760px);margin:0 auto;text-align:left;}
@@ -13398,6 +13427,81 @@ function loadUiSettings() {
     return score;
   }
 
+  // tw16_ai_discard_coherence_20260622: 主體棄牌牌型一致性評估。
+  // 分數為「棄牌候選加分」：正分代表此牌較該丟，負分代表此牌應保留。
+  // 重點修正：吃牌後若手牌已有孤張，AI 不得為了保留孤張而拆 89、12、兩面、嵌搭、完成順子、對子或刻子。
+  function smartAiDiscardShapeCoherenceScore(code, handCounts, potential, beforeShape) {
+    if (!code || !handCounts) return 0;
+    const count = handCounts[code] || 0;
+    const beforeShanten = beforeShape && Number.isFinite(beforeShape.shanten) ? beforeShape.shanten : 9;
+    const afterShanten = potential && Number.isFinite(potential.shanten) ? potential.shanten : 9;
+    const reachesWin = afterShanten < 0;
+    const reachesTing = afterShanten === 0;
+    const improves = afterShanten < beforeShanten;
+    let score = 0;
+
+    function suitShape(c) {
+      if (!isSuitTile(c)) return null;
+      const suit = c[0];
+      const n = Number(c.slice(1));
+      const has = d => (handCounts[suit + (n + d)] || 0) > 0;
+      const left1 = has(-1), right1 = has(1), left2 = has(-2), right2 = has(2);
+      const adjacent = left1 || right1;
+      const gapped = left2 || right2;
+      const bothSide = left1 && right1;
+      const completedSeq = (n >= 3 && left2 && left1) || (n >= 2 && n <= 8 && left1 && right1) || (n <= 7 && right1 && right2);
+      const edgeWaitLike = (n === 1 && right1) || (n === 2 && left1) || (n === 8 && right1) || (n === 9 && left1);
+      const isolated = !adjacent && !gapped;
+      const middle = n >= 3 && n <= 7;
+      const nearTerminal = n === 2 || n === 8;
+      return { suit, n, adjacent, gapped, bothSide, completedSeq, edgeWaitLike, isolated, middle, nearTerminal };
+    }
+
+    let otherLooseSingles = 0;
+    Object.keys(handCounts).forEach(c => {
+      if (!c || c === code || (handCounts[c] || 0) !== 1) return;
+      if (isHonorCode(c)) { otherLooseSingles += 1.25; return; }
+      const info = suitShape(c);
+      if (!info) return;
+      if (info.isolated) otherLooseSingles += info.middle ? 1.35 : 1.05;
+      else if (!info.adjacent && info.gapped) otherLooseSingles += 0.42;
+    });
+
+    if (count === 1) {
+      if (isHonorCode(code)) {
+        score += 96;
+        if (otherLooseSingles >= 1) score += 18;
+      } else if (isSuitTile(code)) {
+        const info = suitShape(code);
+        if (info) {
+          if (info.isolated) {
+            score += info.middle ? 168 : (info.nearTerminal ? 150 : 128);
+            if (otherLooseSingles < 1) score -= 14;
+          } else if (!info.adjacent && info.gapped) {
+            score += info.middle ? 64 : 50;
+          } else {
+            // 有相鄰連結即是搭子；尤其 12/89 仍是搭，不可被當成廢孤張。
+            score -= info.completedSeq ? 238 : (info.bothSide ? 188 : (info.edgeWaitLike ? 142 : 118));
+            if (info.gapped) score -= 28;
+            if (otherLooseSingles >= 1) score -= Math.min(90, 36 + otherLooseSingles * 22);
+          }
+        }
+      }
+    } else if (count === 2) {
+      score -= otherLooseSingles >= 1 ? 190 : 92;
+      if (!improves) score -= 28;
+    } else if (count === 3) {
+      score -= otherLooseSingles >= 1 ? 260 : 150;
+    } else if (count >= 4) {
+      score -= 12;
+    }
+
+    if (reachesWin) return Math.floor(score * 0.08);
+    if (reachesTing) return Math.floor(score * 0.22);
+    return score;
+  }
+
+
   function smartAiWaitingPotential(seat, codes, concealedSetsNeeded) {
     let _waitKey = null;
     if (tw16WaitCache) {
@@ -13609,6 +13713,7 @@ function loadUiSettings() {
     score += waitScore * (_anyTing ? 0.7 : 0.9);
     score += smartAiTileRoughDiscardValue(code, handCounts[code] || 1, handCounts);
     score += smartAiDiscardStructureGuard(code, handCounts, potential, _beforeShape);
+    score += smartAiDiscardShapeCoherenceScore(code, handCounts, potential, _beforeShape);
     if ((handCounts[code] || 0) >= 2 && potential && potential.shanten > 0) score -= 24;
     score += smartAiCompletedMeldDiscardAdjust(code, handCounts, potential, _beforeShape);
     score += smartAiSafetyDiscardScore(seat, code);
@@ -15107,6 +15212,8 @@ function loadUiSettings() {
       try { rough = smartAiTileRoughDiscardValue(code, counts[code] || 1, counts); } catch (e) { rough = 0; }
       let safety = 0;
       try { safety = smartAiSafetyDiscardScore(seat, code); } catch (e) { safety = 0; }
+      let coherence = 0;
+      try { coherence = smartAiDiscardShapeCoherenceScore(code, counts, after, before); } catch (e) { coherence = 0; }
       const shantenGain = (before.shanten || 9) - (after.shanten || 9);
       const reachesWin = after.shanten < 0;
       const reachesTing = after.shanten === 0;
@@ -15124,11 +15231,12 @@ function loadUiSettings() {
         Math.max(0, after.value || 0) * 2 +
         guard * 980 +
         rough * 320 +
+        coherence * 1180 +
         lonely * 760 +
         safety * 12 -
         risk * 1120 -
         item.idx * .001;
-      return { id: String(tile.id), code, idx: item.idx, score, after, guard, rough, lonely, risk };
+      return { id: String(tile.id), code, idx: item.idx, score, after, guard, rough, coherence, lonely, risk };
     }
 
     const scored = candidates.map(scoreCandidate).filter(x => x && x.id);
@@ -15233,9 +15341,9 @@ function loadUiSettings() {
         const completed = (n >= 3 && has(-2) && has(-1)) || (n >= 2 && n <= 8 && has(-1) && has(1)) || (n <= 7 && has(1) && has(2));
         const adjacent = has(-1) || has(1);
         const gapped = has(-2) || has(2);
-        if (completed) local -= 120;
-        else if (adjacent) local -= 45;
-        else if (!gapped && dup === 1) local += 70;
+        if (completed) local -= 180;
+        else if (adjacent) local -= ((n === 1 && has(1)) || (n === 2 && has(-1)) || (n === 8 && has(1)) || (n === 9 && has(-1))) ? 110 : 82;
+        else if (!gapped && dup === 1) local += (n >= 3 && n <= 7) ? 138 : 112;
       }
       const score = -shape.shanten * 100000 + (shape.value || 0) * 2 + Math.max(0, shape.effectiveRemaining || 0) * 250 + Math.max(0, shape.waitRemaining || 0) * 900 + local - i * 0.001;
       if (!best || score > best.score) best = { score, remain };
@@ -15266,6 +15374,7 @@ function loadUiSettings() {
     let local = 0;
     try { local += smartAiDiscardStructureGuard(tile.code, counts, after, before) * 800; } catch (_) {}
     try { local += smartAiTileRoughDiscardValue(tile.code, counts[tile.code] || 1, counts) * 260; } catch (_) {}
+    try { local += smartAiDiscardShapeCoherenceScore(tile.code, counts, after, before) * 1100; } catch (_) {}
     try { local += smartAiSafetyDiscardScore(seat, tile.code) * 10; } catch (_) {}
     const baseScore = ((before && before.shanten || 9) - (after.shanten || 9)) * 900000
       + (after.shanten === 0 ? 3500000 : 0)
@@ -15349,6 +15458,19 @@ function loadUiSettings() {
       if (!best || row.total > best.total || (row.total === best.total && row.idx < best.idx)) best = row;
     });
     if (best && best.id && best.id !== String(preferredId || '')) {
+      const pref = preferredId ? scored.find(x => x.id === String(preferredId)) : null;
+      if (pref && pref.after && best.after && Number.isFinite(pref.after.shanten) && Number.isFinite(best.after.shanten)) {
+        const handCodes = (state.hands[seat] || []).map(t => t && t.code).filter(c => c && !isFlower(c));
+        const counts = smartAiCountsFromCodes(handCodes);
+        const before = smartAiApproxShape(handCodes, requiredConcealedSets(seat));
+        const prefCoherence = smartAiDiscardShapeCoherenceScore(pref.code, counts, pref.after, before);
+        const bestCoherence = smartAiDiscardShapeCoherenceScore(best.code, counts, best.after, before);
+        const sameShanten = best.after.shanten === pref.after.shanten;
+        const notTingUpgrade = !(best.after.shanten <= 0 && pref.after.shanten > 0);
+        if (sameShanten && notTingUpgrade && prefCoherence > bestCoherence + 120 && best.total < pref.total + 180000) {
+          return preferredId || pref.id;
+        }
+      }
       try { recordNetworkEvent('discard-ai-monte-carlo', (full ? '完整自適應蒙地卡羅' : '快速自適應蒙地卡羅') + '修正棄牌建議', { seat, from: preferredId || '', to: best.id, code: best.code, trials, horizon, elapsedMs: Date.now() - started }); } catch (_) {}
       return best.id;
     }
@@ -15460,6 +15582,7 @@ function loadUiSettings() {
       try { score += smartAiDiscardStructureGuard(tile.code, countInHand, potential, before); } catch (_) {}
       try { score += smartAiCompletedMeldDiscardAdjust(tile.code, countInHand, potential, before); } catch (_) {}
       try { score += smartAiTileRoughDiscardValue(tile.code, countInHand[tile.code] || 1, countInHand); } catch (_) {}
+      try { score += smartAiDiscardShapeCoherenceScore(tile.code, countInHand, potential, before); } catch (_) {}
       try { score += smartAiSafetyDiscardScore(seat, tile.code) * 0.55; } catch (_) {}
 
       // 固定 tie-break，不用亂數。
@@ -19728,6 +19851,7 @@ function showIntegrityReport(precomputed) {
     updateAdaptiveLayout();
     applyUiTheme();
     updateBottomSeatTouchClass(map);
+    prepareBottomHandScaleBeforeHandRender('renderAll-before-hands');
     renderHands(map);
     fitBottomHandToTableWidthAfterOpening();
     ensureBottomHandPinchListeners();
@@ -20304,13 +20428,19 @@ function showIntegrityReport(precomputed) {
     return [state.handId || 0, seat, bottomHandScaleViewportKey(vw, vh)].join('|');
   }
 
+  function isBottomHandOpeningPresetActive() {
+    return !!(state && (state.phase === 'opening' || (state.openingDeal && state.openingDeal.active)));
+  }
+
   function computeBottomHandBaseScaleFromTable(tileW, tileH, vw, vh) {
     let count = 17;
     try {
-      const map = displayMap();
-      const seat = bottomDisplaySeat(map);
-      const hand = seat && state.hands ? (state.hands[seat] || []) : [];
-      count = Math.max(1, hand.length || 17);
+      if (!isBottomHandOpeningPresetActive()) {
+        const map = displayMap();
+        const seat = bottomDisplaySeat(map);
+        const hand = seat && state.hands ? (state.hands[seat] || []) : [];
+        count = Math.max(1, hand.length || 17);
+      }
     } catch (e) {}
     const screenW = Math.max(1, Number(vw) || bottomHandVisibleGameWidth() || 300);
     const targetW = Math.max(1, screenW * 0.90);
@@ -20408,11 +20538,26 @@ function showIntegrityReport(precomputed) {
     }
   }
 
+  function prepareBottomHandScaleBeforeHandRender(reason) {
+    if (!isBottomHandOpeningPresetActive()) return;
+    const tileW = cssPixelNumber('--tw-tile-w', 22);
+    const tileH = cssPixelNumber('--tw-tile-h', 32);
+    const vw = bottomHandVisibleGameWidth();
+    const vh = bottomHandVisibleGameHeight();
+    const baseScale = computeBottomHandBaseScaleFromTable(tileW, tileH, vw, vh);
+    bottomHandPinchScaleState.key = bottomHandScaleContentKey(tileW, tileH, vw, vh);
+    bottomHandPinchScaleState.baseScale = baseScale;
+    bottomHandPinchScaleState.userScale = 1;
+    bottomHandPinchScaleState.currentScale = baseScale;
+    bottomHandPinchScaleState.active = false;
+    try { document.documentElement.style.setProperty('--tw-bottom-seat-touch-scale', baseScale.toFixed(3)); } catch (e) {}
+  }
+
   function fitBottomHandToTableWidthAfterOpening() {
     /* 下方座位手牌主體縮放規則：
-       1) 開新局/發牌流程中，依目前下方座位實際手牌數重算到螢幕寬 90%。
+       1) 開新局/發牌流程中，先以17張手牌預算到螢幕寬90%，再顯示任何取牌動畫或手牌列。
        2) 開局完成後再以最終手牌列重算一次，之後摸打、吃碰槓、補花不再自動改玩家雙指縮放倍率。
-       3) 手機直橫擺或視窗尺寸改變時，viewport key 會改變，重新套用 90%。 */
+       3) 手機直橫擺或視窗尺寸改變時，viewport key 會改變，重新套用90%。 */
     const handEl = dom.handBottom || byId('handBottom');
     if (!handEl) return;
     const roundViewportKey = bottomHandOpeningFitKey();
@@ -21527,6 +21672,138 @@ function showIntegrityReport(precomputed) {
     return !!state.ended;
   }
 
+  function aiDangerDiscardSuggestionVisible(seat) {
+    return !!(!state.ended && seat === state.viewSeat && isAiSuggestionDisplayEnabled());
+  }
+
+  function aiDangerDiscardSeatHasTingThreat(seat) {
+    if (!SEATS.includes(seat) || !state.declaredTing) return false;
+    return SEATS.some(other => other !== seat && !!state.declaredTing[other]);
+  }
+
+  function aiDangerDiscardScore(seat, code) {
+    if (!code || !aiDangerDiscardSeatHasTingThreat(seat)) return 0;
+    let riskScore = 0;
+    try {
+      const safetyScore = smartAiSafetyDiscardScore(seat, code);
+      if (Number.isFinite(safetyScore)) riskScore += Math.max(0, -safetyScore);
+    } catch (e) {}
+    try {
+      const threatScore = smartAiThreatAwareDiscardRisk(seat, code);
+      if (Number.isFinite(threatScore)) riskScore += Math.max(0, threatScore * 0.42);
+    } catch (e) {}
+    try {
+      SEATS.forEach(other => {
+        if (other === seat || !state.declaredTing || !state.declaredTing[other]) return;
+        const otherCodes = (state.hands[other] || []).map(t => t && t.code).filter(c => c && !isFlower(c));
+        const needed = requiredConcealedSets(other);
+        if (isWinningCodeListCached(otherCodes.concat([code]), needed)) riskScore += 42;
+      });
+    } catch (e) {}
+    return Math.max(0, riskScore);
+  }
+
+  function aiDangerDiscardCodeSet(seat, hand) {
+    const out = new Set();
+    if (!aiDangerDiscardSuggestionVisible(seat)) return out;
+    if (!Array.isArray(hand) || !hand.length) return out;
+    if (!aiDangerDiscardSeatHasTingThreat(seat)) return out;
+    const seen = new Set();
+    hand.forEach(tileObj => {
+      const code = tileObj && tileObj.code;
+      if (!code || isFlower(code) || seen.has(code)) return;
+      seen.add(code);
+      const danger = aiDangerDiscardScore(seat, code);
+      if (danger >= 18) out.add(code);
+    });
+    return out;
+  }
+
+  function bindFaceUpHandTileDiscardAction(node, seat, tileObj, pos) {
+    if (!node || !tileObj) return;
+    if (!state.ended && seat === state.viewSeat) bindBottomHandSwipeDiscard(node, seat, tileObj, pos);
+    node.addEventListener('click', ev => {
+      if (state.ended || seat !== state.viewSeat) { ev.preventDefault(); ev.stopPropagation(); return; }
+      if (consumeBottomSwipeDiscardClick(tileObj.id)) { ev.preventDefault(); ev.stopPropagation(); return; }
+      if (isTileManagementPausingGame()) { requestDebugPauseToggle(false); }
+      const tingOpts = getTingOptions(seat);
+      const tingOpt = tingOpts.find(opt => opt.discardId === tileObj.id);
+      if (tingOpt && !state.declaredTing[seat]) { openTingChoicePanel(seat); } else { submitDiscard(seat, tileObj.id, 'human'); }
+    });
+  }
+
+  function decorateFaceUpHandTile(node, seat, pos, tileObj, revealHand, strategySuggestedTileId, dangerCodeSet) {
+    if (!node || !tileObj) return false;
+    const settlementTileId = state.lastSettlement && state.lastSettlement.tile && state.lastSettlement.tile.id ? String(state.lastSettlement.tile.id) : '';
+    const isSettlementWinTile = !!(revealHand && state.ended && state.lastSettlement && state.lastSettlement.type === 'win' && state.lastSettlement.winner === seat && tileObj && (tileObj.settlementWinTile || (settlementTileId && String(tileObj.id) === settlementTileId)));
+    if (isSettlementWinTile) {
+      node.classList.add('settlement-hand-win-tile');
+      node.title = '胡牌：' + tileText(tileObj.code);
+      const winLabel = document.createElement('span');
+      winLabel.className = 'settlement-hand-win-label';
+      winLabel.textContent = '胡牌';
+      node.appendChild(winLabel);
+    }
+    if ((pos === 'left' || pos === 'right') && revealHand && node.classList && node.classList.contains('face-image')) {
+      node.classList.add('settlement-side-reveal-tile');
+      node.style.setProperty('overflow', 'visible', 'important');
+      node.style.setProperty('clip-path', 'none', 'important');
+      node.style.setProperty('background', 'transparent', 'important');
+      node.style.setProperty('border', '0', 'important');
+      node.style.setProperty('box-shadow', '0 3px 6px rgba(0,0,0,.25)', 'important');
+      const face = node.querySelector('.tile-face');
+      if (face) {
+        face.style.setProperty('position', 'absolute', 'important');
+        face.style.setProperty('inset', 'auto', 'important');
+        face.style.setProperty('width', 'var(--tw-tile-w)', 'important');
+        face.style.setProperty('height', 'var(--tw-tile-h)', 'important');
+        face.style.setProperty('left', '50%', 'important');
+        face.style.setProperty('top', '50%', 'important');
+        face.style.setProperty('transform-origin', 'center center', 'important');
+        face.style.setProperty('transform', pos === 'left' ? 'translate(-50%,-50%) rotate(90deg)' : 'translate(-50%,-50%) rotate(-90deg)', 'important');
+        face.style.setProperty('overflow', 'hidden', 'important');
+        face.style.setProperty('border-radius', 'var(--tw-tile-radius,calc(var(--tw-tile-w) * .18))', 'important');
+        const img = face.querySelector('img');
+        if (img) {
+          img.style.setProperty('width', '100%', 'important');
+          img.style.setProperty('height', '100%', 'important');
+          img.style.setProperty('object-fit', 'cover', 'important');
+          img.style.setProperty('object-position', 'center center', 'important');
+          img.style.setProperty('display', 'block', 'important');
+          img.style.setProperty('border-radius', '0', 'important');
+        }
+      }
+    }
+    node.classList.toggle('drawn', shouldRenderActiveDrawnTile(seat, tileObj));
+    node.classList.toggle('tw16-drawn-mark', !!(activeDrawnTileId(seat) && String(tileObj.id) === activeDrawnTileId(seat) && !state.ended));
+    const isDanger = !!(dangerCodeSet && tileObj.code && dangerCodeSet.has(tileObj.code));
+    node.classList.toggle('tw16-danger-discard-suggestion', isDanger);
+    if (isDanger) {
+      const dangerText = '危險牌：' + tileText(tileObj.code);
+      node.title = node.title ? node.title + '；' + dangerText : dangerText;
+    }
+    const isStrategySuggested = !!(strategySuggestedTileId && tileObj && String(tileObj.id) === String(strategySuggestedTileId));
+    node.classList.toggle('strategy-discard-suggestion', isStrategySuggested);
+    if (isStrategySuggested) {
+      node.title = '策略建議打出：' + tileText(tileObj.code) + (isDanger ? '；危險牌' : '');
+      const lbl = document.createElement('span');
+      lbl.className = 'ai-suggest-label';
+      lbl.textContent = 'AI建議';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'ai-suggest-wrapper';
+      const ting2 = state.uiSettings && state.uiSettings.tingAssistEnabled ? getTingOptions(seat).find(opt => opt.discardId === tileObj.id) : null;
+      if (ting2) node.title = (node.title ? node.title + '；' : '') + '打出後聽：' + ting2.waits.map(tileText).join('、');
+      bindFaceUpHandTileDiscardAction(node, seat, tileObj, pos);
+      wrapper.appendChild(lbl);
+      wrapper.appendChild(node);
+      return wrapper;
+    }
+    const ting = state.uiSettings && state.uiSettings.tingAssistEnabled ? getTingOptions(seat).find(opt => opt.discardId === tileObj.id) : null;
+    if (ting) node.title = (node.title ? node.title + '；' : '') + '打出後聽：' + ting.waits.map(tileText).join('、');
+    bindFaceUpHandTileDiscardAction(node, seat, tileObj, pos);
+    return node;
+  }
+
   function renderHands(map) {
     DISPLAY_POSITIONS.forEach(pos => {
       const rows = ensureHandRows(pos);
@@ -21543,88 +21820,11 @@ function showIntegrityReport(precomputed) {
       if (shouldRenderSeatHandFaceUp(seat)) {
         const aiSuggestionVisible = !state.ended && seat === state.viewSeat && isAiSuggestionDisplayEnabled();
         const strategySuggestedTileId = aiSuggestionVisible ? suggestedStrategyDiscardTileId(seat) : '';
-        hand.forEach((tileObj, idx) => {
+        const dangerCodeSet = aiSuggestionVisible ? aiDangerDiscardCodeSet(seat, hand) : new Set();
+        hand.forEach((tileObj) => {
           const node = createTileElement(tileObj, false);
-          const settlementTileId = state.lastSettlement && state.lastSettlement.tile && state.lastSettlement.tile.id ? String(state.lastSettlement.tile.id) : '';
-          const isSettlementWinTile = !!(revealHand && state.ended && state.lastSettlement && state.lastSettlement.type === 'win' && state.lastSettlement.winner === seat && tileObj && (tileObj.settlementWinTile || (settlementTileId && String(tileObj.id) === settlementTileId)));
-          if (isSettlementWinTile) {
-            node.classList.add('settlement-hand-win-tile');
-            node.title = '胡牌：' + tileText(tileObj.code);
-            const winLabel = document.createElement('span');
-            winLabel.className = 'settlement-hand-win-label';
-            winLabel.textContent = '胡牌';
-            node.appendChild(winLabel);
-          }
-          if ((pos === 'left' || pos === 'right') && revealHand && node.classList && node.classList.contains('face-image')) {
-            node.classList.add('settlement-side-reveal-tile');
-            node.style.setProperty('overflow', 'visible', 'important');
-            node.style.setProperty('clip-path', 'none', 'important');
-            node.style.setProperty('background', 'transparent', 'important');
-            node.style.setProperty('border', '0', 'important');
-            node.style.setProperty('box-shadow', '0 3px 6px rgba(0,0,0,.25)', 'important');
-            const face = node.querySelector('.tile-face');
-            if (face) {
-              face.style.setProperty('position', 'absolute', 'important');
-              face.style.setProperty('inset', 'auto', 'important');
-              face.style.setProperty('width', 'var(--tw-tile-w)', 'important');
-              face.style.setProperty('height', 'var(--tw-tile-h)', 'important');
-              face.style.setProperty('left', '50%', 'important');
-              face.style.setProperty('top', '50%', 'important');
-              face.style.setProperty('transform-origin', 'center center', 'important');
-              face.style.setProperty('transform', pos === 'left' ? 'translate(-50%,-50%) rotate(90deg)' : 'translate(-50%,-50%) rotate(-90deg)', 'important');
-              face.style.setProperty('overflow', 'hidden', 'important');
-              face.style.setProperty('border-radius', 'var(--tw-tile-radius,calc(var(--tw-tile-w) * .18))', 'important');
-              const img = face.querySelector('img');
-              if (img) {
-                img.style.setProperty('width', '100%', 'important');
-                img.style.setProperty('height', '100%', 'important');
-                img.style.setProperty('object-fit', 'cover', 'important');
-                img.style.setProperty('object-position', 'center center', 'important');
-                img.style.setProperty('display', 'block', 'important');
-                img.style.setProperty('border-radius', '0', 'important');
-              }
-            }
-          }
-          node.classList.toggle('drawn', shouldRenderActiveDrawnTile(seat, tileObj));
-          node.classList.toggle('tw16-drawn-mark', !!(activeDrawnTileId(seat) && String(tileObj.id) === activeDrawnTileId(seat) && !state.ended));
-          const isStrategySuggested = !!(strategySuggestedTileId && tileObj && String(tileObj.id) === String(strategySuggestedTileId));
-          node.classList.toggle('strategy-discard-suggestion', isStrategySuggested);
-          if (isStrategySuggested) {
-            node.title = '策略建議打出：' + tileText(tileObj.code);
-            const lbl = document.createElement('span');
-            lbl.className = 'ai-suggest-label';
-            lbl.textContent = 'AI建議';
-            // 用 wrapper 包住 tile，讓 label 不受 tile overflow:hidden 裁切
-            const wrapper = document.createElement('div');
-            wrapper.className = 'ai-suggest-wrapper';
-            const ting2 = state.uiSettings && state.uiSettings.tingAssistEnabled ? getTingOptions(seat).find(opt => opt.discardId === tileObj.id) : null;
-            if (ting2) node.title = (node.title ? node.title + '；' : '') + '打出後聽：' + ting2.waits.map(tileText).join('、');
-            if (!state.ended && seat === state.viewSeat) bindBottomHandSwipeDiscard(node, seat, tileObj, pos);
-            node.addEventListener('click', ev => {
-              if (state.ended || seat !== state.viewSeat) { ev.preventDefault(); ev.stopPropagation(); return; }
-              if (consumeBottomSwipeDiscardClick(tileObj.id)) { ev.preventDefault(); ev.stopPropagation(); return; }
-              if (isTileManagementPausingGame()) { requestDebugPauseToggle(false); }
-              const tingOpts = getTingOptions(seat);
-              const tingOpt = tingOpts.find(opt => opt.discardId === tileObj.id);
-              if (tingOpt && !state.declaredTing[seat]) { openTingChoicePanel(seat); } else { submitDiscard(seat, tileObj.id, 'human'); }
-            });
-            wrapper.appendChild(lbl);
-            wrapper.appendChild(node);
-            handRow.appendChild(wrapper);
-          } else {
-            const ting = state.uiSettings && state.uiSettings.tingAssistEnabled ? getTingOptions(seat).find(opt => opt.discardId === tileObj.id) : null;
-            if (ting) node.title = (node.title ? node.title + '；' : '') + '打出後聽：' + ting.waits.map(tileText).join('、');
-            if (!state.ended && seat === state.viewSeat) bindBottomHandSwipeDiscard(node, seat, tileObj, pos);
-            node.addEventListener('click', ev => {
-              if (state.ended || seat !== state.viewSeat) { ev.preventDefault(); ev.stopPropagation(); return; }
-              if (consumeBottomSwipeDiscardClick(tileObj.id)) { ev.preventDefault(); ev.stopPropagation(); return; }
-              if (isTileManagementPausingGame()) { requestDebugPauseToggle(false); }
-              const tingOpts = getTingOptions(seat);
-              const tingOpt = tingOpts.find(opt => opt.discardId === tileObj.id);
-              if (tingOpt && !state.declaredTing[seat]) { openTingChoicePanel(seat); } else { submitDiscard(seat, tileObj.id, 'human'); }
-            });
-            handRow.appendChild(node);
-          }
+          const decorated = decorateFaceUpHandTile(node, seat, pos, tileObj, revealHand, strategySuggestedTileId, dangerCodeSet);
+          handRow.appendChild(decorated || node);
         });
       } else {
         if (!hand.length && !isSeatActiveInTable(seat)) {
@@ -21634,15 +21834,13 @@ function showIntegrityReport(precomputed) {
             handRow.appendChild(placeholder);
           }
         } else {
-          {
-            const _dd = activeDrawnTileId(seat);
-            const _ll = hand.length ? String(hand[hand.length-1].id) : '';
-            hand.forEach(function(t2, i2) {
-              const bt = createBackTile();
-              if (_dd && _ll && _dd === _ll && !state.ended && i2 === hand.length-1) bt.classList.add('tw16-drawn-mark');
-              handRow.appendChild(bt);
-            });
-          }
+          const _dd = activeDrawnTileId(seat);
+          const _ll = hand.length ? String(hand[hand.length - 1].id) : '';
+          hand.forEach(function(t2, i2) {
+            const bt = createBackTile();
+            if (_dd && _ll && _dd === _ll && !state.ended && i2 === hand.length - 1) bt.classList.add('tw16-drawn-mark');
+            handRow.appendChild(bt);
+          });
         }
       }
     });
@@ -21686,6 +21884,26 @@ function showIntegrityReport(precomputed) {
       const top = clampTopInBox(rect.top - labelH + 1, labelH, box, 1);
       label.style.setProperty('--ai-suggest-left', Math.round(left) + 'px');
       label.style.setProperty('--ai-suggest-top', Math.round(top) + 'px');
+    });
+
+    const dangerTiles = Array.from(document.querySelectorAll('.hand .hand-tile-row .tile.tw16-danger-discard-suggestion'));
+    dangerTiles.forEach(tile => {
+      if (!tile || !tile.getBoundingClientRect) return;
+      const rect = tile.getBoundingClientRect();
+      if (!rect || rect.width <= 0 || rect.height <= 0) return;
+      const label = document.createElement('span');
+      label.className = 'danger-suggest-label';
+      label.textContent = '危險牌';
+      layer.appendChild(label);
+      const labelRect = label.getBoundingClientRect();
+      const labelW = Math.max(1, labelRect.width || 24);
+      const labelH = Math.max(1, labelRect.height || 8);
+      const preferRight = tile.classList && tile.classList.contains('strategy-discard-suggestion');
+      const rawLeft = preferRight ? (rect.right - labelW) : rect.left;
+      const left = clampLeftInBox(rawLeft, labelW, box, 1);
+      const top = clampTopInBox(rect.top - labelH + 1, labelH, box, 1);
+      label.style.setProperty('--danger-suggest-left', Math.round(left) + 'px');
+      label.style.setProperty('--danger-suggest-top', Math.round(top) + 'px');
     });
   }
 
