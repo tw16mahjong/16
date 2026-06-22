@@ -16204,8 +16204,7 @@ function chooseExactDiscardTile(seat) {
           }
           timer = setTimeout(() => finish(ok), 80);
         };
-        const utter = new SpeechSynthesisUtterance(body);
-        utter.lang = 'zh-TW';
+        const utter = applyChineseVoiceToUtterance(new SpeechSynthesisUtterance(tw16NormalizeGameVoiceText(body)));
         utter.rate = 1.02;
         utter.pitch = 1;
         utter.volume = 1;
@@ -18780,11 +18779,55 @@ function showIntegrityReport(precomputed) {
     return !!state.ended;
   }
 
+  function tw16ChineseVoiceNumber(n) {
+    const map = { 1:'一', 2:'二', 3:'三', 4:'四', 5:'五', 6:'六', 7:'七', 8:'八', 9:'九' };
+    return map[Number(n)] || String(n || '');
+  }
+
   function tileSpeechText(code) {
-    if (/^m[1-9]$/.test(code)) return tileText(code) + '萬';
-    if (/^p[1-9]$/.test(code)) return tileText(code) + '筒';
-    if (/^s[1-9]$/.test(code)) return tileText(code) + '索';
-    return tileText(code);
+    const c = String(code || '');
+    const n = c.slice(1);
+    if (/^m[1-9]$/.test(c)) return tw16ChineseVoiceNumber(n) + '萬';
+    if (/^p[1-9]$/.test(c)) return tw16ChineseVoiceNumber(n) + '筒';
+    if (/^s[1-9]$/.test(c)) return tw16ChineseVoiceNumber(n) + '索';
+    const honorMap = { E:'東風', S:'南風', W:'西風', N:'北風', C:'紅中', F:'發財', P:'白板', H1:'春', H2:'夏', H3:'秋', H4:'冬', H5:'梅', H6:'蘭', H7:'竹', H8:'菊' };
+    return honorMap[c] || tileText(c);
+  }
+
+  function tw16NormalizeGameVoiceText(text) {
+    let body = String(text || '').trim();
+    if (!body) return '';
+    body = body.replace(/undefined|null|NaN|under\s*mind/ig, '');
+    body = body.replace(/([1-9])萬/g, (_, n) => tw16ChineseVoiceNumber(n) + '萬');
+    body = body.replace(/([1-9])筒/g, (_, n) => tw16ChineseVoiceNumber(n) + '筒');
+    body = body.replace(/([1-9])索/g, (_, n) => tw16ChineseVoiceNumber(n) + '索');
+    body = body.replace(/白\s*板/g, '白板').replace(/紅\s*中/g, '紅中').replace(/發\s*財/g, '發財');
+    body = body.replace(/\s+/g, '').replace(/^，+|，+$/g, '').trim();
+    return body;
+  }
+
+  function chooseGameChineseVoice() {
+    try {
+      if (!('speechSynthesis' in window) || !window.speechSynthesis || typeof window.speechSynthesis.getVoices !== 'function') return null;
+      const voices = window.speechSynthesis.getVoices() || [];
+      if (!voices.length) return null;
+      const exact = voices.find(v => /zh[-_]TW/i.test(v.lang || '') || /Taiwan|臺灣|台灣|國語|中文/i.test((v.name || '') + ' ' + (v.lang || '')));
+      if (exact) return exact;
+      return voices.find(v => /^zh/i.test(v.lang || '')) || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function applyChineseVoiceToUtterance(utter) {
+    if (!utter) return utter;
+    utter.lang = 'zh-TW';
+    const voice = chooseGameChineseVoice();
+    if (voice) {
+      utter.voice = voice;
+      utter.lang = voice.lang || 'zh-TW';
+    }
+    return utter;
   }
 
   function gameVoiceEnabled() {
@@ -18793,14 +18836,7 @@ function showIntegrityReport(precomputed) {
   }
 
   function sanitizeGameVoiceText(text) {
-    let body = String(text || '').trim();
-    if (!body) return '';
-    SEATS.forEach(seat => {
-      const seatName = SEAT_NAME[seat] || '';
-      if (seatName) body = body.split(seatName).join('');
-    });
-    body = body.replace(/\s+/g, ' ').replace(/^，+|，+$/g, '').trim();
-    return body;
+    return tw16NormalizeGameVoiceText(text);
   }
 
   function speechSynthesisGameBusy() {
@@ -18926,8 +18962,7 @@ function showIntegrityReport(precomputed) {
       currentGameVoiceSerial = serial;
       resolveCurrentGameVoiceWaiter();
       currentGameVoiceSerial = serial;
-      const utter = new SpeechSynthesisUtterance(body);
-      utter.lang = 'zh-TW';
+      const utter = applyChineseVoiceToUtterance(new SpeechSynthesisUtterance(body));
       utter.rate = 1.08;
       utter.pitch = 1;
       utter.volume = 1;
