@@ -3210,9 +3210,9 @@ html body .hand .hand-row .tile.face-image.settlement-hand-win-tile::before{
   border-radius:2px!important;
   background:rgba(220,0,0,.94)!important;
   color:#fff!important;
-  font-size:clamp(5px,calc(var(--tw-tile-w,28px) * .18),6px)!important;
+  font-size:clamp(6px,calc(var(--tw-tile-w,28px) * .22),8px)!important;
   font-weight:1000!important;
-  line-height:1.05!important;
+  line-height:1.02!important;
   white-space:nowrap!important;
   text-shadow:0 1px 2px rgba(0,0,0,.82)!important;
   box-shadow:0 0 4px rgba(255,32,32,.72)!important;
@@ -3237,15 +3237,16 @@ html body .hand .hand-row .tile.face-image.settlement-hand-win-tile::before{
   border-radius:0!important;
   background:transparent!important;
   color:#000!important;
-  font-size:clamp(5px,calc(var(--tw-tile-w,28px) * .18),6px)!important;
+  font-size:clamp(6px,calc(var(--tw-tile-w,28px) * .22),8px)!important;
   font-weight:1000!important;
-  line-height:1.05!important;
+  line-height:1.02!important;
   white-space:nowrap!important;
   pointer-events:none!important;
   text-shadow:0 0 2px rgba(255,255,255,.95),0 1px 1px rgba(255,255,255,.85)!important;
   box-shadow:none!important;
 }
 .ai-suggest-floating-layer .danger-suggest-label.most-danger-suggest-label{
+  font-size:clamp(7px,calc(var(--tw-tile-w,28px) * .25),9px)!important;
   animation:tw16MostDangerLabelBlink .56s steps(2,end) infinite!important;
 }
 @keyframes tw16MostDangerLabelBlink{
@@ -4031,6 +4032,96 @@ html body .table{
 .result.settlement-open .settlement-exposed-showcase-line .tile .small,
 .result.settlement-open .settlement-hand-showcase-line .tile .small{font-size:var(--tw-settlement-showcase-small-font,8px)!important;}
 
+
+
+/* tw16_local_view_wind_badge: 永久顯示自己視角圓框風位，貼著自己視角棄牌／副露上方，並保持桌面左右置中。 */
+.tw16-local-seat-wind-badge{
+  position:fixed!important;
+  left:-9999px;
+  top:-9999px;
+  z-index:2147482400!important;
+  display:none;
+  width:clamp(16px,calc(var(--tw-tile-w,22px) * .96),25px);
+  height:clamp(16px,calc(var(--tw-tile-w,22px) * .96),25px);
+  border:1.5px solid rgba(255,255,255,.96);
+  border-radius:999px;
+  background:rgba(2,6,23,.72);
+  color:#fff;
+  font-size:clamp(11px,calc(var(--tw-tile-w,22px) * .64),17px);
+  font-weight:1000;
+  line-height:1;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  box-shadow:0 2px 6px rgba(0,0,0,.42),0 0 5px rgba(255,255,255,.22);
+  text-shadow:0 1px 2px rgba(0,0,0,.82);
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.tw16-local-seat-wind-badge.show{display:flex!important;}
+
+
+/* tw16_all_seats_ting_assist: 東南西北任一家聽牌，直接貼在該座位手牌列顯示聽牌實例牌。 */
+.hand-row .tingWaitAssistGroupAllSeats{
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:100%!important;
+  transform:translateX(-50%)!important;
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:flex-end!important;
+  justify-content:center!important;
+  gap:4px!important;
+  margin:0!important;
+  padding:0!important;
+  max-width:calc(100vw - 8px)!important;
+  pointer-events:none!important;
+  z-index:2147482500!important;
+  background:transparent!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+}
+.hand-row .tingWaitAssistGroupAllSeats .tingWaitAssistTitle{
+  color:#ff3030!important;
+  font-size:clamp(14px,calc(var(--tw-tile-w) * .90),22px)!important;
+  font-weight:1000!important;
+  line-height:1.05!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.78)!important;
+  white-space:nowrap!important;
+}
+.hand-row .tingWaitAssistGroupAllSeats .tingWaitAssistCard{
+  display:grid!important;
+  justify-items:center!important;
+  align-items:start!important;
+  gap:1px!important;
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+}
+
+
+
+/* tw16_ting_assist_adaptive_avoid: 自己聽牌提示固定浮層定位，由 JS 自適應避開手牌、副露、牌牆與棄牌；不再壓住其它牌。 */
+html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-seat-only="1"]{
+  position:fixed!important;
+  left:var(--tw16-ting-assist-left,-9999px)!important;
+  top:var(--tw16-ting-assist-top,-9999px)!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:none!important;
+  z-index:2147482500!important;
+}
+html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-seat-only="1"][data-adaptive-ready="0"]{
+  visibility:hidden!important;
+}
+
 </style>
 </head>
 <body>
@@ -4049,6 +4140,222 @@ html body .table{
 .result.settlement-open .settlement-exposed-showcase-line .tile .small,
 .result.settlement-open .settlement-hand-showcase-line .tile .small{font-size:var(--tw-settlement-showcase-small-font,8px)!important;}
 
+
+
+/* tw16_button_press_feedback: 全域按鈕點擊回饋，只改主體按鈕視覺，不改任何牌局功能。 */
+html body button,
+html body .btn,
+html body .tw16-lobby-btn,
+html body .panelToolBtn,
+html body .actionBtn,
+html body .tingChoiceClose,
+html body .tw16-lobby-key-sheet-close,
+html body .tw17-broadcast-floating-count-v45,
+html body #tw17TextBroadcastSendV45,
+html body #tw17TextBroadcastCancelV45{
+  -webkit-tap-highlight-color:rgba(255,255,255,.16)!important;
+  touch-action:manipulation;
+  transition:transform .09s cubic-bezier(.2,.8,.25,1.25),filter .09s ease,box-shadow .09s ease,background-color .09s ease!important;
+  will-change:transform,filter!important;
+}
+html body button:active,
+html body .btn:active,
+html body .tw16-lobby-btn:active,
+html body .panelToolBtn:active,
+html body .actionBtn:active,
+html body .tingChoiceClose:active,
+html body .tw16-lobby-key-sheet-close:active,
+html body #tw17TextBroadcastSendV45:active,
+html body #tw17TextBroadcastCancelV45:active{
+  transform:scale(.94)!important;
+  filter:brightness(.82) saturate(.95)!important;
+  box-shadow:inset 0 3px 9px rgba(0,0,0,.48),0 0 0 1px rgba(255,255,255,.16)!important;
+}
+html body #menuBtn:active,
+html body #autoBtn:active,
+html body #broadcastBtn:active,
+html body #voiceBtn:active,
+html body #newGameBtn:active,
+html body #fullBtn:active,
+html body #resultBackBtn:active,
+html body #resultCloseBtn:active,
+html body #resultNewBtn:active{
+  transform:scale(.94)!important;
+  filter:brightness(.82) saturate(.95)!important;
+  box-shadow:inset 0 3px 9px rgba(0,0,0,.48),0 0 0 1px rgba(255,255,255,.16)!important;
+}
+html body button:disabled:active,
+html body .btn:disabled:active,
+html body .tw16-lobby-btn:disabled:active{
+  transform:none!important;
+  filter:grayscale(.35) brightness(.92)!important;
+  box-shadow:none!important;
+}
+
+
+/* tw16_button_press_feedback_core: 全域按鈕點擊回饋主體。 */
+html body button,
+html body .btn,
+html body .tw16-lobby-btn,
+html body .panelToolBtn,
+html body .actionBtn,
+html body .tingChoiceRow,
+html body .tw16-lobby-key-choice,
+html body .customTileImportRoundBtn,
+html body .customTileImportRedPointSelectBtn{
+  -webkit-tap-highlight-color:rgba(255,255,255,.10)!important;
+  transform-origin:center center!important;
+  transition:transform .075s ease,filter .075s ease,box-shadow .075s ease,opacity .075s ease,background-color .075s ease!important;
+}
+html body button.tw16-button-pressing,
+html body .btn.tw16-button-pressing,
+html body .tw16-lobby-btn.tw16-button-pressing,
+html body .panelToolBtn.tw16-button-pressing,
+html body .actionBtn.tw16-button-pressing,
+html body .tingChoiceRow.tw16-button-pressing,
+html body .tw16-lobby-key-choice.tw16-button-pressing,
+html body .customTileImportRoundBtn.tw16-button-pressing,
+html body .customTileImportRedPointSelectBtn.tw16-button-pressing,
+html body button:active,
+html body .btn:active,
+html body .tw16-lobby-btn:active,
+html body .panelToolBtn:active,
+html body .actionBtn:active,
+html body .tingChoiceRow:active,
+html body .tw16-lobby-key-choice:active,
+html body .customTileImportRoundBtn:active,
+html body .customTileImportRedPointSelectBtn:active{
+  transform:scale(.88)!important;
+  filter:brightness(.62) saturate(.86)!important;
+  opacity:.86!important;
+  box-shadow:inset 0 4px 12px rgba(0,0,0,.70),0 0 0 2px rgba(255,255,255,.34)!important;
+}
+html body button.tw16-button-press-flash,
+html body .btn.tw16-button-press-flash,
+html body .tw16-lobby-btn.tw16-button-press-flash,
+html body .panelToolBtn.tw16-button-press-flash,
+html body .actionBtn.tw16-button-press-flash,
+html body .tingChoiceRow.tw16-button-press-flash,
+html body .tw16-lobby-key-choice.tw16-button-press-flash,
+html body .customTileImportRoundBtn.tw16-button-press-flash,
+html body .customTileImportRedPointSelectBtn.tw16-button-press-flash{
+  animation:tw16ButtonPressBounce .16s ease-out 1!important;
+}
+@keyframes tw16ButtonPressBounce{
+  0%{transform:scale(.88);filter:brightness(.62) saturate(.86);}
+  62%{transform:scale(1.035);filter:brightness(1.15) saturate(1.08);}
+  100%{transform:scale(1);filter:brightness(1) saturate(1);}
+}
+html body button:disabled,
+html body button[disabled],
+html body .btn:disabled,
+html body .btn[disabled],
+html body .tw16-lobby-btn:disabled,
+html body .tw16-lobby-btn[disabled]{
+  pointer-events:none!important;
+}
+
+/* tw16_history_toolbar_press_feedback: 胡牌歷程上方固定列按鈕專用點擊回饋。 */
+html body #tw16HistTools button,
+html body #tw16HistClose{
+  -webkit-tap-highlight-color:rgba(255,255,255,.16)!important;
+  transform-origin:center center!important;
+  transition:transform .075s ease,filter .075s ease,box-shadow .075s ease,opacity .075s ease,background-color .075s ease!important;
+  will-change:transform,filter,box-shadow!important;
+}
+html body #tw16HistTools button.tw16-button-pressing,
+html body #tw16HistClose.tw16-button-pressing,
+html body #tw16HistTools button:active,
+html body #tw16HistClose:active{
+  transform:scale(.82)!important;
+  filter:brightness(.55) saturate(.82)!important;
+  opacity:.82!important;
+  box-shadow:inset 0 4px 12px rgba(0,0,0,.76),0 0 0 2px rgba(255,255,255,.42)!important;
+}
+html body #tw16HistTools button.tw16-button-press-flash,
+html body #tw16HistClose.tw16-button-press-flash{
+  animation:tw16ButtonPressBounce .16s ease-out 1!important;
+}
+
+
+/* tw16_ting_view_only_fixed: 只顯示自己視角聽牌實例牌，固定在下方座位右前方，不放大、不顯示其它家。 */
+html body .hand-row .tingWaitAssistGroupAllSeats{
+  display:none!important;
+}
+html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-seat-only="1"]{
+  display:flex!important;
+  position:absolute!important;
+  left:auto!important;
+  right:0!important;
+  top:auto!important;
+  bottom:calc(100% + 4px)!important;
+  transform:none!important;
+  flex-wrap:nowrap!important;
+  align-items:flex-end!important;
+  justify-content:flex-end!important;
+  gap:2px!important;
+  max-width:calc(100vw - 10px)!important;
+  z-index:2147482500!important;
+  pointer-events:none!important;
+  background:transparent!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  margin:0!important;
+  padding:0!important;
+}
+html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-seat-only="1"] .tingWaitAssistTitle{
+  font-size:calc(var(--tw-tile-w) * .52)!important;
+  line-height:1.05!important;
+  color:#ff2020!important;
+  font-weight:1000!important;
+  white-space:nowrap!important;
+  margin:0 1px 0 0!important;
+  padding:0!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.78)!important;
+}
+html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-seat-only="1"] .tingWaitAssistCard{
+  display:grid!important;
+  justify-items:center!important;
+  align-items:start!important;
+  gap:0!important;
+  min-width:calc(var(--tw-tile-w) * .86)!important;
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+}
+html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-seat-only="1"] .tingWaitAssistCard .tile{
+  width:calc(var(--tw-tile-w) * .86)!important;
+  height:calc(var(--tw-tile-h) * .86)!important;
+  min-width:calc(var(--tw-tile-w) * .86)!important;
+  min-height:calc(var(--tw-tile-h) * .86)!important;
+  max-width:calc(var(--tw-tile-w) * .86)!important;
+  max-height:calc(var(--tw-tile-h) * .86)!important;
+  font-size:calc(var(--tw-tile-w) * .58)!important;
+  border-radius:var(--tw-tile-radius,4px)!important;
+  margin:0!important;
+  padding:0!important;
+  outline:1px solid #ff2020!important;
+  outline-offset:-1px!important;
+  box-shadow:0 0 4px rgba(255,32,32,.35)!important;
+  transform:none!important;
+}
+html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-seat-only="1"] .tingWaitAssistCard .tile .small{
+  font-size:calc(var(--tw-tile-w) * .28)!important;
+}
+html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-seat-only="1"] .tingWaitAssistCount{
+  font-size:calc(var(--tw-tile-w) * .34)!important;
+  line-height:1.02!important;
+  font-weight:1000!important;
+  color:#fde68a!important;
+  white-space:nowrap!important;
+  margin:0!important;
+  padding:0!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.75)!important;
+}
 </style>
   <p>此遊戲需要 JavaScript 才能執行，請啟用瀏覽器的 JavaScript 功能。</p>
 </noscript>
@@ -13211,35 +13518,79 @@ function loadUiSettings() {
 
   function smartAiOpponentWaitRisk(seat, code) {
     if (!code) return 0;
-    const cacheKey = 'waitRisk:' + String(seat || '') + ':' + code;
+    const cacheKey = 'waitRisk:v2:' + String(state.handId || 0) + ':' + String(state.lastActionId || 0) + ':' + String(seat || '') + ':' + code;
     if (tw16OpponentInferenceCache && tw16OpponentInferenceCache[cacheKey] !== undefined) return tw16OpponentInferenceCache[cacheKey];
     const table = smartAiBuildOpponentReadTable(seat);
+    const visible = smartAiVisibleCount(code, seat);
+    const liveLeft = Math.max(0, 4 - visible);
+    if (liveLeft <= 0) {
+      if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[cacheKey] = 0;
+      return 0;
+    }
     let risk = 0;
     SEATS.forEach(other => {
       if (other === seat || !table[other]) return;
       const read = table[other];
-      if (read.discardSet && read.discardSet.has(code)) { risk -= state.declaredTing && state.declaredTing[other] ? 18 : 10; return; }
-      const visible = smartAiVisibleCount(code, seat);
-      const liveLeft = Math.max(0, 4 - visible);
-      if (liveLeft <= 0) { risk -= 18; return; }
-      let r = read.threat;
-      if (isSuitTile(code)) {
-        const suit = code[0], n = Number(code.slice(1));
-        r += (read.dangerSuit && read.dangerSuit[suit] || 0);
-        if (n >= 4 && n <= 6) r += 8;
-        else if (n >= 3 && n <= 7) r += 5;
-        else if (n === 2 || n === 8) r += 2;
-        const sujiSafe = (n >= 4 && read.discardSet.has(suit + (n - 3))) || (n <= 6 && read.discardSet.has(suit + (n + 3)));
-        if (sujiSafe) r -= (state.declaredTing && state.declaredTing[other]) ? 5 : 3;
-        const nearDiscard = [-2,-1,1,2].some(d => read.discardSet.has(suit + (n + d)));
-        if (!nearDiscard && read.discards.length >= 8) r += 4;
-      } else if (isHonorCode(code)) {
-        if (visible >= 2) r -= visible * 7;
-        else r += (state.declaredTing && state.declaredTing[other]) ? 9 : 5;
-        if (read.melds.length >= 2 && visible <= 1) r += 5;
+      const isTing = !!(state.declaredTing && state.declaredTing[other]);
+      const hasSameDiscard = !!(read.discardSet && read.discardSet.has(code));
+      if (hasSameDiscard) {
+        risk -= isTing ? 30 : 16;
+        return;
       }
-      r *= Math.max(0.15, liveLeft / 4);
-      risk += Math.max(-20, r);
+
+      let exactRon = false;
+      let taiCost = 1;
+      if (isTing) {
+        try {
+          const otherCodes = (state.hands[other] || []).map(t => t && t.code).filter(c => c && !isFlower(c));
+          const needed = requiredConcealedSets(other);
+          exactRon = isWinningCodeListCached(otherCodes.concat([code]), needed);
+          if (exactRon) {
+            try {
+              const detail = evaluateWinDetails(other, 'ron', seat, { code, id: 'risk_' + code }, {}) || {};
+              taiCost = Math.max(1, Number(detail.tai) || 1);
+            } catch (_) { taiCost = 1; }
+          }
+        } catch (_) { exactRon = false; }
+      }
+
+      let r = 0;
+      if (exactRon) {
+        r += 92 + taiCost * 15;
+        r += liveLeft * 9;
+        if (isMiddleTile(code)) r += 18;
+        if (isHonorCode(code) && visible <= 1) r += 14;
+        if ((read.melds || []).length >= 2) r += 10;
+      } else {
+        r += read.threat * (isTing ? 1.25 : 0.62);
+        if (isSuitTile(code)) {
+          const suit = code[0], n = Number(code.slice(1));
+          const suitDanger = (read.dangerSuit && read.dangerSuit[suit] || 0);
+          r += suitDanger * (isTing ? 1.15 : 0.72);
+          if (n >= 4 && n <= 6) r += isTing ? 15 : 8;
+          else if (n >= 3 && n <= 7) r += isTing ? 10 : 5;
+          else if (n === 2 || n === 8) r += isTing ? 5 : 2;
+          else r += isTing ? 2 : 0;
+
+          const sujiSafe = (n >= 4 && read.discardSet.has(suit + (n - 3))) || (n <= 6 && read.discardSet.has(suit + (n + 3)));
+          if (sujiSafe) r -= isTing ? 9 : 5;
+          const nearDiscard = [-2,-1,1,2].some(d => read.discardSet.has(suit + (n + d)));
+          if (!nearDiscard && (read.discards || []).length >= 8) r += isTing ? 8 : 4;
+          const earlySameSuit = (read.discards || []).slice(0, 6).filter(c => c && c[0] === suit).length;
+          if (earlySameSuit >= 3) r -= 5;
+          if (suitDanger >= 12 && earlySameSuit <= 1) r += isTing ? 10 : 5;
+        } else if (isHonorCode(code)) {
+          if (visible >= 3) r -= 30;
+          else if (visible === 2) r -= 12;
+          else r += isTing ? 16 : 7;
+          if ((read.melds || []).length >= 2 && visible <= 1) r += isTing ? 10 : 5;
+        }
+      }
+      if (visible >= 3) r *= 0.20;
+      else if (visible === 2) r *= 0.48;
+      else if (visible === 1) r *= 0.82;
+      r *= Math.max(0.20, liveLeft / 4);
+      risk += Math.max(-28, r);
     });
     risk = Math.max(0, risk);
     if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[cacheKey] = risk;
@@ -15182,7 +15533,7 @@ function loadUiSettings() {
     const preferred = String(preferredId || '');
 
     const tingFirstId = tw16BestImmediateTingDiscardId(seat);
-    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) return tingFirstId;
+    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) return tw16AutoplayAvoidMostDangerDiscardId(seat, tingFirstId, 'immediate-ting');
 
     const hand = state.hands[seat] || [];
     const codes = hand.map(t => t && t.code).filter(c => c && !isFlower(c));
@@ -15511,6 +15862,68 @@ function loadUiSettings() {
   }
 
 
+
+  function tw16AutoplayMostDangerDiscardCode(seat, candidates) {
+    if (!SEATS.includes(seat) || !aiDangerDiscardSeatHasTingThreat(seat)) return '';
+    const candidateList = Array.isArray(candidates) ? candidates : tw16DiscardCandidateList(seat);
+    let bestCode = '';
+    let bestRisk = 0;
+    const seen = new Set();
+    candidateList.forEach(item => {
+      const tile = item && item.tile;
+      const code = tile && tile.code;
+      if (!code || isFlower(code) || seen.has(code)) return;
+      seen.add(code);
+      let risk = 0;
+      try { risk = aiDangerDiscardScore(seat, code); } catch (e) { risk = 0; }
+      if (!Number.isFinite(risk)) risk = 0;
+      if (risk > bestRisk || (risk === bestRisk && risk > 0 && bestCode && tileOrder(code) < tileOrder(bestCode))) {
+        bestRisk = risk;
+        bestCode = code;
+      }
+    });
+    return bestRisk >= 18 ? bestCode : '';
+  }
+
+  function tw16AutoplayAvoidMostDangerDiscardId(seat, preferredId, reason) {
+    if (!SEATS.includes(seat) || !preferredId) return preferredId || '';
+    const autoDriven = !!(isSeatAutoDrivenBySystem(seat) || (state.seatAutoPlay && state.seatAutoPlay[seat]));
+    if (!autoDriven) return preferredId || '';
+    const candidates = tw16DiscardCandidateList(seat);
+    if (!candidates.length) return preferredId || '';
+    const preferredItem = candidates.find(item => item && item.tile && String(item.tile.id) === String(preferredId));
+    if (!preferredItem || !preferredItem.tile || !preferredItem.tile.code) return preferredId || '';
+    const mostDangerCode = tw16AutoplayMostDangerDiscardCode(seat, candidates);
+    if (!mostDangerCode || preferredItem.tile.code !== mostDangerCode) return preferredId || '';
+    const safeCandidates = candidates.filter(item => item && item.tile && item.tile.code && !isFlower(item.tile.code) && item.tile.code !== mostDangerCode);
+    if (!safeCandidates.length) return preferredId || '';
+
+    const hand = state.hands[seat] || [];
+    let best = null;
+    safeCandidates.forEach(item => {
+      const tile = item.tile;
+      let score = -Infinity;
+      try {
+        const scored = smartAiDiscardCandidateScore(seat, tile, item.idx, hand);
+        if (scored && Number.isFinite(scored.score)) score = scored.score;
+      } catch (e) {}
+      if (!Number.isFinite(score)) {
+        try { score = smartAiSafetyDiscardScore(seat, tile.code) || 0; } catch (e) { score = 0; }
+        try { score += smartAiTileRoughDiscardValue(tile.code, 1, smartAiCountsFromCodes(smartAiCodesFromHand(hand))) || 0; } catch (e) {}
+      }
+      let risk = 0;
+      try { risk = aiDangerDiscardScore(seat, tile.code); } catch (e) { risk = 0; }
+      if (Number.isFinite(risk)) score -= risk * 2.5;
+      score += (item.idx || 0) * 0.001;
+      if (!best || score > best.score) best = { id: tile.id, code: tile.code, score };
+    });
+    if (best && best.id) {
+      try { recordNetworkEvent('autoplay-avoid-most-danger', SEAT_NAME[seat] + '托管避開最危險牌', { seat, reason: reason || '', avoidedCode: mostDangerCode, from: preferredItem.tile.code, to: best.code }); } catch (e) {}
+      return best.id;
+    }
+    return preferredId || '';
+  }
+
   function chooseDiscardTile(seat) {
     if (!SEATS.includes(seat)) return '';
     const candidates = tw16DiscardCandidateList(seat);
@@ -15528,7 +15941,8 @@ function loadUiSettings() {
       ? tw16SharedAiDiscardGate(seat, chosen, seatAiMode(seat))
       : tw16SharedAiDiscardGate(seat, tw16DeterministicDiscardFallback(seat, 'chooseDiscardTile-invalid-or-empty'), seatAiMode(seat));
     const refined = tw16AiMonteCarloRefineDiscard(seat, gated);
-    return (refined && candidates.some(x => String(x.tile.id) === String(refined))) ? refined : gated;
+    const finalId = (refined && candidates.some(x => String(x.tile.id) === String(refined))) ? refined : gated;
+    return tw16AutoplayAvoidMostDangerDiscardId(seat, finalId, 'choose-discard-final');
   }
 
   function chooseGreedyDiscardTile(seat) {
@@ -18242,10 +18656,10 @@ function showWinHistory() {
     });
     let drag=null;
     function onMove(cx,cy){if(!drag)return;let nx=drag.ox+cx-drag.sx,ny=drag.oy+cy-drag.sy;nx=Math.max(0,Math.min(window.innerWidth-panel.offsetWidth,nx));ny=Math.max(0,Math.min(window.innerHeight-panel.offsetHeight,ny));panel.style.left=nx+'px';panel.style.top=ny+'px';panel.style.transform='none';}
-    bar.addEventListener('mousedown',e=>{if(e.target===close)return;const r=panel.getBoundingClientRect();drag={sx:e.clientX,sy:e.clientY,ox:r.left,oy:r.top};panel.style.left=r.left+'px';panel.style.top=r.top+'px';panel.style.transform='none';e.preventDefault();});
+    bar.addEventListener('mousedown',e=>{if(e.target&&e.target.closest&&e.target.closest('button,input,select,textarea,label'))return;const r=panel.getBoundingClientRect();drag={sx:e.clientX,sy:e.clientY,ox:r.left,oy:r.top};panel.style.left=r.left+'px';panel.style.top=r.top+'px';panel.style.transform='none';e.preventDefault();});
     window.addEventListener('mousemove',e=>onMove(e.clientX,e.clientY));
     window.addEventListener('mouseup',()=>{drag=null;});
-    bar.addEventListener('touchstart',e=>{if(e.target===close)return;const t=e.touches[0],r=panel.getBoundingClientRect();drag={sx:t.clientX,sy:t.clientY,ox:r.left,oy:r.top};panel.style.left=r.left+'px';panel.style.top=r.top+'px';panel.style.transform='none';},{passive:true});
+    bar.addEventListener('touchstart',e=>{if(e.target&&e.target.closest&&e.target.closest('button,input,select,textarea,label'))return;const t=e.touches[0],r=panel.getBoundingClientRect();drag={sx:t.clientX,sy:t.clientY,ox:r.left,oy:r.top};panel.style.left=r.left+'px';panel.style.top=r.top+'px';panel.style.transform='none';},{passive:true});
     window.addEventListener('touchmove',e=>{if(!drag)return;onMove(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
     window.addEventListener('touchend',()=>{drag=null;});
   }
@@ -20051,6 +20465,7 @@ function showIntegrityReport(precomputed) {
     updateMiniDashboard();
     positionTopWindowHudAdaptive();
     positionTileContainers(map);
+    scheduleTingWaitAssistAdaptivePlacement();
     positionOpeningFloatingElements();
     positionNetworkWaitHint();
     renderLabels(map);
@@ -20069,6 +20484,8 @@ function showIntegrityReport(precomputed) {
         scheduleNetworkSnapshot('render');
       }
     }
+    updateLocalSeatWindBadge();
+    requestAnimationFrame(() => updateLocalSeatWindBadge());
     tw16Tri();
     tw16ClaimFloat();
     tw16WinFloat();
@@ -21816,14 +22233,14 @@ function showIntegrityReport(precomputed) {
 
   function canRevealTingWaitDetails(seat) {
     if (!seat || !SEATS.includes(seat)) return false;
-    if (canLocalHumanOperateSeat(seat)) return true;
-    return seat === state.viewSeat && isSeatLocalHuman(seat) && !state.seatAutoPlay[seat];
+    if (!isSeatActiveInTable(seat)) return false;
+    /* 聽什麼牌只屬於自己目前視角的提示資訊，不公開顯示其它座位。 */
+    return seat === state.viewSeat;
   }
 
   function localTingAssistSeat() {
-    if (canRevealTingWaitDetails(state.viewSeat)) return state.viewSeat;
-    const seat = localHumanSeat();
-    return canRevealTingWaitDetails(seat) ? seat : '';
+    /* 聽牌實例牌由 renderHands() 綁在自己視角的下方手牌右前方；不再放進 actionPanel。 */
+    return '';
   }
 
   function renderTingWaitAssist(seat, container) {
@@ -21880,25 +22297,74 @@ function showIntegrityReport(precomputed) {
     return SEATS.some(other => other !== seat && !!state.declaredTing[other]);
   }
 
+  function aiDangerDeclaredTingRonRisk(seat, code) {
+    if (!code || !state.declaredTing) return 0;
+    const visible = smartAiVisibleCount(code, seat);
+    const liveLeft = Math.max(0, 4 - visible);
+    if (liveLeft <= 0) return 0;
+    let score = 0;
+    SEATS.forEach(other => {
+      if (other === seat || !state.declaredTing[other]) return;
+      if (smartAiDiscardedBySeat(code, other)) {
+        score -= 45;
+        return;
+      }
+      let exactRon = false;
+      let taiCost = 1;
+      try {
+        const otherCodes = (state.hands[other] || []).map(t => t && t.code).filter(c => c && !isFlower(c));
+        const needed = requiredConcealedSets(other);
+        exactRon = isWinningCodeListCached(otherCodes.concat([code]), needed);
+        if (exactRon) {
+          try {
+            const detail = evaluateWinDetails(other, 'ron', seat, { code, id: 'danger_' + code }, {}) || {};
+            taiCost = Math.max(1, Number(detail.tai) || 1);
+          } catch (_) { taiCost = 1; }
+        }
+      } catch (_) { exactRon = false; }
+      if (exactRon) {
+        score += 140 + taiCost * 22 + liveLeft * 12;
+        if (isMiddleTile(code)) score += 18;
+        if (isHonorCode(code) && visible <= 1) score += 18;
+      } else {
+        let inferred = 0;
+        try { inferred += smartAiOpponentWaitRisk(seat, code) * 0.72; } catch (_) {}
+        try { inferred += smartAiOpponentHandInference(seat, code) * 0.55; } catch (_) {}
+        if (isMiddleTile(code) && visible <= 1) inferred += 14;
+        if (isHonorCode(code) && visible <= 1) inferred += 8;
+        score += Math.max(0, inferred);
+      }
+    });
+    if (visible >= 3) score *= 0.25;
+    else if (visible === 2) score *= 0.56;
+    return Math.max(0, score);
+  }
+
   function aiDangerDiscardScore(seat, code) {
     if (!code || !aiDangerDiscardSeatHasTingThreat(seat)) return 0;
+    const visible = smartAiVisibleCount(code, seat);
+    if (Math.max(0, 4 - visible) <= 0) return 0;
     let riskScore = 0;
     try {
+      const exactRonRisk = aiDangerDeclaredTingRonRisk(seat, code);
+      if (Number.isFinite(exactRonRisk)) riskScore += exactRonRisk;
+    } catch (e) {}
+    try {
       const safetyScore = smartAiSafetyDiscardScore(seat, code);
-      if (Number.isFinite(safetyScore)) riskScore += Math.max(0, -safetyScore);
+      if (Number.isFinite(safetyScore)) riskScore += Math.max(0, -safetyScore) * 1.05;
     } catch (e) {}
     try {
       const threatScore = smartAiThreatAwareDiscardRisk(seat, code);
-      if (Number.isFinite(threatScore)) riskScore += Math.max(0, threatScore * 0.42);
+      if (Number.isFinite(threatScore)) riskScore += Math.max(0, threatScore * 0.62);
     } catch (e) {}
     try {
-      SEATS.forEach(other => {
-        if (other === seat || !state.declaredTing || !state.declaredTing[other]) return;
-        const otherCodes = (state.hands[other] || []).map(t => t && t.code).filter(c => c && !isFlower(c));
-        const needed = requiredConcealedSets(other);
-        if (isWinningCodeListCached(otherCodes.concat([code]), needed)) riskScore += 42;
-      });
+      const inferenceScore = smartAiOpponentHandInference(seat, code);
+      if (Number.isFinite(inferenceScore)) riskScore += Math.max(0, inferenceScore * 0.38);
     } catch (e) {}
+    if (visible >= 3) riskScore *= 0.38;
+    else if (visible === 2) riskScore *= 0.70;
+    if (isMiddleTile(code) && visible <= 1) riskScore += 10;
+    if (isHonorCode(code) && visible >= 2) riskScore *= 0.65;
     return Math.max(0, riskScore);
   }
 
@@ -21907,14 +22373,21 @@ function showIntegrityReport(precomputed) {
     if (!aiDangerDiscardSuggestionVisible(seat)) return out;
     if (!Array.isArray(hand) || !hand.length) return out;
     if (!aiDangerDiscardSeatHasTingThreat(seat)) return out;
+    const scored = [];
     const seen = new Set();
     hand.forEach(tileObj => {
       const code = tileObj && tileObj.code;
       if (!code || isFlower(code) || seen.has(code)) return;
       seen.add(code);
       const danger = aiDangerDiscardScore(seat, code);
-      if (Number.isFinite(danger) && danger >= 18) out.set(code, danger);
+      if (Number.isFinite(danger) && danger >= 18) scored.push([code, danger]);
     });
+    scored.sort((a, b) => {
+      const diff = Number(b[1] || 0) - Number(a[1] || 0);
+      if (diff) return diff;
+      try { return tileSortValue(a[0]) - tileSortValue(b[0]); } catch (e) { return String(a[0]).localeCompare(String(b[0])); }
+    });
+    scored.slice(0, 3).forEach(item => out.set(item[0], item[1]));
     return out;
   }
 
@@ -22013,6 +22486,154 @@ function showIntegrityReport(precomputed) {
     return node;
   }
 
+  function renderSeatTingWaitAssistOnHandRow(seat, handRow) {
+    if (!handRow) return false;
+    if (!state.declaredTing || !state.declaredTing[seat]) return false;
+    if (!(state.uiSettings && state.uiSettings.tingAssistEnabled)) return false;
+    if (!canRevealTingWaitDetails(seat)) return false;
+    const waits = currentWaits(seat);
+    if (!waits.length) return false;
+    const group = document.createElement('div');
+    group.className = 'tingWaitAssistGroup tingWaitAssistGroupAllSeats';
+    group.dataset.seat = seat;
+    group.dataset.viewSeatOnly = '1';
+    group.dataset.adaptiveReady = '0';
+    const title = document.createElement('span');
+    title.className = 'tingWaitAssistTitle';
+    title.textContent = '聽';
+    group.appendChild(title);
+    waits.forEach(code => {
+      const drawable = countDrawableWaitTiles(code);
+      const card = document.createElement('span');
+      card.className = 'tingWaitAssistCard';
+      card.title = '聽 ' + tileText(code) + ' 可摸 ' + drawable + ' 張';
+      const tile = createTileElement({ id: 'ting-assist-' + seat + '-' + code + '-' + Math.random().toString(36).slice(2), code }, false);
+      tile.classList.add('tingWaitAssistExampleTile');
+      card.appendChild(tile);
+      const count = document.createElement('span');
+      count.className = 'tingWaitAssistCount';
+      count.textContent = '可摸' + drawable + '張';
+      card.appendChild(count);
+      group.appendChild(card);
+    });
+    handRow.appendChild(group);
+    return true;
+  }
+
+  function tw16ViewportSafeBox() {
+    const w = Math.max(0, window.innerWidth || document.documentElement.clientWidth || 0);
+    const h = Math.max(0, window.innerHeight || document.documentElement.clientHeight || 0);
+    return { left: 2, top: 2, right: Math.max(2, w - 2), bottom: Math.max(2, h - 2), width: Math.max(0, w - 4), height: Math.max(0, h - 4) };
+  }
+
+  function tw16VisibleRectOf(el) {
+    if (!el || !el.getBoundingClientRect) return null;
+    const style = window.getComputedStyle ? window.getComputedStyle(el) : null;
+    if (style && (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity || 1) === 0)) return null;
+    const r = el.getBoundingClientRect();
+    if (!r || r.width <= 0 || r.height <= 0) return null;
+    return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+  }
+
+  function tw16UnionRects(rects) {
+    const list = (rects || []).filter(Boolean);
+    if (!list.length) return null;
+    return list.reduce((acc, r) => ({
+      left: Math.min(acc.left, r.left),
+      top: Math.min(acc.top, r.top),
+      right: Math.max(acc.right, r.right),
+      bottom: Math.max(acc.bottom, r.bottom),
+      width: Math.max(acc.right, r.right) - Math.min(acc.left, r.left),
+      height: Math.max(acc.bottom, r.bottom) - Math.min(acc.top, r.top)
+    }));
+  }
+
+  function tw16RectsOverlap(a, b, pad) {
+    const p = Number.isFinite(pad) ? pad : 2;
+    if (!a || !b) return false;
+    return !(a.right <= b.left - p || a.left >= b.right + p || a.bottom <= b.top - p || a.top >= b.bottom + p);
+  }
+
+  function tw16ClampRectCandidate(left, top, w, h, box) {
+    const l = Math.min(Math.max(left, box.left), Math.max(box.left, box.right - w));
+    const t = Math.min(Math.max(top, box.top), Math.max(box.top, box.bottom - h));
+    return { left: l, top: t, right: l + w, bottom: t + h, width: w, height: h };
+  }
+
+  function tw16TingAssistCollisionScore(candidate, blockers) {
+    let score = 0;
+    (blockers || []).forEach(b => {
+      if (!tw16RectsOverlap(candidate, b, 1)) return;
+      const ix = Math.max(0, Math.min(candidate.right, b.right) - Math.max(candidate.left, b.left));
+      const iy = Math.max(0, Math.min(candidate.bottom, b.bottom) - Math.max(candidate.top, b.top));
+      score += ix * iy + 1000;
+    });
+    return score;
+  }
+
+  function adjustTingWaitAssistAdaptivePlacement() {
+    const group = document.querySelector('.hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-seat-only="1"]');
+    if (!group) return;
+    const handEl = document.querySelector('.hand-bottom');
+    const handRow = document.querySelector('.hand-bottom .hand-tile-row');
+    const meldRow = document.querySelector('.hand-bottom .hand-meld-row');
+    if (!handEl || !handRow) return;
+
+    group.dataset.adaptiveReady = '0';
+    group.style.setProperty('--tw16-ting-assist-left', '0px');
+    group.style.setProperty('--tw16-ting-assist-top', '0px');
+
+    const box = tw16ViewportSafeBox();
+    const measured = tw16VisibleRectOf(group);
+    const w = Math.max(1, Math.ceil((measured && measured.width) || group.offsetWidth || 120));
+    const h = Math.max(1, Math.ceil((measured && measured.height) || group.offsetHeight || 42));
+    const handRect = tw16VisibleRectOf(handRow) || tw16VisibleRectOf(handEl);
+    const meldRect = tw16VisibleRectOf(meldRow);
+    const anchor = tw16UnionRects([handRect, meldRect]) || handRect;
+    if (!anchor) return;
+
+    const blockers = Array.from(document.querySelectorAll('.tile,.wall .piece,.ai-suggest-wrapper,.hand-exposed-group'))
+      .filter(el => el && !group.contains(el))
+      .map(tw16VisibleRectOf)
+      .filter(Boolean);
+
+    const gap = Math.max(6, Math.round((parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tw-tile-h')) || 32) * 0.16));
+    const baseLeftRight = anchor.right - w;
+    const baseLeftCenter = anchor.left + (anchor.width - w) / 2;
+    const rawCandidates = [];
+
+    // 優先：自己座位視角右前方，並在整組手牌+副露上緣之外。
+    for (let i = 0; i < 7; i += 1) rawCandidates.push([baseLeftRight, anchor.top - h - gap - i * Math.max(8, Math.round(h * 0.72))]);
+    // 若右前方空間不足，改用上方置中，再嘗試左右側，仍然避開所有牌。
+    for (let i = 0; i < 5; i += 1) rawCandidates.push([baseLeftCenter, anchor.top - h - gap - i * Math.max(8, Math.round(h * 0.72))]);
+    rawCandidates.push([anchor.right + gap, anchor.top]);
+    rawCandidates.push([anchor.left - w - gap, anchor.top]);
+    rawCandidates.push([anchor.right - w, anchor.bottom + gap]);
+
+    let best = null;
+    let bestScore = Infinity;
+    rawCandidates.forEach(pair => {
+      const c = tw16ClampRectCandidate(pair[0], pair[1], w, h, box);
+      const score = tw16TingAssistCollisionScore(c, blockers);
+      if (score < bestScore) { best = c; bestScore = score; }
+    });
+    if (!best) return;
+
+    group.style.setProperty('--tw16-ting-assist-left', Math.round(best.left) + 'px');
+    group.style.setProperty('--tw16-ting-assist-top', Math.round(best.top) + 'px');
+    group.dataset.adaptiveReady = '1';
+  }
+
+  function scheduleTingWaitAssistAdaptivePlacement() {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => adjustTingWaitAssistAdaptivePlacement());
+      requestAnimationFrame(() => requestAnimationFrame(() => adjustTingWaitAssistAdaptivePlacement()));
+    } else {
+      setTimeout(() => adjustTingWaitAssistAdaptivePlacement(), 0);
+    }
+  }
+
+
   function renderHands(map) {
     DISPLAY_POSITIONS.forEach(pos => {
       const rows = ensureHandRows(pos);
@@ -22054,6 +22675,7 @@ function showIntegrityReport(precomputed) {
           });
         }
       }
+      renderSeatTingWaitAssistOnHandRow(seat, handRow);
     });
   }
 
@@ -22171,7 +22793,7 @@ function showIntegrityReport(precomputed) {
         if (!(child && child.classList && child.classList.contains('hand-exposed-group'))) child.remove();
       });
       Array.from(rows.handRow.children || []).forEach(child => {
-        if (!(child && child.classList && (child.classList.contains('tile') || child.classList.contains('ai-suggest-wrapper')))) child.remove();
+        if (!(child && child.classList && (child.classList.contains('tile') || child.classList.contains('ai-suggest-wrapper') || child.classList.contains('tingWaitAssistGroupAllSeats')))) child.remove();
       });
     });
   }
@@ -23205,7 +23827,129 @@ function concealedKongOwnerOfMeld(meld) {
       if(dom.wmLeft)  {dom.wmLeft.style.left  =(cx-off)+'px';dom.wmLeft.style.top=cy+'px';}
       if(dom.wmRight) {dom.wmRight.style.left =(cx+off)+'px';dom.wmRight.style.top=cy+'px';}
     })();
+    updateLocalSeatWindBadge();
   }
+
+  function ensureLocalSeatWindBadge() {
+    let badge = byId('tw16LocalSeatWindBadge');
+    if (badge) return badge;
+    badge = document.createElement('div');
+    badge.id = 'tw16LocalSeatWindBadge';
+    badge.className = 'tw16-local-seat-wind-badge';
+    document.body.appendChild(badge);
+    return badge;
+  }
+
+  function centralSeatWindMarksVisible() {
+    const marks = [dom.wmBottom, dom.wmTop, dom.wmLeft, dom.wmRight].filter(Boolean);
+    if (!marks.length) return false;
+    return marks.some(mark => {
+      if (!mark || !String(mark.textContent || '').trim()) return false;
+      const style = getComputedStyle(mark);
+      if (style.display === 'none' || style.visibility === 'hidden') return false;
+      const opacity = Number(style.opacity);
+      if (!Number.isFinite(opacity) || opacity < 0.35) return false;
+      const color = String(style.color || '');
+      const rgba = color.match(/rgba?\(([^)]+)\)/i);
+      if (rgba) {
+        const parts = rgba[1].split(',').map(v => v.trim());
+        if (parts.length >= 4 && Number(parts[3]) < 0.35) return false;
+      }
+      const rect = mark.getBoundingClientRect();
+      return !!(rect && rect.width > 0.5 && rect.height > 0.5 && rect.right > 0 && rect.bottom > 0 && rect.left < window.innerWidth && rect.top < window.innerHeight);
+    });
+  }
+
+  function getTw16VisibleUnionRect(nodes) {
+    const list = Array.from(nodes || []).filter(el => el && el.getBoundingClientRect);
+    let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity, found = false;
+    list.forEach(el => {
+      const style = getComputedStyle(el);
+      if (style.display === 'none' || style.visibility === 'hidden') return;
+      const r = el.getBoundingClientRect();
+      if (!r || r.width <= 0.5 || r.height <= 0.5) return;
+      if (r.right <= 0 || r.bottom <= 0 || r.left >= window.innerWidth || r.top >= window.innerHeight) return;
+      left = Math.min(left, r.left);
+      top = Math.min(top, r.top);
+      right = Math.max(right, r.right);
+      bottom = Math.max(bottom, r.bottom);
+      found = true;
+    });
+    return found ? { left, top, right, bottom, width: right - left, height: bottom - top } : null;
+  }
+
+  function getTw16LocalWindBadgeAnchorRect(pos) {
+    const side = pos || 'bottom';
+    let rect = getTw16VisibleUnionRect(document.querySelectorAll('.discardSeat.discard-' + side + ' .tile, .discardSeat.discard-' + side + ' .discard-tile'));
+    if (rect) return rect;
+
+    rect = getTw16VisibleUnionRect(document.querySelectorAll('.hand-' + side + ' .hand-meld-row .tile, .hand-' + side + ' .hand-exposed-group .tile'));
+    if (rect) return rect;
+
+    rect = getTw16VisibleUnionRect(document.querySelectorAll('.wall-' + side + ' .piece, .wall-' + side + ' .wallStack'));
+    if (rect) return rect;
+
+    const discardBox = document.querySelector('.discardSeat.discard-' + side) || document.querySelector('.discard-' + side) || dom.discardGrid;
+    rect = discardBox && discardBox.getBoundingClientRect ? discardBox.getBoundingClientRect() : null;
+    if (rect && rect.width > 0.5 && rect.height > 0.5) return rect;
+
+    const table = byId('table') || document.querySelector('.table');
+    rect = table && table.getBoundingClientRect ? table.getBoundingClientRect() : null;
+    return (rect && rect.width > 0.5 && rect.height > 0.5) ? rect : null;
+  }
+
+  function updateLocalSeatWindBadge() {
+    const lobby = byId('tw16Lobby');
+    const lobbyVisible = !!(lobby && !lobby.hidden && getComputedStyle(lobby).display !== 'none' && getComputedStyle(lobby).visibility !== 'hidden');
+    if (lobbyVisible) {
+      const oldBadge = byId('tw16LocalSeatWindBadge');
+      if (oldBadge) {
+        oldBadge.classList.remove('show');
+        oldBadge.style.left = '-9999px';
+        oldBadge.style.top = '-9999px';
+      }
+      return;
+    }
+    const badge = ensureLocalSeatWindBadge();
+    const seat = SEATS.includes(state.viewSeat) ? state.viewSeat : (networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : '');
+    const windChar = ({ east:'東', south:'南', west:'西', north:'北' })[seat] || '';
+    if (state.ended || !seat || !windChar) {
+      badge.classList.remove('show');
+      badge.style.left = '-9999px';
+      badge.style.top = '-9999px';
+      return;
+    }
+    badge.textContent = windChar;
+    badge.classList.add('show');
+
+    const map = (typeof displayMap === 'function') ? displayMap() : null;
+    const pos = (map && map[seat]) || 'bottom';
+    const anchorRect = getTw16LocalWindBadgeAnchorRect(pos);
+    const table = byId('table') || document.querySelector('.table');
+    const tableRect = table && table.getBoundingClientRect ? table.getBoundingClientRect() : null;
+    const badgeSize = Math.max(16, Math.min(25, Math.round(cssPixelNumber('--tw-tile-w', 22) * .98)));
+    const gap = Math.max(5, Math.round(badgeSize * .34));
+
+    let x = tableRect && tableRect.width > 0.5 ? (tableRect.left + tableRect.width / 2) : (window.innerWidth / 2);
+    let y = window.innerHeight / 2;
+
+    if (anchorRect && anchorRect.width > 0.5 && anchorRect.height > 0.5) {
+      if (pos === 'top') {
+        y = anchorRect.bottom + gap;
+      } else {
+        y = anchorRect.top - gap;
+      }
+    } else if (tableRect && tableRect.width > 0.5 && tableRect.height > 0.5) {
+      y = (pos === 'top') ? (tableRect.top + tableRect.height * .28) : (tableRect.top + tableRect.height * .72);
+    }
+
+    x = Math.max(badgeSize / 2 + 2, Math.min(window.innerWidth - badgeSize / 2 - 2, Math.round(x)));
+    y = Math.max(badgeSize / 2 + 2, Math.min(window.innerHeight - badgeSize / 2 - 2, Math.round(y)));
+    badge.style.left = x + 'px';
+    badge.style.top = y + 'px';
+    badge.style.transform = 'translate(-50%,-50%)';
+  }
+
 
 
   function rectFromLeftTop(left, top, width, height) {
@@ -35631,6 +36375,174 @@ function concealedKongOwnerOfMeld(meld) {
 </script>
 
 <div id="tw16HistPanel"><div id="tw16HistBar"><h2>🀄 胡牌歷程</h2><div id="tw16HistTools"><button id="tw16HistSave">貯存</button><button id="tw16HistQuery">查詢</button><button id="tw16HistAll">全部</button><button id="tw16HistDelete" class="red">刪除</button></div><span id="tw16HistBadge">0 筆</span><button id="tw16HistClose">✕</button></div><div id="tw16HistBody"><p style="text-align:center;color:#475569;padding:40px 0">尚無胡牌記錄</p></div></div>
+
+<script>
+(function installTw16ButtonPressFeedback(){
+  if (window.tw16ButtonPressFeedbackInstalled) return;
+  window.tw16ButtonPressFeedbackInstalled = true;
+
+  const PRESS_SELECTOR = [
+    'button',
+    'input[type="button"]',
+    'input[type="submit"]',
+    'input[type="reset"]',
+    '[role="button"]',
+    '.btn',
+    '.tw16-lobby-btn',
+    '.panelToolBtn',
+    '.actionBtn',
+    '.tingChoiceRow',
+    '.tw16-lobby-key-choice',
+    '.customTileImportRoundBtn',
+    '.customTileImportRedPointSelectBtn',
+    '[data-menu]',
+    '[data-import-align]',
+    '[data-import-nudge]'
+  ].join(',');
+
+  const PRESS_SCALE = 'scale(.82)';
+  const PRESS_FILTER = 'brightness(.52) saturate(.82)';
+  const PRESS_SHADOW = 'inset 0 5px 14px rgba(0,0,0,.82), 0 0 0 2px rgba(255,255,255,.46)';
+  let pressedEl = null;
+  let restoreTimer = 0;
+
+  function isPressable(el){
+    if (!el || !el.matches || !el.matches(PRESS_SELECTOR)) return false;
+    if (el.disabled) return false;
+    if (el.getAttribute('disabled') !== null) return false;
+    if (el.getAttribute('aria-disabled') === 'true') return false;
+    return true;
+  }
+
+  function findPressTarget(raw){
+    if (!raw || !raw.closest) return null;
+    const el = raw.closest(PRESS_SELECTOR);
+    return isPressable(el) ? el : null;
+  }
+
+  function saveOriginalInline(el){
+    if (!el || !el.style || el.dataset.tw16PressSaved === '1') return;
+    el.dataset.tw16PressSaved = '1';
+    el.dataset.tw16PressTransform = el.style.getPropertyValue('transform') || '';
+    el.dataset.tw16PressTransformPriority = el.style.getPropertyPriority('transform') || '';
+    el.dataset.tw16PressFilter = el.style.getPropertyValue('filter') || '';
+    el.dataset.tw16PressFilterPriority = el.style.getPropertyPriority('filter') || '';
+    el.dataset.tw16PressBoxShadow = el.style.getPropertyValue('box-shadow') || '';
+    el.dataset.tw16PressBoxShadowPriority = el.style.getPropertyPriority('box-shadow') || '';
+    el.dataset.tw16PressOpacity = el.style.getPropertyValue('opacity') || '';
+    el.dataset.tw16PressOpacityPriority = el.style.getPropertyPriority('opacity') || '';
+    el.dataset.tw16PressTransition = el.style.getPropertyValue('transition') || '';
+    el.dataset.tw16PressTransitionPriority = el.style.getPropertyPriority('transition') || '';
+    el.dataset.tw16PressWillChange = el.style.getPropertyValue('will-change') || '';
+    el.dataset.tw16PressWillChangePriority = el.style.getPropertyPriority('will-change') || '';
+  }
+
+  function restoreProperty(el, prop, valueKey, priorityKey){
+    const value = el.dataset[valueKey] || '';
+    const priority = el.dataset[priorityKey] || '';
+    if (value) el.style.setProperty(prop, value, priority);
+    else el.style.removeProperty(prop);
+  }
+
+  function restoreOriginalInline(el){
+    if (!el || !el.style || el.dataset.tw16PressSaved !== '1') return;
+    restoreProperty(el, 'transform', 'tw16PressTransform', 'tw16PressTransformPriority');
+    restoreProperty(el, 'filter', 'tw16PressFilter', 'tw16PressFilterPriority');
+    restoreProperty(el, 'box-shadow', 'tw16PressBoxShadow', 'tw16PressBoxShadowPriority');
+    restoreProperty(el, 'opacity', 'tw16PressOpacity', 'tw16PressOpacityPriority');
+    restoreProperty(el, 'transition', 'tw16PressTransition', 'tw16PressTransitionPriority');
+    restoreProperty(el, 'will-change', 'tw16PressWillChange', 'tw16PressWillChangePriority');
+    delete el.dataset.tw16PressSaved;
+    delete el.dataset.tw16PressTransform;
+    delete el.dataset.tw16PressTransformPriority;
+    delete el.dataset.tw16PressFilter;
+    delete el.dataset.tw16PressFilterPriority;
+    delete el.dataset.tw16PressBoxShadow;
+    delete el.dataset.tw16PressBoxShadowPriority;
+    delete el.dataset.tw16PressOpacity;
+    delete el.dataset.tw16PressOpacityPriority;
+    delete el.dataset.tw16PressTransition;
+    delete el.dataset.tw16PressTransitionPriority;
+    delete el.dataset.tw16PressWillChange;
+    delete el.dataset.tw16PressWillChangePriority;
+  }
+
+  function applyPress(el){
+    if (!isPressable(el)) return;
+    if (pressedEl && pressedEl !== el) releasePress(true);
+    pressedEl = el;
+    saveOriginalInline(el);
+    el.classList.add('tw16-button-pressing');
+    el.classList.remove('tw16-button-press-flash');
+    el.style.setProperty('transition', 'transform .045s ease, filter .045s ease, box-shadow .045s ease, opacity .045s ease', 'important');
+    el.style.setProperty('will-change', 'transform, filter, box-shadow, opacity', 'important');
+    el.style.setProperty('transform', PRESS_SCALE, 'important');
+    el.style.setProperty('filter', PRESS_FILTER, 'important');
+    el.style.setProperty('box-shadow', PRESS_SHADOW, 'important');
+    el.style.setProperty('opacity', '.82', 'important');
+  }
+
+  function releasePress(skipBounce){
+    const el = pressedEl;
+    pressedEl = null;
+    if (!el || !el.style) return;
+    el.classList.remove('tw16-button-pressing');
+    restoreOriginalInline(el);
+    if (!skipBounce && el.classList) {
+      el.classList.add('tw16-button-press-flash');
+      window.clearTimeout(restoreTimer);
+      restoreTimer = window.setTimeout(function(){
+        try { el.classList.remove('tw16-button-press-flash'); } catch(e) {}
+      }, 210);
+    }
+  }
+
+  function flashClick(el){
+    if (!isPressable(el)) return;
+    applyPress(el);
+    window.setTimeout(function(){ releasePress(false); }, 75);
+  }
+
+  document.addEventListener('pointerdown', function(ev){
+    const el = findPressTarget(ev.target);
+    if (!el) return;
+    applyPress(el);
+  }, true);
+
+  document.addEventListener('touchstart', function(ev){
+    const el = findPressTarget(ev.target);
+    if (!el) return;
+    applyPress(el);
+  }, true);
+
+  ['pointerup','pointercancel','lostpointercapture','dragstart','touchend','touchcancel','mouseup','mouseleave'].forEach(function(type){
+    document.addEventListener(type, function(){ if (pressedEl) releasePress(false); }, true);
+  });
+
+  document.addEventListener('click', function(ev){
+    const el = findPressTarget(ev.target);
+    if (!el) return;
+    if (!pressedEl) flashClick(el);
+  }, true);
+})();
+
+(function(){
+  let tw16LocalWindBadgeTimer = 0;
+  function refreshTw16LocalWindBadgeSoon(){
+    if (tw16LocalWindBadgeTimer) clearTimeout(tw16LocalWindBadgeTimer);
+    tw16LocalWindBadgeTimer = setTimeout(function(){
+      try { if (typeof updateLocalSeatWindBadge === 'function') updateLocalSeatWindBadge(); } catch(e) {}
+    }, 30);
+  }
+  window.addEventListener('resize', refreshTw16LocalWindBadgeSoon, { passive:true });
+  window.addEventListener('orientationchange', refreshTw16LocalWindBadgeSoon, { passive:true });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', refreshTw16LocalWindBadgeSoon, { passive:true });
+    window.visualViewport.addEventListener('scroll', refreshTw16LocalWindBadgeSoon, { passive:true });
+  }
+  setInterval(refreshTw16LocalWindBadgeSoon, 700);
+})();
+</script>
 </body>
 </html>
 
