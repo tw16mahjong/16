@@ -3690,6 +3690,10 @@ html body .app.perspective3d .discardSeat .tile::before {
 .historyChipDelta.plus{color:#ff3030;background:rgba(127,29,29,.24);}
 .historyChipDelta.minus{color:#34d399;background:rgba(6,78,59,.22);}
 .historyChipDelta.zero{color:#94a3b8;}
+.historyTingDangerSnap{display:inline-flex;align-items:center;vertical-align:middle;margin-left:4px;color:#fbbf24;font-size:11px;font-weight:1000;gap:2px;}
+.historyTingDangerSnapItem{display:inline-flex;align-items:center;gap:1px;}
+.historyTingDangerSnapSeat{font-size:10px;color:#93c5fd;font-weight:1000;margin-right:1px;}
+.historyTingDangerSnap .tile{width:20px!important;height:29px!important;font-size:13px!important;border-radius:3px!important;}
 
 
 .tw16-btn-hint-wrap{position:relative;display:inline-flex;flex:0 0 auto;}
@@ -4060,6 +4064,8 @@ html body .table{
   -webkit-user-select:none;
 }
 .tw16-local-seat-wind-badge.show{display:flex!important;}
+.tw16-local-seat-wind-badge.tw16-turn-active{background:rgba(180,20,20,.88)!important;}
+.tw16-local-seat-dealer-badge{background:rgba(180,140,0,.88)!important;border-color:rgba(255,220,50,.96)!important;}
 
 
 /* tw16_all_seats_ting_assist: 東南西北任一家聽牌，直接貼在該座位手牌列顯示聽牌實例牌。 */
@@ -4130,11 +4136,13 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
   top:var(--tw16-ting-danger-top,-9999px)!important;
   z-index:2147483002!important;
   display:grid!important;
-  gap:1px!important;
+  gap:0!important;
   padding:0!important;
   margin:0!important;
-  background:transparent!important;
-  border:0!important;
+  width:max-content!important;
+  background:rgba(80,80,80,.55)!important;
+  border:1.5px solid rgba(220,30,30,.82)!important;
+  border-radius:4px!important;
   outline:0!important;
   box-shadow:none!important;
   pointer-events:none!important;
@@ -4142,11 +4150,11 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
   -webkit-user-select:none!important;
 }
 .tw16-ting-danger-examples-panel[hidden]{display:none!important;}
-.tw16-ting-danger-examples-row{display:flex!important;align-items:flex-end!important;justify-content:flex-start!important;gap:0!important;margin:0!important;padding:0!important;line-height:1!important;white-space:nowrap!important;}
-.tw16-ting-danger-seat-label{display:inline-flex!important;align-items:flex-end!important;justify-content:flex-end!important;min-width:1.9em!important;margin:0 2px 0 0!important;padding:0!important;color:#111!important;font-size:clamp(9px,calc(var(--tw16-ting-danger-tile-w,var(--tw-tile-w)) * .42),14px)!important;font-weight:1000!important;line-height:1.05!important;text-shadow:0 1px 2px rgba(255,255,255,.72)!important;}
+.tw16-ting-danger-examples-row{display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;gap:0!important;margin:0!important;padding:0!important;line-height:1!important;white-space:nowrap!important;}
+.tw16-ting-danger-examples-row::before{content:attr(data-seat-label)!important;display:inline!important;color:#111!important;font-size:clamp(9px,calc(var(--tw16-ting-danger-tile-w,var(--tw-tile-w)) * .42),14px)!important;font-weight:1000!important;line-height:1!important;text-shadow:0 1px 2px rgba(255,255,255,.72)!important;}
 .tw16-ting-danger-card{position:relative!important;display:inline-flex!important;align-items:flex-end!important;justify-content:center!important;margin:0!important;padding:0!important;}
-.tw16-ting-danger-card + .tw16-ting-danger-card{margin-left:calc(var(--tw16-ting-danger-tile-w,var(--tw-tile-w)) * -.08)!important;}
-.tw16-ting-danger-card .tile{width:var(--tw16-ting-danger-tile-w,calc(var(--tw-tile-w) * 1.10))!important;height:var(--tw16-ting-danger-tile-h,calc(var(--tw-tile-h) * 1.10))!important;min-width:var(--tw16-ting-danger-tile-w,calc(var(--tw-tile-w) * 1.10))!important;min-height:var(--tw16-ting-danger-tile-h,calc(var(--tw-tile-h) * 1.10))!important;font-size:var(--tw16-ting-danger-font,calc(var(--tw-tile-w) * .72))!important;margin:0!important;border-radius:0!important;box-shadow:0 1px 3px rgba(0,0,0,.30)!important;}
+.tw16-ting-danger-card + .tw16-ting-danger-card{margin-left:0!important;}
+.tw16-ting-danger-card .tile{width:var(--tw16-ting-danger-tile-w,calc(var(--tw-tile-w) * 1.10))!important;height:var(--tw16-ting-danger-tile-h,calc(var(--tw-tile-h) * 1.10))!important;min-width:var(--tw16-ting-danger-tile-w,calc(var(--tw-tile-w) * 1.10))!important;min-height:var(--tw16-ting-danger-tile-h,calc(var(--tw-tile-h) * 1.10))!important;font-size:var(--tw16-ting-danger-font,calc(var(--tw-tile-w) * .72))!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;}
 .tw16-ting-danger-card .tile .small{font-size:var(--tw16-ting-danger-small-font,calc(var(--tw-tile-w) * .33))!important;}
 .tw16-ting-danger-word{position:absolute!important;left:0!important;bottom:calc(100% - 1px)!important;color:#111!important;font-size:clamp(7px,calc(var(--tw16-ting-danger-tile-w,var(--tw-tile-w)) * .30),10px)!important;font-weight:1000!important;line-height:.95!important;white-space:nowrap!important;text-shadow:0 1px 2px rgba(255,255,255,.72),0 0 2px rgba(255,255,255,.45)!important;z-index:2!important;}
 
@@ -8410,7 +8418,7 @@ function loadUiSettings() {
     if (!('wakeLock' in navigator) || document.visibilityState !== 'visible' || tw16WakeLock) return;
     try {
       tw16WakeLock = await navigator.wakeLock.request('screen');
-      tw16WakeLock.addEventListener('release', () => { tw16WakeLock = null; });
+      tw16WakeLock.addEventListener('release', () => { tw16WakeLock = null; setTimeout(syncScreenWakeLock, 1000); });
     } catch (e) {
       tw16WakeLock = null;
     }
@@ -12099,6 +12107,25 @@ function loadUiSettings() {
     if (!tileObj) return false;
     // discardId 必須在所有 try 塊之前宣告，避免 TDZ 問題
     let discardId = tileObj.id;
+    // 摸進最危險牌：寧可拆聽也不打
+    try {
+      if (isSeatAutoDrivenBySystem(seat) && state.declaredTing[seat] && tw16IsOpponentTopDangerCode(seat, tileObj.code)) {
+        const safeOptions = (tw16DiscardCandidateList(seat) || []).filter(item =>
+          item && item.tile && !isFlower(item.tile.code) && !tw16IsOpponentTopDangerCode(seat, item.tile.code)
+        );
+        if (safeOptions.length > 0) {
+          safeOptions.sort((a, b) => {
+            let sa = 0, sb = 0;
+            try { sa = smartAiDiscardCandidateScore(seat, a.tile, a.idx, state.hands[seat] || []).score || 0; } catch (e) {}
+            try { sb = smartAiDiscardCandidateScore(seat, b.tile, b.idx, state.hands[seat] || []).score || 0; } catch (e) {}
+            return sb - sa;
+          });
+          discardId = safeOptions[0].tile.id;
+          state.declaredTing[seat] = false;
+          addLog(SEAT_NAME[seat] + '摸進最危險牌，拆聽改打安全牌');
+        }
+      }
+    } catch (e) { /* 靜默失敗 */ }
     // ④ 進張全死偵測
     try {
       if (isSeatAutoDrivenBySystem(seat)) {
@@ -12168,6 +12195,12 @@ function loadUiSettings() {
         }
       }
     } catch (e) { /* 靜默失敗 */ }
+    // tw16_ting_auto_forbidden_gate_20260623: 聽牌自動摸打最終禁打守門，確保不打危險牌例中的牌
+    try {
+      if (isSeatAutoDrivenBySystem(seat)) {
+        discardId = tw16ForceAvoidTingExamplesFirst(seat, discardId, tw16DiscardCandidateList(seat));
+      }
+    } catch (_) {}
     addLog(SEAT_NAME[seat] + '聽牌自動摸打 ' + tileText((hand.find(t => t.id === discardId) || tileObj).code));
     clearTimeout(autoplayTimer);
     autoplayTimer = setTimeout(async () => {
@@ -15047,7 +15080,24 @@ function loadUiSettings() {
     tingChoiceDismissKey = '';
     renderAll();
     if (!state.ended && !state.pending && state.turn === seat && state.phase === 'discard') {
-      return submitDiscard(seat, selected.discardId, source === 'remote' ? 'remote-ting' : 'ting-declare');
+      let tingDiscardId = selected.discardId;
+      // tw16_ting_declare_forbidden_gate_20260623: 宣告聽牌時若棄牌是禁打牌，改選安全的聽牌選項
+      if (source !== 'remote' && source !== 'remote-ting' && isSeatAutoDrivenBySystem(seat)) {
+        try {
+          const forbidden = tw16TingExamplesFirstCodeSet(seat);
+          if (forbidden.size) {
+            const selectedCode = selected.discardCode || (options.find(o => String(o.discardId) === String(selected.discardId)) || {}).discardCode || '';
+            if (selectedCode && forbidden.has(selectedCode)) {
+              const safeOption = options.find(o => {
+                const c = o.discardCode || '';
+                return c && !forbidden.has(c) && String(o.discardId) !== String(selected.discardId);
+              });
+              if (safeOption) { tingDiscardId = safeOption.discardId; }
+            }
+          }
+        } catch (_) {}
+      }
+      return submitDiscard(seat, tingDiscardId, source === 'remote' ? 'remote-ting' : 'ting-declare');
     }
     return true;
   }
@@ -15449,7 +15499,16 @@ function loadUiSettings() {
           return taiPot >= 6 && best.drawableRemaining <= 2;
         })();
         if (!shouldHold) {
-          declareTing(seat, 'auto:' + reason, best.discardId);
+          // tw16_auto_ting_forbidden_20260623: 宣告聽牌前過濾禁打牌，改選安全聽牌選項
+          let safeTingDiscardId = best.discardId;
+          try {
+            const forbidden = tw16TingExamplesFirstCodeSet(seat);
+            if (forbidden.size && best.discardCode && forbidden.has(best.discardCode)) {
+              const safeOpt = tingOptions.find(o => o.discardCode && !forbidden.has(o.discardCode) && String(o.discardId) !== String(best.discardId));
+              if (safeOpt) safeTingDiscardId = safeOpt.discardId;
+            }
+          } catch (_) {}
+          declareTing(seat, 'auto:' + reason, safeTingDiscardId);
           return;
         }
       }
@@ -15581,13 +15640,19 @@ function loadUiSettings() {
   // tw16_ai_shared_gate_20260619: 精確/貪心 AI 共用最後守門規則。
   // 目的：不論來源是精確版或貪心版，最後都要通過同一套牌理檢查：
   // 可胡/可聽牌優先、向聽數不可退步、不得在有孤張時拆對子/刻子/完成順子、不得走亂數。
+  function tw16IsOpponentTopDangerCode(seat, code) {
+    if (!code || isFlower(code)) return false;
+    // 統一使用 tw16TingExamplesFirstCodeSet，確保與禁打規則完全一致
+    return tw16TingExamplesFirstCodeSet(seat).has(code);
+  }
+
   function tw16SharedAiDiscardGate(seat, preferredId, mode) {
     const candidates = tw16DiscardCandidateList(seat);
     if (!candidates.length) return '';
     const preferred = String(preferredId || '');
 
     const tingFirstId = tw16BestImmediateTingDiscardId(seat);
-    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) return tw16AutoplayAvoidMostDangerDiscardId(seat, tingFirstId, 'immediate-ting');
+    const _tingFirstCode15603 = (candidates.find(x => String(x.tile.id) === String(tingFirstId)) || {tile:{}}).tile.code; if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId)) && !tw16IsOpponentTopDangerCode(seat, _tingFirstCode15603)) return tw16ForceAvoidTingExamplesFirst(seat, tw16AutoplayAvoidMostDangerDiscardId(seat, tingFirstId, 'immediate-ting'), candidates);
 
     const hand = state.hands[seat] || [];
     const codes = hand.map(t => t && t.code).filter(c => c && !isFlower(c));
@@ -15865,7 +15930,8 @@ function loadUiSettings() {
     const candidates = tw16DiscardCandidateList(seat);
     if (!candidates.length) return preferredId || '';
     const tingFirstId = tw16BestImmediateTingDiscardId(seat);
-    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) return tingFirstId;
+    const _tfc15881 = (candidates.find(x => String(x.tile.id) === String(tingFirstId)) || {tile:{}}).tile.code;
+    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId)) && !tw16IsOpponentTopDangerCode(seat, _tfc15881)) return tw16ForceAvoidTingExamplesFirst(seat, tingFirstId, candidates);
     const scored = candidates.map(item => tw16AiMonteCarloBaseCandidateScore(seat, item)).filter(Boolean);
     if (!scored.length) return preferredId || '';
     scored.sort((a, b) => b.baseScore - a.baseScore || tileOrder(a.code) - tileOrder(b.code) || a.idx - b.idx);
@@ -15917,6 +15983,53 @@ function loadUiSettings() {
 
 
 
+  // tw16_ting_examples_first_absolute_20260623:
+  // 危險牌例面板裡，每個已聽牌對手排第一的牌，AI 絕對不能打，沒有例外。
+  function tw16TingExamplesFirstCodeSet(seat) {
+    const forbidden = new Set();
+    if (!state.declaredTing) return forbidden;
+    SEATS.forEach(function(other) {
+      if (other === seat) return;
+      if (!state.declaredTing[other]) return;
+      if (!isSeatActiveInTable(other)) return;
+      try {
+        const codes = tingSeatTopDangerCodes(other);
+        if (codes) codes.forEach(function(c) { if (c) forbidden.add(c); });
+      } catch (_) {}
+    });
+    return forbidden;
+  }
+
+  function tw16ForceAvoidTingExamplesFirst(seat, tileId, candidates) {
+    if (!tileId) return tileId || '';
+    const forbidden = tw16TingExamplesFirstCodeSet(seat);
+    if (!forbidden.size) return tileId;
+    const cands = Array.isArray(candidates) ? candidates : tw16DiscardCandidateList(seat);
+    const item = cands.find(x => x && x.tile && String(x.tile.id) === String(tileId));
+    if (!item || !item.tile || !item.tile.code) return tileId;
+    if (!forbidden.has(item.tile.code)) return tileId;
+    // 目前 tileId 是禁打牌，從候選中選出最佳的非禁打替代
+    const safe = cands.filter(x => x && x.tile && x.tile.code && !isFlower(x.tile.code) && !forbidden.has(x.tile.code));
+    if (!safe.length) return tileId; // 無路可走，只能照打（極端罕見）
+    const hand = state.hands[seat] || [];
+    let best = null;
+    safe.forEach(function(c) {
+      let score = 0;
+      try { score = smartAiSafetyDiscardScore(seat, c.tile.code) || 0; } catch (_) {}
+      try { score += smartAiTileRoughDiscardValue(c.tile.code, 1, smartAiCountsFromCodes(smartAiCodesFromHand(hand))) || 0; } catch (_) {}
+      let risk = 0;
+      try { risk = aiDangerDiscardScore(seat, c.tile.code); } catch (_) {}
+      if (Number.isFinite(risk)) score -= risk * 2.5;
+      score += (c.idx || 0) * 0.001;
+      if (!best || score > best.score) best = { id: c.tile.id, code: c.tile.code, score };
+    });
+    if (best && best.id) {
+      try { recordNetworkEvent('avoid-ting-examples-first', SEAT_NAME[seat] + '絕對不打危險牌例第一張', { seat, forbidden: Array.from(forbidden), from: item.tile.code, to: best.code }); } catch (_) {}
+      return best.id;
+    }
+    return tileId;
+  }
+
   function tw16AutoplayMostDangerDiscardCode(seat, candidates) {
     if (!SEATS.includes(seat) || !aiDangerDiscardSeatHasTingThreat(seat)) return '';
     const candidateList = Array.isArray(candidates) ? candidates : tw16DiscardCandidateList(seat);
@@ -15949,6 +16062,8 @@ function loadUiSettings() {
     if (!preferredItem || !preferredItem.tile || !preferredItem.tile.code) return preferredId || '';
     const mostDangerCode = tw16AutoplayMostDangerDiscardCode(seat, candidates);
     if (!mostDangerCode || preferredItem.tile.code !== mostDangerCode) return preferredId || '';
+    // tw16_absolute_safety_autoplay_20260623: 托管最高等級安全原則。
+    // 即使原本建議的是聽牌（preferredId 是聽牌 ID），只要該牌是最危險牌，就強制換掉。
     const safeCandidates = candidates.filter(item => item && item.tile && item.tile.code && !isFlower(item.tile.code) && item.tile.code !== mostDangerCode);
     if (!safeCandidates.length) return preferredId || '';
 
@@ -15982,8 +16097,16 @@ function loadUiSettings() {
     if (!SEATS.includes(seat)) return '';
     const candidates = tw16DiscardCandidateList(seat);
     if (!candidates.length) return '';
+    // tw16_absolute_safety_20260623: 最高等級安全原則。
+    // 就算拆了聽牌不胡也絕對不打出其它座位最危險的牌。
+    const mostDangerCode = tw16AutoplayMostDangerDiscardCode(seat, candidates);
     const tingFirstId = tw16BestImmediateTingDiscardId(seat);
-    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) return tingFirstId;
+    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) {
+      const tingTileCode = (candidates.find(x => String(x.tile.id) === String(tingFirstId)) || {tile:{}}).tile.code;
+      // 只有在聽牌打出的這張牌不是最危險牌時，才優先打出聽牌。
+      if (!mostDangerCode || tingTileCode !== mostDangerCode) return tw16ForceAvoidTingExamplesFirst(seat, tingFirstId, candidates);
+      // 如果聽牌要打的那張是最危險牌，則放棄此優先權，進入後續避險邏輯。
+    }
     let chosen = '';
     try {
       chosen = seatAiMode(seat) === 'greedy' ? chooseGreedyDiscardTile(seat) : chooseExactDiscardTile(seat);
@@ -15996,7 +16119,8 @@ function loadUiSettings() {
       : tw16SharedAiDiscardGate(seat, tw16DeterministicDiscardFallback(seat, 'chooseDiscardTile-invalid-or-empty'), seatAiMode(seat));
     const refined = tw16AiMonteCarloRefineDiscard(seat, gated);
     const finalId = (refined && candidates.some(x => String(x.tile.id) === String(refined))) ? refined : gated;
-    return tw16AutoplayAvoidMostDangerDiscardId(seat, finalId, 'choose-discard-final');
+    const afterMostDanger = tw16AutoplayAvoidMostDangerDiscardId(seat, finalId, 'choose-discard-final');
+    return tw16ForceAvoidTingExamplesFirst(seat, afterMostDanger, candidates);
   }
 
   function chooseGreedyDiscardTile(seat) {
@@ -16005,9 +16129,13 @@ function loadUiSettings() {
     const candidates = tw16DiscardCandidateList(seat);
     if (!candidates.length) return tw16DeterministicDiscardFallback(seat, 'greedy-no-candidates');
 
-    // 三層 AI 共用守門：可直接聽牌的棄牌永遠優先。
+    // tw16_absolute_safety_greedy_20260623: 貪心版最高等級安全原則。
+    const mostDangerCode = tw16AutoplayMostDangerDiscardCode(seat, candidates);
     const tingFirstId = tw16BestImmediateTingDiscardId(seat);
-    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) return tingFirstId;
+    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) {
+      const tingTileCode = (candidates.find(x => String(x.tile.id) === String(tingFirstId)) || {tile:{}}).tile.code;
+      if (!mostDangerCode || tingTileCode !== mostDangerCode) return tw16ForceAvoidTingExamplesFirst(seat, tingFirstId, candidates);
+    }
 
     const allCodes = hand.map(t => t && t.code).filter(c => c && !isFlower(c));
     const needed = requiredConcealedSets(seat);
@@ -16100,8 +16228,13 @@ function chooseExactDiscardTile(seat) {
     const discardCandidates = tw16DiscardCandidateList(seat);
     if (!discardCandidates.length) return '';
     if (state.openingDeal && state.openingDeal.active) return '';
+    // tw16_absolute_safety_exact_20260623: 精確版最高等級安全原則。
+    const mostDangerCode = tw16AutoplayMostDangerDiscardCode(seat, discardCandidates);
     const tingFirstId = tw16BestImmediateTingDiscardId(seat);
-    if (tingFirstId && discardCandidates.some(x => String(x.tile.id) === String(tingFirstId))) return tingFirstId;
+    if (tingFirstId && discardCandidates.some(x => String(x.tile.id) === String(tingFirstId))) {
+      const tingTileCode = (discardCandidates.find(x => String(x.tile.id) === String(tingFirstId)) || {tile:{}}).tile.code;
+      if (!mostDangerCode || tingTileCode !== mostDangerCode) return tw16ForceAvoidTingExamplesFirst(seat, tingFirstId, discardCandidates);
+    }
     const cacheKey = smartAiBuildDiscardCacheKey(seat);
     if (tw16SmartDiscardCache && tw16SmartDiscardCache.key === cacheKey) return tw16SmartDiscardCache.tileId || '';
     // ① 建立本回合的 visibleCount 快取（涵蓋所有 34 種牌，避免字牌 cache miss）
@@ -16387,7 +16520,8 @@ function chooseExactDiscardTile(seat) {
       items: Array.isArray(payload.items) ? payload.items.slice() : [],
       reveal: winnerReveal,
       chipDeltas,
-      createdAt
+      createdAt,
+      tingDangerSnapshot: Array.isArray(payload.tingDangerSnapshot) ? payload.tingDangerSnapshot.slice() : []
     };
   }
 
@@ -16437,7 +16571,18 @@ function chooseExactDiscardTile(seat) {
       scoreUnitsAfter: clonePlain(scoreUnitsAfter),
       seatRows,
       nextRoundPlan: clonePlain(state.nextRoundPlan || null),
-      reveal: buildRevealPayload(winner, winTile)
+      reveal: buildRevealPayload(winner, winTile),
+      tingDangerSnapshot: (function() {
+        // tw16_win_history_ting_danger_snapshot_20260623: 記錄胡牌者自己在危險牌例面板顯示的牌
+        const snap = [];
+        if (state.declaredTing && state.declaredTing[winner] && isSeatActiveInTable(winner)) {
+          try {
+            const codes = tingSeatTopDangerCodes(winner);
+            if (codes) codes.forEach(function(code) { if (code) snap.push({ seat: winner, code: code }); });
+          } catch (_) {}
+        }
+        return snap;
+      })()
     };
   }
 
@@ -18734,8 +18879,10 @@ function showWinHistory() {
         const time = formatTaipeiDateTime(h.createdAt || Date.now());
         const line=(h.round||'')+'　'+(SEAT_NAME[h.winner]||'')+(h.kind==='self'?'自摸':'胡 '+(SEAT_NAME[h.fromSeat]||''))+'　'+h.tai+'台';
         const wt=h.winTile||h.tile?'<span class="historyWinTileInline">'+tileMiniHtml(h.winTile||h.tile,true)+'</span>':'';
+        const tingSnap=Array.isArray(h.tingDangerSnapshot)?h.tingDangerSnapshot.filter(function(s){return s&&s.seat===h.winner;}):[];
+        const tingSnapHtml=tingSnap.length?'<span class="historyTingDangerSnap">（危險牌例：'+tingSnap.map(function(s){return'<span class="historyTingDangerSnapItem">'+tileMiniHtml(s.code,false)+'</span>';}).join('')+'）</span>':'';
         const sub=Array.isArray(h.items)?h.items.join('／'):'';
-        return '<div class="historyItem"><label class="tw16HistPickLabel"><input type="checkbox" class="tw16HistPick" value="'+escapeHtml(key)+'"> <b>#'+(allItems.length-i)+'</b></label> <span class="historyTime">'+escapeHtml(time)+'</span><br>'+escapeHtml(line)+wt+'<br>'+buildWinHistoryChipDeltaHtml(h)+'<span style="color:#fde68a">'+escapeHtml(sub)+'</span>'+buildWinHistoryRevealHtml(h)+'</div>';
+        return '<div class="historyItem"><label class="tw16HistPickLabel"><input type="checkbox" class="tw16HistPick" value="'+escapeHtml(key)+'"> <b>#'+(allItems.length-i)+'</b></label> <span class="historyTime">'+escapeHtml(time)+'</span><br>'+escapeHtml(line)+wt+tingSnapHtml+'<br>'+buildWinHistoryChipDeltaHtml(h)+'<span style="color:#fde68a">'+escapeHtml(sub)+'</span>'+buildWinHistoryRevealHtml(h)+'</div>';
       }).join('')+'</div>';body.scrollTop=0;
     },0);
   }
@@ -21155,6 +21302,7 @@ function showIntegrityReport(precomputed) {
           try { positionTileContainers(displayMap()); } catch (e) {}
           try { positionBottomHandScrollIndicator(dom.handBottom || byId('handBottom')); } catch (e) {}
           try { if (typeof refreshAiSuggestFloatingLabels === 'function') refreshAiSuggestFloatingLabels(); } catch (e) {}
+          try { positionTingDangerExamplesPanel(); } catch (e) {}
         });
       }
     } catch (e) {}
@@ -21357,6 +21505,7 @@ function showIntegrityReport(precomputed) {
       requestAnimationFrame(() => {
         refreshBottomHandPanState();
         try { positionTileContainers(displayMap()); } catch (e) {}
+        try { positionTingDangerExamplesPanel(); } catch (e) {}
       });
     };
 
@@ -22527,21 +22676,16 @@ function showIntegrityReport(precomputed) {
     const panel = ensureTingDangerExamplesPanel();
     panel.replaceChildren();
     if (!tingDangerExamplesEnabled() || isLobbyVisibleNow() || !state.declaredTing) {
-      panel.hidden = true;
-      return;
+      panel.hidden = true; return;
     }
     const tingSeats = SEATS.filter(seat => !!state.declaredTing[seat] && isSeatActiveInTable(seat));
     if (!tingSeats.length) { panel.hidden = true; return; }
-
     tingSeats.forEach(seat => {
       const codes = tingSeatTopDangerCodes(seat);
       if (!codes.length) return;
       const row = document.createElement('div');
       row.className = 'tw16-ting-danger-examples-row';
-      const seatLabel = document.createElement('span');
-      seatLabel.className = 'tw16-ting-danger-seat-label';
-      seatLabel.textContent = (SEAT_NAME[seat] || seat).replace('家','');
-      row.appendChild(seatLabel);
+      row.setAttribute('data-seat-label', (SEAT_NAME[seat] || seat).replace('家',''));
       codes.forEach(code => {
         const card = document.createElement('span');
         card.className = 'tw16-ting-danger-card';
@@ -22563,96 +22707,23 @@ function showIntegrityReport(precomputed) {
   function positionTingDangerExamplesPanel() {
     const panel = document.getElementById('tw16TingDangerExamplesPanel');
     if (!panel || panel.hidden) return;
-    const hand = document.querySelector('.hand-bottom .hand-tile-row') || document.querySelector('.hand-bottom');
-    if (!hand || !hand.getBoundingClientRect) { panel.hidden = true; return; }
-    const rect = hand.getBoundingClientRect();
-    if (!rect || rect.width <= 0 || rect.height <= 0) { panel.hidden = true; return; }
-    const handTile = hand.querySelector ? hand.querySelector('.tile') : null;
-    const handTileRect = handTile && handTile.getBoundingClientRect ? handTile.getBoundingClientRect() : null;
+    const discardEl = document.querySelector('.discardSeat.discard-bottom') || document.querySelector('.discard-bottom');
+    if (!discardEl) return;
+    const discardRect = discardEl.getBoundingClientRect();
+    if (!discardRect || discardRect.width <= 0) return;
     const baseTileW = Math.max(1, cssPixelNumber ? cssPixelNumber('--tw-tile-w', 22) : 22);
     const baseTileH = Math.max(1, cssPixelNumber ? cssPixelNumber('--tw-tile-h', 32) : 32);
-    const bottomTileW = Math.max(baseTileW, handTileRect && handTileRect.width > 0 ? handTileRect.width : baseTileW);
-    const bottomTileH = Math.max(baseTileH, handTileRect && handTileRect.height > 0 ? handTileRect.height : baseTileH);
-    const box = viewportBox ? viewportBox() : { left:0, top:0, right:window.innerWidth||0, bottom:window.innerHeight||0, width:window.innerWidth||0, height:window.innerHeight||0 };
-    const gap = Math.max(3, Math.round(bottomTileH * 0.08));
-    const pad = 2;
-    const panelHasNode = function(node) { return !!(node && (node === panel || (panel.contains && panel.contains(node)))); };
-    const visibleRect = function(node) {
-      if (!node || panelHasNode(node) || !node.getBoundingClientRect) return null;
-      const r = node.getBoundingClientRect();
-      if (!r || r.width <= 1 || r.height <= 1) return null;
-      if (r.right < box.left || r.left > box.right || r.bottom < box.top || r.top > box.bottom) return null;
-      return { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height };
-    };
-    const rectsOverlap = function(a, b) {
-      return !!(a && b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top);
-    };
-    const obstacleRects = [];
-    const obstacleSelectors = [
-      '.hand .tile', '.melds .tile', '.discardSeat .tile', '.wall .piece', '.bigDiscard.show .tile', '.actionPanel.action-panel-visible .tile', '.actionPanel.ting-choice-active .tile'
-    ];
-    obstacleSelectors.forEach(function(sel) {
-      document.querySelectorAll(sel).forEach(function(node) {
-        const r = visibleRect(node);
-        if (r) obstacleRects.push(r);
-      });
-    });
-    const applyDangerExampleSize = function(scale) {
-      const dangerTileW = Math.max(1, Math.min(bottomTileW, bottomTileW * scale));
-      const dangerTileH = Math.max(1, Math.min(bottomTileH, bottomTileH * scale));
-      panel.style.setProperty('--tw16-ting-danger-tile-w', Math.round(dangerTileW * 10) / 10 + 'px');
-      panel.style.setProperty('--tw16-ting-danger-tile-h', Math.round(dangerTileH * 10) / 10 + 'px');
-      panel.style.setProperty('--tw16-ting-danger-font', Math.round(dangerTileW * 0.66 * 10) / 10 + 'px');
-      panel.style.setProperty('--tw16-ting-danger-small-font', Math.round(dangerTileW * 0.30 * 10) / 10 + 'px');
-    };
-    const clampCandidate = function(x, y, w, h) {
-      return {
-        left: clampLeftInBox ? clampLeftInBox(x, w, box, pad) : Math.max(box.left + pad, Math.min(x, box.right - w - pad)),
-        top: clampTopInBox ? clampTopInBox(y, h, box, pad) : Math.max(box.top + pad, Math.min(y, box.bottom - h - pad))
-      };
-    };
-    const scoreCandidate = function(x, y, w, h) {
-      const p = { left:x, top:y, right:x + w, bottom:y + h, width:w, height:h };
-      let hits = 0;
-      obstacleRects.forEach(function(o) { if (rectsOverlap(p, o)) hits++; });
-      return hits;
-    };
-    const scales = [0.92,0.86,0.80,0.74,0.68,0.62,0.56];
-    let best = null;
-    for (let si = 0; si < scales.length; si++) {
-      applyDangerExampleSize(scales[si]);
-      const pr = panel.getBoundingClientRect();
-      const w = Math.max(1, pr.width || panel.offsetWidth || 90);
-      const h = Math.max(1, pr.height || panel.offsetHeight || 36);
-      const candidates = [
-        [rect.left, rect.top - h - gap],
-        [rect.right - w, rect.top - h - gap],
-        [rect.left, rect.bottom + gap],
-        [rect.right - w, rect.bottom + gap],
-        [rect.left - w - gap, rect.top],
-        [rect.right + gap, rect.top],
-        [box.left + pad, rect.top - h - gap],
-        [box.right - w - pad, rect.top - h - gap]
-      ];
-      for (let ci = 0; ci < candidates.length; ci++) {
-        const pos = clampCandidate(candidates[ci][0], candidates[ci][1], w, h);
-        const hits = scoreCandidate(pos.left, pos.top, w, h);
-        const distance = Math.abs(pos.left - rect.left) + Math.abs(pos.top - (rect.top - h - gap));
-        const rank = hits * 100000 + si * 1000 + ci * 30 + distance;
-        if (!best || rank < best.rank) best = { left:pos.left, top:pos.top, scale:scales[si], rank, hits };
-        if (hits === 0) break;
-      }
-      if (best && best.hits === 0) break;
-    }
-    if (best) applyDangerExampleSize(best.scale);
-    const finalRect = panel.getBoundingClientRect();
-    const finalW = Math.max(1, finalRect.width || panel.offsetWidth || 90);
-    const finalH = Math.max(1, finalRect.height || panel.offsetHeight || 36);
-    let left = best ? best.left : rect.left;
-    let top = best ? best.top : rect.top - finalH - gap;
-    const finalPos = clampCandidate(left, top, finalW, finalH);
-    panel.style.setProperty('--tw16-ting-danger-left', Math.round(finalPos.left) + 'px');
-    panel.style.setProperty('--tw16-ting-danger-top', Math.round(finalPos.top) + 'px');
+    panel.style.setProperty('--tw16-ting-danger-tile-w', Math.round(baseTileW * 0.92 * 10) / 10 + 'px');
+    panel.style.setProperty('--tw16-ting-danger-tile-h', Math.round(baseTileH * 0.92 * 10) / 10 + 'px');
+    panel.style.setProperty('--tw16-ting-danger-font', Math.round(baseTileW * 0.92 * 0.66 * 10) / 10 + 'px');
+    panel.style.setProperty('--tw16-ting-danger-small-font', Math.round(baseTileW * 0.92 * 0.30 * 10) / 10 + 'px');
+    void panel.offsetWidth;
+    const pr = panel.getBoundingClientRect();
+    const panelW = pr.width || panel.offsetWidth || 60;
+    const left = discardRect.left - panelW;
+    const top = discardRect.top;
+    panel.style.setProperty('--tw16-ting-danger-left', Math.round(left) + 'px');
+    panel.style.setProperty('--tw16-ting-danger-top', Math.round(top) + 'px');
   }
 
   function bindFaceUpHandTileDiscardAction(node, seat, tileObj, pos) {
@@ -24090,12 +24161,24 @@ function concealedKongOwnerOfMeld(meld) {
     updateLocalSeatWindBadge();
   }
 
-  function ensureLocalSeatWindBadge() {
-    let badge = byId('tw16LocalSeatWindBadge');
+  function ensureLocalSeatWindBadge(seat) {
+    const id = 'tw16LocalSeatWindBadge' + (seat || '');
+    let badge = byId(id);
     if (badge) return badge;
     badge = document.createElement('div');
-    badge.id = 'tw16LocalSeatWindBadge';
+    badge.id = id;
     badge.className = 'tw16-local-seat-wind-badge';
+    document.body.appendChild(badge);
+    return badge;
+  }
+
+  function ensureLocalSeatDealerBadge(seat) {
+    const id = 'tw16LocalSeatDealerBadge' + (seat || '');
+    let badge = byId(id);
+    if (badge) return badge;
+    badge = document.createElement('div');
+    badge.id = id;
+    badge.className = 'tw16-local-seat-wind-badge tw16-local-seat-dealer-badge';
     document.body.appendChild(badge);
     return badge;
   }
@@ -24162,52 +24245,74 @@ function concealedKongOwnerOfMeld(meld) {
     const lobby = byId('tw16Lobby');
     const lobbyVisible = !!(lobby && !lobby.hidden && getComputedStyle(lobby).display !== 'none' && getComputedStyle(lobby).visibility !== 'hidden');
     if (lobbyVisible) {
-      const oldBadge = byId('tw16LocalSeatWindBadge');
-      if (oldBadge) {
-        oldBadge.classList.remove('show');
-        oldBadge.style.left = '-9999px';
-        oldBadge.style.top = '-9999px';
-      }
+      SEATS.forEach(function(s) {
+        const b = byId('tw16LocalSeatWindBadge' + s);
+        if (b) { b.classList.remove('show'); b.style.left = '-9999px'; b.style.top = '-9999px'; }
+        const d = byId('tw16LocalSeatDealerBadge' + s);
+        if (d) { d.classList.remove('show'); d.style.left = '-9999px'; d.style.top = '-9999px'; }
+      });
       return;
     }
-    const badge = ensureLocalSeatWindBadge();
-    const seat = SEATS.includes(state.viewSeat) ? state.viewSeat : (networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : '');
-    const windChar = ({ east:'東', south:'南', west:'西', north:'北' })[seat] || '';
-    if (state.ended || !seat || !windChar) {
-      badge.classList.remove('show');
-      badge.style.left = '-9999px';
-      badge.style.top = '-9999px';
-      return;
-    }
-    badge.textContent = windChar;
-    badge.classList.add('show');
-
+    const resultEl = byId('resultPanel');
+    const resultRect = resultEl && resultEl.classList.contains('show') ? resultEl.getBoundingClientRect() : null;
     const map = (typeof displayMap === 'function') ? displayMap() : null;
-    const pos = (map && map[seat]) || 'bottom';
-    const anchorRect = getTw16LocalWindBadgeAnchorRect(pos);
+    const windChars = { east:'東', south:'南', west:'西', north:'北' };
     const table = byId('table') || document.querySelector('.table');
     const tableRect = table && table.getBoundingClientRect ? table.getBoundingClientRect() : null;
     const badgeSize = Math.max(16, Math.min(25, Math.round(cssPixelNumber('--tw-tile-w', 22) * .98)));
     const gap = Math.max(5, Math.round(badgeSize * .34));
-
-    let x = tableRect && tableRect.width > 0.5 ? (tableRect.left + tableRect.width / 2) : (window.innerWidth / 2);
-    let y = window.innerHeight / 2;
-
-    if (anchorRect && anchorRect.width > 0.5 && anchorRect.height > 0.5) {
-      if (pos === 'top') {
-        y = anchorRect.bottom + gap;
-      } else {
-        y = anchorRect.top - gap;
+    SEATS.forEach(function(seat) {
+      const windChar = windChars[seat] || '';
+      const badge = ensureLocalSeatWindBadge(seat);
+      const dealerBadge = ensureLocalSeatDealerBadge(seat);
+      if (!windChar) {
+        badge.classList.remove('show'); badge.style.left = '-9999px'; badge.style.top = '-9999px';
+        dealerBadge.classList.remove('show'); dealerBadge.style.left = '-9999px'; dealerBadge.style.top = '-9999px';
+        return;
       }
-    } else if (tableRect && tableRect.width > 0.5 && tableRect.height > 0.5) {
-      y = (pos === 'top') ? (tableRect.top + tableRect.height * .28) : (tableRect.top + tableRect.height * .72);
-    }
-
-    x = Math.max(badgeSize / 2 + 2, Math.min(window.innerWidth - badgeSize / 2 - 2, Math.round(x)));
-    y = Math.max(badgeSize / 2 + 2, Math.min(window.innerHeight - badgeSize / 2 - 2, Math.round(y)));
-    badge.style.left = x + 'px';
-    badge.style.top = y + 'px';
-    badge.style.transform = 'translate(-50%,-50%)';
+      badge.textContent = windChar;
+      const isTurn = state.turn === seat && !state.ended;
+      if (isTurn) { badge.classList.add('tw16-turn-active'); } else { badge.classList.remove('tw16-turn-active'); }
+      const isDealer = state.dealer === seat;
+      const pos = (map && map[seat]) || 'bottom';
+      const anchorRect = getTw16LocalWindBadgeAnchorRect(pos);
+      let x = tableRect && tableRect.width > 0.5 ? (tableRect.left + tableRect.width / 2) : (window.innerWidth / 2);
+      let y = window.innerHeight / 2;
+      if (anchorRect && anchorRect.width > 0.5 && anchorRect.height > 0.5) {
+        if (pos === 'top') { y = anchorRect.bottom + gap; }
+        else if (pos === 'bottom') { y = anchorRect.top - gap; }
+        else if (pos === 'left') { x = anchorRect.right + gap; y = anchorRect.top + anchorRect.height / 2; }
+        else if (pos === 'right') { x = anchorRect.left - gap; y = anchorRect.top + anchorRect.height / 2; }
+      } else if (tableRect && tableRect.width > 0.5 && tableRect.height > 0.5) {
+        if (pos === 'top') { y = tableRect.top + tableRect.height * .28; }
+        else if (pos === 'bottom') { y = tableRect.top + tableRect.height * .72; }
+        else if (pos === 'left') { x = tableRect.left + tableRect.width * .28; y = tableRect.top + tableRect.height / 2; }
+        else if (pos === 'right') { x = tableRect.left + tableRect.width * .72; y = tableRect.top + tableRect.height / 2; }
+      }
+      x = Math.max(badgeSize / 2 + 2, Math.min(window.innerWidth - badgeSize / 2 - 2, Math.round(x)));
+      y = Math.max(badgeSize / 2 + 2, Math.min(window.innerHeight - badgeSize / 2 - 2, Math.round(y)));
+      const half = badgeSize / 2;
+      if (resultRect && x + half > resultRect.left && x - half < resultRect.right && y + half > resultRect.top && y - half < resultRect.bottom) {
+        badge.classList.remove('show'); badge.style.left = '-9999px'; badge.style.top = '-9999px';
+        dealerBadge.classList.remove('show'); dealerBadge.style.left = '-9999px'; dealerBadge.style.top = '-9999px';
+        return;
+      }
+      badge.classList.add('show');
+      badge.style.left = x + 'px';
+      badge.style.top = y + 'px';
+      badge.style.transform = 'translate(-50%,-50%)';
+      if (isDealer) {
+        dealerBadge.textContent = '莊';
+        dealerBadge.classList.add('show');
+        const dx = (pos === 'left' || pos === 'right') ? x : x + badgeSize + 2;
+        const dy = (pos === 'left' || pos === 'right') ? y + badgeSize + 2 : y;
+        dealerBadge.style.left = Math.max(badgeSize / 2 + 2, Math.min(window.innerWidth - badgeSize / 2 - 2, Math.round(dx))) + 'px';
+        dealerBadge.style.top = Math.max(badgeSize / 2 + 2, Math.min(window.innerHeight - badgeSize / 2 - 2, Math.round(dy))) + 'px';
+        dealerBadge.style.transform = 'translate(-50%,-50%)';
+      } else {
+        dealerBadge.classList.remove('show'); dealerBadge.style.left = '-9999px'; dealerBadge.style.top = '-9999px';
+      }
+    });
   }
 
 
