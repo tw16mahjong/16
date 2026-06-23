@@ -12250,6 +12250,35 @@ function loadUiSettings() {
     }
     const allowComputerRecovery = !!(options && options.forceComputer && isOnlineHost() && isHostDrivenSeat(seat) && !state.ended && !state.locked && !state.pending && seat === state.turn && state.phase === 'discard' && (state.hands[seat] || []).length);
     if (!canDiscard(seat) && !allowComputerRecovery) return false;
+    // tw16_submit_discard_forbidden_gate_20260624: 最終守門，AI出牌一律過禁打過濾
+    if (source !== 'remote' && source !== 'remote-ting' && source !== 'human' && source !== 'human-swipe') {
+      try {
+        const _forbidden = tw16TingExamplesFirstCodeSet(seat);
+        if (_forbidden.size) {
+          const _cands = tw16DiscardCandidateList(seat);
+          const _item = _cands.find(x => x && x.tile && String(x.tile.id) === String(tileId));
+          if (_item && _item.tile && _item.tile.code && _forbidden.has(_item.tile.code)) {
+            const _safe = _cands.filter(x => x && x.tile && x.tile.code && !isFlower(x.tile.code) && !_forbidden.has(x.tile.code));
+            if (_safe.length) {
+              const _hand = state.hands[seat] || [];
+              let _best = null;
+              _safe.forEach(function(c) {
+                let _s = 0;
+                try { _s = smartAiSafetyDiscardScore(seat, c.tile.code) || 0; } catch (_) {}
+                try { _s += smartAiTileRoughDiscardValue(c.tile.code, 1, smartAiCountsFromCodes(smartAiCodesFromHand(_hand))) || 0; } catch (_) {}
+                let _r = 0; try { _r = aiDangerDiscardScore(seat, c.tile.code); } catch (_) {}
+                if (Number.isFinite(_r)) _s -= _r * 2.5;
+                if (!_best || _s > _best.score) _best = { id: c.tile.id, code: c.tile.code, score: _s };
+              });
+              if (_best && _best.id) {
+                try { recordNetworkEvent('submit-discard-forbidden-gate', SEAT_NAME[seat] + '最終守門攔截禁打牌', { seat, source, blocked: _item.tile.code, to: _best.code }); } catch (_) {}
+                tileId = _best.id;
+              }
+            }
+          }
+        }
+      } catch (_) {}
+    }
     clearTurnDeadline();
     const hand = state.hands[seat];
     const index = hand.findIndex(t => t.id === tileId);
@@ -22720,8 +22749,21 @@ function showIntegrityReport(precomputed) {
     void panel.offsetWidth;
     const pr = panel.getBoundingClientRect();
     const panelW = pr.width || panel.offsetWidth || 60;
-    const left = discardRect.left - panelW;
-    const top = discardRect.top;
+    const panelH = pr.height || panel.offsetHeight || 40;
+    // 以不超出棄牌池（#center）為原則，left/top 都 clamp 在池內
+    const centerEl = document.getElementById('center');
+    const centerRect = centerEl ? centerEl.getBoundingClientRect() : null;
+    let left = discardRect.left - panelW;
+    let top = discardRect.top;
+    if (centerRect && centerRect.width > 0) {
+      // left 不超出棄牌池左邊
+      left = Math.max(centerRect.left, left);
+      // top 不超出棄牌池下邊（面板底部不超出 center 底部）
+      const maxTop = centerRect.bottom - panelH;
+      // top 不超出棄牌池上邊
+      const minTop = centerRect.top;
+      top = Math.min(maxTop, Math.max(minTop, top));
+    }
     panel.style.setProperty('--tw16-ting-danger-left', Math.round(left) + 'px');
     panel.style.setProperty('--tw16-ting-danger-top', Math.round(top) + 'px');
   }
