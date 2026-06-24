@@ -18879,6 +18879,16 @@ function showWinHistory() {
       saveWinHistoryToStorage();
       tw16RenderHistPanel();
     });
+    const clearAllBtn = document.getElementById('tw16HistClearAll');
+    if (clearAllBtn) clearAllBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const total = trimWinHistory().length;
+      if (!total) { alert('胡牌歷程已經是空的。'); return; }
+      if (!confirm('確定要清空全部 ' + total + ' 筆胡牌歷程？此動作無法復原。')) return;
+      state.winHistory = [];
+      saveWinHistoryToStorage();
+      tw16RenderHistPanel();
+    });
     close.addEventListener('click',()=>{
       panel.classList.remove('show');
       tw16HistViewing = false;
@@ -22750,11 +22760,12 @@ function showIntegrityReport(precomputed) {
     const pr = panel.getBoundingClientRect();
     const panelW = pr.width || panel.offsetWidth || 60;
     const panelH = pr.height || panel.offsetHeight || 40;
-    // 以不超出棄牌池（#center）為原則，left/top 都 clamp 在池內
+    // 危險牌例面板：位於棄牌池左側，與棄牌池保持 1/5 牌寬間距，下緣對齊棄牌池下緣
+    const gap = baseTileW * 0.2;
     const centerEl = document.getElementById('center');
     const centerRect = centerEl ? centerEl.getBoundingClientRect() : null;
-    let left = discardRect.left - panelW;
-    let top = discardRect.top;
+    let left = discardRect.left - panelW - gap;
+    let top = discardRect.bottom - panelH;
     if (centerRect && centerRect.width > 0) {
       // left 不超出棄牌池左邊
       left = Math.max(centerRect.left, left);
@@ -36781,7 +36792,7 @@ function concealedKongOwnerOfMeld(meld) {
 
 </script>
 
-<div id="tw16HistPanel"><div id="tw16HistBar"><h2>🀄 胡牌歷程</h2><div id="tw16HistTools"><button id="tw16HistSave">貯存</button><button id="tw16HistQuery">查詢</button><button id="tw16HistAll">全部</button><button id="tw16HistDelete" class="red">刪除</button></div><span id="tw16HistBadge">0 筆</span><button id="tw16HistClose">✕</button></div><div id="tw16HistBody"><p style="text-align:center;color:#475569;padding:40px 0">尚無胡牌記錄</p></div></div>
+<div id="tw16HistPanel"><div id="tw16HistBar"><h2>🀄 胡牌歷程</h2><div id="tw16HistTools"><button id="tw16HistSave">貯存</button><button id="tw16HistQuery">查詢</button><button id="tw16HistAll">全部</button><button id="tw16HistDelete" class="red">刪除</button><button id="tw16HistClearAll" class="red">清空</button></div><span id="tw16HistBadge">0 筆</span><button id="tw16HistClose">✕</button></div><div id="tw16HistBody"><p style="text-align:center;color:#475569;padding:40px 0">尚無胡牌記錄</p></div></div>
 
 <script>
 (function installTw16ButtonPressFeedback(){
