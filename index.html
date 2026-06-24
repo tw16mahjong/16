@@ -24640,7 +24640,6 @@ function concealedKongOwnerOfMeld(meld) {
     const ht = handLayoutBoxes.top   || chainContentBox(items.top.hand,   'top',   'hand');
     const hl = handLayoutBoxes.left  || chainContentBox(items.left.hand,  'left',  'hand');
     const hr = handLayoutBoxes.right || chainContentBox(items.right.hand, 'right', 'hand');
-    // tw16_drawn_ext_boxes: 用已有的 handLayoutBoxes 推算 handRow 位置，零額外計算
     const wb = chainContentBox(items.bottom.wall, 'bottom', 'wall');
     const wt = chainContentBox(items.top.wall, 'top', 'wall');
     const wl = chainContentBox(items.left.wall, 'left', 'wall');
@@ -24684,17 +24683,21 @@ function concealedKongOwnerOfMeld(meld) {
     const topHandCenterX = topHandLeft + ht.width / 2;
     placeByLeftTop(items.top.hand, topHandLeft, topHandTop);
     placeByLeftTop(items.top.wall, clampLeftInBox(topHandCenterX - wt.width / 2, wt.width, box, pad), topHandTop + ht.height);
-    // tw16_drawn_ext: 上家摸牌容器貼在 hand-tile-row 右側（用計算值，不用 getBoundingClientRect）
+    // tw16_drawn_ext: 上家摸牌容器貼在 hand-tile-row 右側
     const _extTop = byId('tw16DrawnExt_top');
     if (_extTop && _extTop.children.length) {
       const _tW = cssPixelNumber('--tw-tile-w', 22);
       const _tH = cssPixelNumber('--tw-tile-h', 32);
       _extTop.style.setProperty('width',  _tW + 'px', 'important');
       _extTop.style.setProperty('height', _tH + 'px', 'important');
-      // 上家：ext 貼 handRow 右側，垂直對齊 handRow（= handEl 底部往上 tileH）
-      const _topHRRight = topHandLeft + ht.width;
-      const _topHRTop   = topHandTop + ht.height - _tH;
-      placeByLeftTop(_extTop, _topHRRight, _topHRTop);
+      const _topRows = ensureHandRows('top');
+      const _topHR = _topRows && _topRows.handRow;
+      const _topHRRect = _topHR ? _topHR.getBoundingClientRect() : null;
+      if (_topHRRect && _topHRRect.width > 0) {
+        placeByLeftTop(_extTop, _topHRRect.right, _topHRRect.top + (_topHRRect.height - _tH) / 2);
+      } else {
+        placeByLeftTop(_extTop, topHandLeft + ht.width, topHandTop + (ht.height - _tH) / 2);
+      }
     }
 
     const topRailBottom = topHandTop + ht.height + wt.height;
@@ -24719,15 +24722,21 @@ function concealedKongOwnerOfMeld(meld) {
     const leftHandCenterY = leftHandTop + hl.height / 2;
     placeByLeftTop(items.left.hand, leftHandLeft, leftHandTop);
     placeByLeftTop(items.left.wall, leftHandLeft + hl.width, clampTopInBox(leftHandCenterY - wl.height / 2, wl.height, box, pad));
-    // tw16_drawn_ext: 左家摸牌容器貼在 hand-tile-row 下方（側躺牌尺寸，不用 getBoundingClientRect）
+    // tw16_drawn_ext: 左家摸牌容器貼在 hand-tile-row 下方（側躺牌尺寸）
     const _extLeft = byId('tw16DrawnExt_left');
     if (_extLeft && _extLeft.children.length) {
       const _sTW = cssPixelNumber('--tw-side-tile-w', 32);
       const _sTH = cssPixelNumber('--tw-side-tile-h', 22);
       _extLeft.style.setProperty('width',  _sTW + 'px', 'important');
       _extLeft.style.setProperty('height', _sTH + 'px', 'important');
-      // 左家：ext 貼 handRow 下方，水平置中於 handEl（副露在右，不影響水平位置）
-      placeByLeftTop(_extLeft, leftHandLeft + (hl.width - _sTW) / 2, leftHandTop + hl.height);
+      const _leftRows = ensureHandRows('left');
+      const _leftHR = _leftRows && _leftRows.handRow;
+      const _leftHRRect = _leftHR ? _leftHR.getBoundingClientRect() : null;
+      if (_leftHRRect && _leftHRRect.height > 0) {
+        placeByLeftTop(_extLeft, _leftHRRect.left + (_leftHRRect.width - _sTW) / 2, _leftHRRect.bottom);
+      } else {
+        placeByLeftTop(_extLeft, leftHandLeft + (hl.width - _sTW) / 2, leftHandTop + hl.height);
+      }
     }
 
     const rightHandLeft = box.right - pad - hr.width;
@@ -24735,15 +24744,21 @@ function concealedKongOwnerOfMeld(meld) {
     const rightHandCenterY = rightHandTop + hr.height / 2;
     placeByLeftTop(items.right.hand, rightHandLeft, rightHandTop);
     placeByLeftTop(items.right.wall, rightHandLeft - wr.width, clampTopInBox(rightHandCenterY - wr.height / 2, wr.height, box, pad));
-    // tw16_drawn_ext: 右家摸牌容器貼在 hand-tile-row 下方（側躺牌尺寸，不用 getBoundingClientRect）
+    // tw16_drawn_ext: 右家摸牌容器貼在 hand-tile-row 下方（側躺牌尺寸）
     const _extRight = byId('tw16DrawnExt_right');
     if (_extRight && _extRight.children.length) {
       const _sTW2 = cssPixelNumber('--tw-side-tile-w', 32);
       const _sTH2 = cssPixelNumber('--tw-side-tile-h', 22);
       _extRight.style.setProperty('width',  _sTW2 + 'px', 'important');
       _extRight.style.setProperty('height', _sTH2 + 'px', 'important');
-      // 右家：ext 貼 handRow 下方，水平置中於 handEl
-      placeByLeftTop(_extRight, rightHandLeft + (hr.width - _sTW2) / 2, rightHandTop + hr.height);
+      const _rightRows = ensureHandRows('right');
+      const _rightHR = _rightRows && _rightRows.handRow;
+      const _rightHRRect = _rightHR ? _rightHR.getBoundingClientRect() : null;
+      if (_rightHRRect && _rightHRRect.height > 0) {
+        placeByLeftTop(_extRight, _rightHRRect.left + (_rightHRRect.width - _sTW2) / 2, _rightHRRect.bottom);
+      } else {
+        placeByLeftTop(_extRight, rightHandLeft + (hr.width - _sTW2) / 2, rightHandTop + hr.height);
+      }
     }
 
     const boundaries = centerDiscardBoundariesFromHandContainers(box, pad, items);
