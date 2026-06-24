@@ -11,10 +11,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <title>台灣麻將｜縮放後立即左右拖動</title>
-<link rel="preconnect" href="https://cdn.ably.com" crossorigin/>
+<script type="text/javascript" nonce="1dba6c59f46c4576a475f66efcb" src="//local.adguard.org?ts=1782194530401&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000006e5c7209bfcb33e19b8afe90%26ts%3D495075%26p%3Dfs%26cid%3D1%26sig%3D536904b08b6d36afacae8b9c0f5bb5ea30cc48a34935a5354c22766c2b70adaa%26v%3D0&amp;app=com.opera.browser&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="1dba6c59f46c4576a475f66efcb" src="//local.adguard.org?ts=1782194530401&amp;name=AdGuard%20Extra&amp;type=user-script"></script><link rel="preconnect" href="https://cdn.ably.com" crossorigin/>
 <link rel="dns-prefetch" href="https://realtime.ably.io"/>
 <style>
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#06111f;color:#fff;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;touch-action:manipulation;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.app{position:fixed;inset:0;background:linear-gradient(180deg,#1f68aa 0%,#1f3d7b 44%,#10254f 100%);overflow:hidden;contain:strict}.topbar{position:absolute;left:6px;right:6px;top:max(4px,env(safe-area-inset-top));z-index:20;display:flex;gap:8px;align-items:flex-start;pointer-events:none}.menu{pointer-events:auto;display:grid;gap:4px}.btn{border:0;border-radius:14px;color:white;font-weight:1000;cursor:pointer;background:linear-gradient(180deg,#2563eb,#1d4ed8);box-shadow:0 8px 16px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.18);padding:9px 14px;font-size:16px}.btn.red{background:linear-gradient(180deg,#ef4444,#b91c1c)}.btn.small{padding:7px 10px;font-size:13px}.status{pointer-events:none;border-radius:17px;background:rgba(3,10,25,.78);box-shadow:0 8px 18px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.14);padding:10px 14px;font-size:16px;font-weight:1000;white-space:nowrap}.roundStatusBlock{display:grid;gap:0;align-items:start;justify-items:start;pointer-events:none}.scoreChipLine{margin:0 0 0 2px;padding:0!important;border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important;color:#ff2020;font-size:10px;font-weight:1000;line-height:1.05;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.55),0 0 4px rgba(255,255,255,.22);pointer-events:none}.rightBtns{margin-left:auto;display:flex;gap:7px;pointer-events:auto}.iconBtn{width:58px;height:58px;border-radius:17px;font-size:28px;display:grid;place-items:center}.topbar{gap:0}.menu{gap:0}.topbar .btn{background:rgba(16,90,40,.72)!important;border:0!important;outline:0!important;box-shadow:none!important;border-radius:8px!important;color:#fff!important;padding:3px 6px!important;font-size:11px!important;line-height:1.02!important;min-width:0!important}.topbar .btn.small{padding:3px 6px!important;font-size:10px!important}.topbar .iconBtn{width:30px!important;height:30px!important;border-radius:9px!important;font-size:17px!important}.rightBtns{gap:0}.status{padding:5px 8px!important;font-size:12px!important;border-radius:12px!important}.scoreChipLine{font-size:10px!important;background:transparent!important;border:0!important;box-shadow:none!important}.room{position:absolute;left:6px;top:5px;z-index:21;font-size:14px;font-weight:900;text-shadow:0 2px 4px rgba(0,0,0,.45)}.table{position:absolute;inset:0;border:5px solid rgba(255,255,255,.14);border-radius:8px;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.05),rgba(0,0,0,.18) 42%,rgba(0,0,0,.28) 72%);contain:layout style}.center{position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);width:min(64vw,680px);height:min(54vh,560px);border-radius:15px;background:rgba(72,29,12,.34);box-shadow:inset 0 0 55px rgba(0,0,0,.22);overflow:hidden}.discardGrid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(36vw,330px);min-height:90px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;z-index:8;pointer-events:none}.seatLabel{position:absolute;z-index:8;text-align:center;font-weight:1000;line-height:1.08;text-shadow:0 2px 4px rgba(0,0,0,.55),0 0 8px rgba(255,255,255,.2);pointer-events:none}.seatLabel .name{font-size:20px}.seatLabel .score{margin-top:4px;font-size:24px;color:#ffe85a}.seatLabel .meta{margin-top:2px;font-size:14px;color:#fff6a8}.seatLabel.active .name,.seatLabel.active .score{color:#fff06a;text-shadow:0 0 12px rgba(255,232,90,.65),0 2px 5px rgba(0,0,0,.65)}.seatLabel.ting .name:after{content:' 聽';color:#ff3030;font-size:.9em}.seat-bottom{left:14%;bottom:13%;transform:translateX(-50%)}.seat-top{left:50%;top:12%;transform:translateX(-50%)}.seat-left{left:9%;top:43%;transform:translateY(-50%)}.seat-right{right:9%;top:43%;transform:translateY(-50%)}.hand{position:absolute;z-index:14;display:flex;gap:0;align-items:center;justify-content:center}.hand-bottom{left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:94vw;overflow:visible}.hand-top{left:50%;top:calc(62px + env(safe-area-inset-top));transform:translateX(-50%)}.hand-left{left:36px;top:50%;transform:translateY(-50%);flex-direction:column}.hand-right{right:36px;top:50%;transform:translateY(-50%);flex-direction:column}.melds{position:absolute;z-index:12;display:flex;gap:calc(var(--tw-tile-w) * .14)!important;align-items:flex-start!important;justify-content:flex-start!important}.meld-bottom{left:50%;bottom:88px;transform:translateX(-50%)}.meld-top{left:50%;top:112px;transform:translateX(-50%)}.meld-left{left:102px;top:50%;transform:translateY(-50%);flex-direction:column}.meld-right{right:102px;top:50%;transform:translateY(-50%);flex-direction:column}.tile{position:relative;flex:0 0 auto;width:28px;height:40px;border-radius:var(--tw-tile-radius,5px);background:linear-gradient(180deg,#fffef7 0%,#f1eadf 72%,#d6c7b3 100%);border:1px solid rgba(70,50,28,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 4px rgba(0,0,0,.24);display:grid;place-items:center;font-size:19px;font-weight:1000;color:#111;user-select:none}.tile .small{position:absolute;top:1px;right:2px;font-size:9px;color:#333}.tile.red{color:#c41414}.tile.green{color:#047857}.tile.blue{color:#255fd4}.tile.back{width:27px;height:39px;background:linear-gradient(180deg,#b7f0ff 0%,#7dd3fc 58%,#43a9d8 100%);border-color:rgba(35,84,114,.36);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 4px rgba(0,0,0,.24);color:transparent}.tile.face-image{padding:0;background:transparent!important;border:0!important;box-shadow:0 3px 6px rgba(0,0,0,.25)!important;color:transparent!important}.tile-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none}.tile-face img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;border-radius:0;user-select:none;-webkit-user-drag:none;pointer-events:none}.tile.kind-suit-s .tile-face img,.tile.kind-honor .tile-face img,.tile.kind-flower .tile-face img{transform:scale(1.04);transform-origin:center center}.tile.back.face-image{background:linear-gradient(180deg,#b7f0ff 0%,#7dd3fc 58%,#43a9d8 100%)!important;border:1px solid rgba(35,84,114,.36)!important}.hand-bottom .tile{cursor:pointer}.hand-bottom .tile:hover{transform:translateY(-4px)}.hand-bottom .tile.drawn{margin-left:5px}.discardGrid .tile{width:22px;height:32px;font-size:15px}.bigDiscard{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.5);opacity:0;z-index:14;pointer-events:none;transition:transform .16s ease,opacity .16s ease;will-change:transform,opacity}.bigDiscard.show{opacity:1;transform:translate(-50%,-50%) scale(2.6)}.arrow{display:none!important;position:absolute;z-index:-1;width:0;height:0;pointer-events:none}.arrow-bottom{left:50%;bottom:145px;transform:translateX(-50%);border-left:40px solid transparent;border-right:40px solid transparent;border-top:70px solid rgba(255,0,0,.88)}.arrow-top{left:50%;top:145px;transform:translateX(-50%);border-left:40px solid transparent;border-right:40px solid transparent;border-bottom:70px solid rgba(255,0,0,.88)}.arrow-left{left:165px;top:50%;transform:translateY(-50%);border-top:40px solid transparent;border-bottom:40px solid transparent;border-right:70px solid rgba(255,0,0,.88)}.arrow-right{right:165px;top:50%;transform:translateY(-50%);border-top:40px solid transparent;border-bottom:40px solid transparent;border-left:70px solid rgba(255,0,0,.88)}.wall{position:absolute;z-index:6;display:flex;gap:0;pointer-events:none}.wall-bottom{left:50%;bottom:122px;transform:translateX(-50%)}.wall-top{left:50%;top:105px;transform:translateX(-50%)}.wall-left{left:92px;top:50%;transform:translateY(-50%);flex-direction:column}.wall-right{right:92px;top:50%;transform:translateY(-50%);flex-direction:column}.wall .piece{width:12px;height:18px;border-radius:var(--tw-wall-piece-radius,3px);background:linear-gradient(180deg,#b7f0ff,#43a9d8);border:1px solid rgba(35,84,114,.25);margin:0}.wall-left .piece,.wall-right .piece{width:18px;height:12px}.hint{position:absolute;left:50%;bottom:28%;transform:translateX(-50%);z-index:1;max-width:82vw;border-radius:16px;background:rgba(15,23,42,.38);padding:13px 18px;text-align:center;font-size:18px;font-weight:900;color:rgba(255,255,255,.58);line-height:1.45;pointer-events:none}.log{display:none!important;}.result{position:fixed;left:50vw!important;top:50dvh!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%)!important;z-index:2147483300;display:none;width:min(92vw,720px);min-width:min(300px,92vw);max-width:calc(100vw - 16px);max-height:calc(100dvh - max(16px,env(safe-area-inset-top)) - max(16px,env(safe-area-inset-bottom)));overflow:hidden;border-radius:18px;padding:18px 18px 16px;background:linear-gradient(180deg,rgba(83,16,24,.98),rgba(31,5,10,.98));box-shadow:0 22px 50px rgba(0,0,0,.45);text-align:center;touch-action:auto;box-sizing:border-box;contain:layout}.result.dragging{transition:none;user-select:none}.result h2{cursor:default;touch-action:auto;user-select:text;-webkit-user-select:text;margin:0 0 10px;color:#ffe85a;flex:0 0 auto}.result h2:active{color:#fde68a}.result.show{display:flex;flex-direction:column}.result #resultText{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.result .buttons{display:flex;justify-content:center;gap:10px;margin-top:12px;flex:0 0 auto;flex-wrap:wrap}@media(max-width:700px){.status{font-size:13px;padding:6px 9px}.iconBtn{width:34px;height:34px}.center{width:68vw;height:48vh}.tile{width:24px;height:35px;font-size:17px}.discardGrid .tile{width:20px;height:29px}.hand-top .tile.back{width:22px;height:32px}.hand-left .tile.back,.hand-right .tile.back{width:22px;height:32px}.seatLabel .name{font-size:18px}.seatLabel .score{font-size:22px}.seat-left{left:10%}.seat-right{right:10%}.wall-left{left:84px}.wall-right{right:84px}}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#06111f;color:#fff;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;touch-action:manipulation;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.app{position:fixed;inset:0;background:linear-gradient(180deg,#1f68aa 0%,#1f3d7b 44%,#10254f 100%);overflow:hidden;contain:strict}.topbar{position:absolute;left:6px;right:6px;top:max(4px,env(safe-area-inset-top));z-index:20;display:flex;gap:8px;align-items:flex-start;pointer-events:none}.menu{pointer-events:auto;display:grid;gap:4px}.btn{border:0;border-radius:14px;color:white;font-weight:1000;cursor:pointer;background:linear-gradient(180deg,#2563eb,#1d4ed8);box-shadow:0 8px 16px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.18);padding:9px 14px;font-size:16px}.btn.red{background:linear-gradient(180deg,#ef4444,#b91c1c)}.btn.small{padding:7px 10px;font-size:13px}.status{pointer-events:none;border-radius:17px;background:rgba(3,10,25,.78);box-shadow:0 8px 18px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.14);padding:10px 14px;font-size:16px;font-weight:1000;white-space:nowrap}.roundStatusBlock{display:grid;gap:0;align-items:start;justify-items:start;pointer-events:none}.scoreChipLine{margin:0 0 0 2px;padding:0!important;border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important;color:#ff2020;font-size:10px;font-weight:1000;line-height:1.05;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.55),0 0 4px rgba(255,255,255,.22);pointer-events:none}.rightBtns{margin-left:auto;display:flex;gap:7px;pointer-events:auto}.iconBtn{width:58px;height:58px;border-radius:17px;font-size:28px;display:grid;place-items:center}.topbar{gap:0}.menu{gap:0}.topbar .btn{background:rgba(16,90,40,.72)!important;border:0!important;outline:0!important;box-shadow:none!important;border-radius:8px!important;color:#fff!important;padding:3px 6px!important;font-size:11px!important;line-height:1.02!important;min-width:0!important}.topbar .btn.small{padding:3px 6px!important;font-size:10px!important}.topbar .iconBtn{width:30px!important;height:30px!important;border-radius:9px!important;font-size:17px!important}.rightBtns{gap:0}.status{padding:5px 8px!important;font-size:12px!important;border-radius:12px!important}.scoreChipLine{font-size:10px!important;background:transparent!important;border:0!important;box-shadow:none!important}.room{position:absolute;left:6px;top:5px;z-index:21;font-size:14px;font-weight:900;text-shadow:0 2px 4px rgba(0,0,0,.45)}.table{position:absolute;inset:0;border:5px solid rgba(255,255,255,.14);border-radius:8px;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.05),rgba(0,0,0,.18) 42%,rgba(0,0,0,.28) 72%);contain:layout style}.center{position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);width:min(64vw,680px);height:min(54vh,560px);border-radius:15px;background:rgba(72,29,12,.34);box-shadow:inset 0 0 55px rgba(0,0,0,.22);overflow:hidden}.discardGrid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(36vw,330px);min-height:90px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;z-index:8;pointer-events:none}.seatLabel{position:absolute;z-index:8;text-align:center;font-weight:1000;line-height:1.08;text-shadow:0 2px 4px rgba(0,0,0,.55),0 0 8px rgba(255,255,255,.2);pointer-events:none}.seatLabel .name{font-size:20px}.seatLabel .score{margin-top:4px;font-size:24px;color:#ffe85a}.seatLabel .meta{margin-top:2px;font-size:14px;color:#fff6a8}.seatLabel.active .name,.seatLabel.active .score{color:#fff06a;text-shadow:0 0 12px rgba(255,232,90,.65),0 2px 5px rgba(0,0,0,.65)}.seatLabel.ting .name:after{content:' 聽';color:#ff3030;font-size:.9em}.seat-bottom{left:14%;bottom:13%;transform:translateX(-50%)}.seat-top{left:50%;top:12%;transform:translateX(-50%)}.seat-left{left:9%;top:43%;transform:translateY(-50%)}.seat-right{right:9%;top:43%;transform:translateY(-50%)}.hand{position:absolute;z-index:14;display:flex;gap:0;align-items:center;justify-content:center}.hand-bottom{left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:94vw;overflow:visible}.hand-top{left:50%;top:calc(62px + env(safe-area-inset-top));transform:translateX(-50%)}.hand-left{left:36px;top:50%;transform:translateY(-50%);flex-direction:column}.hand-right{right:36px;top:50%;transform:translateY(-50%);flex-direction:column}.melds{position:absolute;z-index:12;display:flex;gap:calc(var(--tw-tile-w) * .14)!important;align-items:flex-start!important;justify-content:flex-start!important}.meld-bottom{left:50%;bottom:88px;transform:translateX(-50%)}.meld-top{left:50%;top:112px;transform:translateX(-50%)}.meld-left{left:102px;top:50%;transform:translateY(-50%);flex-direction:column}.meld-right{right:102px;top:50%;transform:translateY(-50%);flex-direction:column}.tile{position:relative;flex:0 0 auto;width:28px;height:40px;border-radius:var(--tw-tile-radius,5px);background:linear-gradient(180deg,#fffef7 0%,#f1eadf 72%,#d6c7b3 100%);border:1px solid rgba(70,50,28,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 4px rgba(0,0,0,.24);display:grid;place-items:center;font-size:19px;font-weight:1000;color:#111;user-select:none}.tile .small{position:absolute;top:1px;right:2px;font-size:9px;color:#333}.tile.red{color:#c41414}.tile.green{color:#047857}.tile.blue{color:#255fd4}.tile.back{width:27px;height:39px;background:linear-gradient(180deg,#b7f0ff 0%,#7dd3fc 58%,#43a9d8 100%);border-color:rgba(35,84,114,.36);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 4px rgba(0,0,0,.24);color:transparent}.tile.face-image{padding:0;background:transparent!important;border:0!important;box-shadow:0 3px 6px rgba(0,0,0,.25)!important;color:transparent!important}.tile-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none}.tile-face img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;border-radius:0;user-select:none;-webkit-user-drag:none;pointer-events:none}.tile.kind-suit-s .tile-face img,.tile.kind-honor .tile-face img,.tile.kind-flower .tile-face img{transform:scale(1.04);transform-origin:center center}.tile.back.face-image{background:linear-gradient(180deg,#b7f0ff 0%,#7dd3fc 58%,#43a9d8 100%)!important;border:1px solid rgba(35,84,114,.36)!important}.hand-bottom .tile{cursor:pointer}.hand-bottom .tile:hover{transform:translateY(-4px)}.hand-bottom .tile.drawn{margin-left:0}.discardGrid .tile{width:22px;height:32px;font-size:15px}.bigDiscard{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.5);opacity:0;z-index:14;pointer-events:none;transition:transform .16s ease,opacity .16s ease;will-change:transform,opacity}.bigDiscard.show{opacity:1;transform:translate(-50%,-50%) scale(2.6)}.arrow{display:none!important;position:absolute;z-index:-1;width:0;height:0;pointer-events:none}.arrow-bottom{left:50%;bottom:145px;transform:translateX(-50%);border-left:40px solid transparent;border-right:40px solid transparent;border-top:70px solid rgba(255,0,0,.88)}.arrow-top{left:50%;top:145px;transform:translateX(-50%);border-left:40px solid transparent;border-right:40px solid transparent;border-bottom:70px solid rgba(255,0,0,.88)}.arrow-left{left:165px;top:50%;transform:translateY(-50%);border-top:40px solid transparent;border-bottom:40px solid transparent;border-right:70px solid rgba(255,0,0,.88)}.arrow-right{right:165px;top:50%;transform:translateY(-50%);border-top:40px solid transparent;border-bottom:40px solid transparent;border-left:70px solid rgba(255,0,0,.88)}.wall{position:absolute;z-index:6;display:flex;gap:0;pointer-events:none}.wall-bottom{left:50%;bottom:122px;transform:translateX(-50%)}.wall-top{left:50%;top:105px;transform:translateX(-50%)}.wall-left{left:92px;top:50%;transform:translateY(-50%);flex-direction:column}.wall-right{right:92px;top:50%;transform:translateY(-50%);flex-direction:column}.wall .piece{width:12px;height:18px;border-radius:var(--tw-wall-piece-radius,3px);background:linear-gradient(180deg,#b7f0ff,#43a9d8);border:1px solid rgba(35,84,114,.25);margin:0}.wall-left .piece,.wall-right .piece{width:18px;height:12px}.hint{position:absolute;left:50%;bottom:28%;transform:translateX(-50%);z-index:1;max-width:82vw;border-radius:16px;background:rgba(15,23,42,.38);padding:13px 18px;text-align:center;font-size:18px;font-weight:900;color:rgba(255,255,255,.58);line-height:1.45;pointer-events:none}.log{display:none!important;}.result{position:fixed;left:50vw!important;top:50dvh!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%)!important;z-index:2147483300;display:none;width:min(92vw,720px);min-width:min(300px,92vw);max-width:calc(100vw - 16px);max-height:calc(100dvh - max(16px,env(safe-area-inset-top)) - max(16px,env(safe-area-inset-bottom)));overflow:hidden;border-radius:18px;padding:18px 18px 16px;background:linear-gradient(180deg,rgba(83,16,24,.98),rgba(31,5,10,.98));box-shadow:0 22px 50px rgba(0,0,0,.45);text-align:center;touch-action:auto;box-sizing:border-box;contain:layout}.result.dragging{transition:none;user-select:none}.result h2{cursor:default;touch-action:auto;user-select:text;-webkit-user-select:text;margin:0 0 10px;color:#ffe85a;flex:0 0 auto}.result h2:active{color:#fde68a}.result.show{display:flex;flex-direction:column}.result #resultText{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.result .buttons{display:flex;justify-content:center;gap:10px;margin-top:12px;flex:0 0 auto;flex-wrap:wrap}@media(max-width:700px){.status{font-size:13px;padding:6px 9px}.iconBtn{width:34px;height:34px}.center{width:68vw;height:48vh}.tile{width:24px;height:35px;font-size:17px}.discardGrid .tile{width:20px;height:29px}.hand-top .tile.back{width:22px;height:32px}.hand-left .tile.back,.hand-right .tile.back{width:22px;height:32px}.seatLabel .name{font-size:18px}.seatLabel .score{font-size:22px}.seat-left{left:10%}.seat-right{right:10%}.wall-left{left:84px}.wall-right{right:84px}}
 
 .actionPanel{position:absolute;left:calc(50% + min(9vw,72px));top:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);z-index:200;display:none;flex-direction:column;gap:0;align-items:center;pointer-events:none;max-width:min(46vw,286px);width:0;height:0;overflow:hidden;contain:layout}.actionPanel.action-panel-visible,.actionPanel.ting-choice-active{display:flex;width:auto;height:auto;overflow:visible;pointer-events:auto}.actionPanel:empty{display:none}.actionBtn{border:0;border-radius:0;color:#fff;font-size:15px;font-weight:1000;padding:2px 3px;min-width:0;background:transparent;box-shadow:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;margin:0}.actionBtn.gray{background:transparent;color:#cbd5e1}.actionBtn .sub{display:none!important;font-size:11px;font-weight:900;opacity:.9;margin-top:1px}.claimHint{padding:7px 10px;border-radius:14px;background:rgba(15,23,42,.82);border:1px solid rgba(255,255,255,.15);font-size:13px;font-weight:1000;color:#fde68a;box-shadow:0 10px 18px rgba(0,0,0,.28);text-align:center}.actionTileStrip{display:flex;align-items:center;justify-content:center;gap:0;margin-top:0}.actionTileStrip .tile{width:calc(var(--tw-tile-w) * 1.22)!important;height:calc(var(--tw-tile-h) * 1.22)!important;min-width:calc(var(--tw-tile-w) * 1.22)!important;min-height:calc(var(--tw-tile-h) * 1.22)!important;font-size:calc(var(--tw-tile-w) * .80)!important;margin:0!important;border:0!important;outline:0!important;border-radius:0!important;background:transparent!important;background-color:transparent!important;box-shadow:none!important}.actionTileStrip .tile.back{background:linear-gradient(180deg,#b7f0ff,#43a9d8)!important;border:1px solid rgba(35,84,114,.36)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 4px rgba(0,0,0,.24)!important}.actionBtnLabel{line-height:1.05}.actionPanel .tile-face img{border-radius:0!important}.actionTargetTile{z-index:2!important}.actionTileStrip .tile.face-image{border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important}.actionTileStrip .tile-face img{border-radius:0!important}.historyWinTileInline{display:inline-flex;align-items:center;vertical-align:middle;margin-left:5px}.historyWinTileInline .tile{width:22px!important;height:32px!important;font-size:15px!important;border-radius:4px!important}
 
@@ -1002,7 +1002,7 @@
 .hand{z-index:22!important;filter:none!important;opacity:1!important;}
 .melds{z-index:21!important;filter:none!important;opacity:1!important;}
 .wall{z-index:20!important;filter:none!important;opacity:1!important;}
-.discardSeat{z-index:19!important;gap:0!important;row-gap:0!important;column-gap:0!important;filter:none!important;opacity:1!important;}
+.discardSeat{z-index:19!important;gap:0!important;row-gap:0!important;column-gap:0!important;filter:none!important;opacity:1!important;overflow:visible!important;position:relative!important;}
 .seatLabel{z-index:5!important;pointer-events:none!important;opacity:.92!important;}
 .tile-face,.tile-face img{
   border-radius:0!important;
@@ -1188,8 +1188,8 @@
   min-width:var(--tw-tile-w)!important;
   min-height:var(--tw-tile-h)!important;
   font-size:calc(var(--tw-tile-w) * .68)!important;
-  margin-left:calc(var(--tw-tile-w) * .16)!important;
-  margin-right:calc(var(--tw-tile-w) * .08)!important;
+  margin-left:0!important;
+  margin-right:0!important;
   align-self:flex-end!important;
 }
 .app.bottom-seat-touch .hand-bottom .hand-tile-row .tile.drawn{
@@ -1320,6 +1320,7 @@
 }
 .result .buttons{position:absolute!important;top:6px!important;right:8px!important;display:flex!important;gap:4px!important;margin:0!important;z-index:2147483001!important;}
 .result .buttons .btn{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:2px 5px!important;min-width:0!important;min-height:0!important;color:#ef4444!important;font-size:16px!important;line-height:1.1!important;text-shadow:0 1px 2px rgba(0,0,0,.35)!important;}
+.result .settingsDefaultFloatingBtn{position:absolute!important;top:6px!important;left:8px!important;z-index:2147483001!important;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:2px 5px!important;min-width:0!important;min-height:0!important;color:#ef4444!important;font-size:16px!important;font-weight:1000!important;line-height:1.1!important;text-shadow:0 1px 2px rgba(0,0,0,.35)!important;cursor:pointer!important;}
 .result h2{margin:0 0 12px!important;color:#fde68a!important;font-size:18px!important;font-weight:900!important;line-height:1.16!important;}
 .tw16-lobby{
   position:fixed;inset:0;z-index:2147483646;display:block;overflow:auto;padding:max(18px,calc(env(safe-area-inset-top) + 12px)) 18px max(18px,calc(env(safe-area-inset-bottom) + 12px));
@@ -1371,6 +1372,12 @@
 .tw16-seat-avatar-wm img{width:100%;height:100%;object-fit:cover;display:block;}
 .tw16-mini-dashboard-chip-plus{color:#ef4444;font-weight:1000;margin-left:1px;}
 .tw16-mini-dashboard-chip-sum{position:fixed;left:50%;transform:translateX(-50%);background:rgba(2,6,23,.90);border:1px solid rgba(255,60,60,.80);border-radius:8px;padding:2px 10px;color:#ef4444;font-size:clamp(11px,3vw,15px);font-weight:1000;white-space:nowrap;pointer-events:none;z-index:119;line-height:1.4;}
+.tw16-drawn-ext{position:fixed;z-index:14;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:visible;}
+.tw16-drawn-ext.pos-top,.tw16-drawn-ext.pos-bottom{flex-direction:row;}
+.tw16-drawn-ext.pos-left,.tw16-drawn-ext.pos-right{flex-direction:column;}
+.tw16-drawn-ext.pos-left .tile.back,.tw16-drawn-ext.pos-right .tile.back{width:var(--tw-side-tile-w,32px)!important;height:var(--tw-side-tile-h,22px)!important;}
+.tw16-drawn-ext.pos-top .tile.back{width:var(--tw-tile-w,22px)!important;height:var(--tw-tile-h,32px)!important;}
+.tw16-system-clock{display:inline-block;flex:0 0 auto;align-self:flex-start;pointer-events:none;user-select:none;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.04em;color:#ffe033;text-shadow:0 0 6px rgba(255,210,0,.7),0 1px 3px rgba(0,0,0,.9);line-height:1.1;white-space:nowrap;padding:0;}
 .tw16-mini-dashboard-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;align-items:start;width:100%;}
 .tw16-mini-dashboard-card{position:relative;min-width:0;min-height:0;border-radius:8px!important;padding:1px 3px 2px!important;background:transparent!important;border:1px solid rgba(255,200,50,.85)!important;box-shadow:0 0 4px rgba(255,200,50,.22)!important;color:#f8fafc;text-align:center;overflow:visible;}
 .tw16-mini-dashboard-card.active{border:1px solid rgba(255,32,32,.96)!important;border-radius:8px!important;box-shadow:0 0 6px rgba(255,32,32,.50)!important;background:transparent!important;}
@@ -3218,41 +3225,7 @@ html body .hand .hand-row .tile.face-image.settlement-hand-win-tile::before{
   box-shadow:0 0 4px rgba(255,32,32,.72)!important;
 }
 
-/* tw16_ai_danger_discard_small_text_20260622:
-   危險牌只在「AI建議」開啟時標小黑字；不加框、不遮牌、不改牌大小與位置。 */
-.hand .hand-tile-row .tile.tw16-danger-discard-suggestion{
-  position:relative!important;
-  z-index:91!important;
-}
-.ai-suggest-floating-layer .danger-suggest-label{
-  position:fixed!important;
-  display:block!important;
-  left:var(--danger-suggest-left,0px)!important;
-  top:var(--danger-suggest-top,0px)!important;
-  bottom:auto!important;
-  transform:none!important;
-  z-index:2147483647!important;
-  padding:0 1px!important;
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  color:#000!important;
-  font-size:clamp(6px,calc(var(--tw-tile-w,28px) * .22),8px)!important;
-  font-weight:1000!important;
-  line-height:1.02!important;
-  white-space:nowrap!important;
-  pointer-events:none!important;
-  text-shadow:0 0 2px rgba(255,255,255,.95),0 1px 1px rgba(255,255,255,.85)!important;
-  box-shadow:none!important;
-}
-.ai-suggest-floating-layer .danger-suggest-label.most-danger-suggest-label{
-  font-size:clamp(7px,calc(var(--tw-tile-w,28px) * .25),9px)!important;
-  animation:tw16MostDangerLabelBlink .56s steps(2,end) infinite!important;
-}
-@keyframes tw16MostDangerLabelBlink{
-  0%,49%{opacity:1;filter:brightness(1.35);}
-  50%,100%{opacity:.18;filter:brightness(.72);}
-}
+
 
 
 
@@ -3691,7 +3664,7 @@ html body .app.perspective3d .discardSeat .tile::before {
 .historyChipDelta.minus{color:#34d399;background:rgba(6,78,59,.22);}
 .historyChipDelta.zero{color:#94a3b8;}
 .historyTingDangerSnap{display:inline-flex;align-items:center;vertical-align:middle;margin-left:4px;color:#fbbf24;font-size:11px;font-weight:1000;gap:2px;}
-.historyTingDangerSnapItem{display:inline-flex;align-items:center;gap:1px;}
+.historyTingDangerSnapItem{display:inline-flex;align-items:center;gap:1px;}.historyTingDangerSeatLabel{font-size:.85em;color:#94a3b8;margin-right:2px;white-space:nowrap;}
 .historyTingDangerSnapSeat{font-size:10px;color:#93c5fd;font-weight:1000;margin-right:1px;}
 .historyTingDangerSnap .tile{width:20px!important;height:29px!important;font-size:13px!important;border-radius:3px!important;}
 
@@ -4038,34 +4011,7 @@ html body .table{
 
 
 
-/* tw16_local_view_wind_badge: 永久顯示自己視角圓框風位，貼著自己視角棄牌／副露上方，並保持桌面左右置中。 */
-.tw16-local-seat-wind-badge{
-  position:fixed!important;
-  left:-9999px;
-  top:-9999px;
-  z-index:2147482400!important;
-  display:none;
-  width:clamp(16px,calc(var(--tw-tile-w,22px) * .96),25px);
-  height:clamp(16px,calc(var(--tw-tile-w,22px) * .96),25px);
-  border:1.5px solid rgba(255,255,255,.96);
-  border-radius:999px;
-  background:rgba(2,6,23,.72);
-  color:#fff;
-  font-size:clamp(11px,calc(var(--tw-tile-w,22px) * .64),17px);
-  font-weight:1000;
-  line-height:1;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  box-shadow:0 2px 6px rgba(0,0,0,.42),0 0 5px rgba(255,255,255,.22);
-  text-shadow:0 1px 2px rgba(0,0,0,.82);
-  pointer-events:none;
-  user-select:none;
-  -webkit-user-select:none;
-}
-.tw16-local-seat-wind-badge.show{display:flex!important;}
-.tw16-local-seat-wind-badge.tw16-turn-active{background:rgba(180,20,20,.88)!important;}
-.tw16-local-seat-dealer-badge{background:rgba(180,140,0,.88)!important;border-color:rgba(255,220,50,.96)!important;}
+
 
 
 /* tw16_all_seats_ting_assist: 東南西北任一家聽牌，直接貼在該座位手牌列顯示聽牌實例牌。 */
@@ -4148,6 +4094,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
   pointer-events:none!important;
   user-select:none!important;
   -webkit-user-select:none!important;
+  overflow:visible!important;
 }
 .tw16-ting-danger-examples-panel[hidden]{display:none!important;}
 .tw16-ting-danger-examples-row{display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;gap:0!important;margin:0!important;padding:0!important;line-height:1!important;white-space:nowrap!important;}
@@ -4156,8 +4103,187 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
 .tw16-ting-danger-card + .tw16-ting-danger-card{margin-left:0!important;}
 .tw16-ting-danger-card .tile{width:var(--tw16-ting-danger-tile-w,calc(var(--tw-tile-w) * 1.10))!important;height:var(--tw16-ting-danger-tile-h,calc(var(--tw-tile-h) * 1.10))!important;min-width:var(--tw16-ting-danger-tile-w,calc(var(--tw-tile-w) * 1.10))!important;min-height:var(--tw16-ting-danger-tile-h,calc(var(--tw-tile-h) * 1.10))!important;font-size:var(--tw16-ting-danger-font,calc(var(--tw-tile-w) * .72))!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;}
 .tw16-ting-danger-card .tile .small{font-size:var(--tw16-ting-danger-small-font,calc(var(--tw-tile-w) * .33))!important;}
-.tw16-ting-danger-word{position:absolute!important;left:0!important;bottom:calc(100% - 1px)!important;color:#111!important;font-size:clamp(7px,calc(var(--tw16-ting-danger-tile-w,var(--tw-tile-w)) * .30),10px)!important;font-weight:1000!important;line-height:.95!important;white-space:nowrap!important;text-shadow:0 1px 2px rgba(255,255,255,.72),0 0 2px rgba(255,255,255,.45)!important;z-index:2!important;}
+.tw16-ting-danger-word{display:none!important;}
+.tw16-ting-danger-outside-word{position:absolute!important;left:0!important;bottom:calc(100% + 2px)!important;color:#111!important;font-size:clamp(8px,calc(var(--tw16-ting-danger-tile-w,var(--tw-tile-w)) * .36),12px)!important;font-weight:1000!important;line-height:1!important;white-space:nowrap!important;text-shadow:0 1px 2px rgba(255,255,255,.72),0 0 2px rgba(255,255,255,.45)!important;z-index:3!important;pointer-events:none!important;}
 
+
+
+/* tw16_fix_drawn_tile_flush: 摸進牌仍在手牌容器內，但與原最右牌正常貼齊排列，不留額外抽牌間隙。 */
+.hand-bottom .hand-tile-row .tile.drawn,
+.hand-top .hand-tile-row .tile.drawn,
+html body .hand-bottom .tile.drawn{
+  margin-left:0!important;
+  margin-right:0!important;
+}
+
+
+/* tw16_ting_choice_adaptive_discard_pool: 橫擺聽牌選擇面板即時跟棄牌池尺寸一致，內部牌例同步縮放，避免裁切。 */
+html body .actionPanel.ting-choice-active{
+  position:fixed!important;
+  left:var(--tw-ting-choice-left,50%)!important;
+  top:var(--tw-ting-choice-top,50%)!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:var(--tw-ting-choice-panel-w,calc(var(--tw-discard-box-w,260px)))!important;
+  height:var(--tw-ting-choice-panel-h,calc(var(--tw-discard-box-h,150px)))!important;
+  max-width:calc(100vw - 12px)!important;
+  max-height:calc(100dvh - 12px)!important;
+  min-width:0!important;
+  min-height:0!important;
+  box-sizing:border-box!important;
+  padding:var(--tw-ting-choice-pad,7px)!important;
+  overflow:hidden!important;
+  transform:none!important;
+  transform-origin:left top!important;
+  display:block!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceCard{
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  box-sizing:border-box!important;
+  display:grid!important;
+  grid-template-rows:auto minmax(0,1fr)!important;
+  gap:5px!important;
+  overflow:hidden!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceToolbar{
+  min-width:0!important;
+  min-height:0!important;
+  height:auto!important;
+  max-width:100%!important;
+  gap:5px!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceTitle{
+  min-width:0!important;
+  font-size:var(--tw-ting-choice-title-font,13px)!important;
+  line-height:1.12!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceClose{
+  min-width:34px!important;
+  min-height:24px!important;
+  padding:2px 7px!important;
+  font-size:var(--tw-ting-choice-body-font,11px)!important;
+  line-height:1.1!important;
+  flex:0 0 auto!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceScroll{
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:none!important;
+  min-width:0!important;
+  min-height:0!important;
+  box-sizing:border-box!important;
+  padding:5px!important;
+  overflow:auto!important;
+  border-radius:10px!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceList{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  display:grid!important;
+  gap:5px!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceRow{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr)!important;
+  gap:5px!important;
+  padding:5px!important;
+  border-radius:9px!important;
+  overflow:hidden!important;
+}
+html body .actionPanel.ting-choice-active.ting-choice-compact .tingChoiceRow{
+  grid-template-columns:1fr!important;
+  gap:4px!important;
+  padding:4px!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceText,
+html body .actionPanel.ting-choice-active .tingChoiceSummary{
+  min-width:0!important;
+  font-size:var(--tw-ting-choice-body-font,11px)!important;
+  line-height:1.22!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceText b{
+  font-size:calc(var(--tw-ting-choice-body-font,11px) + 1px)!important;
+  margin-bottom:1px!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceDiscardLine{
+  min-width:0!important;
+  max-width:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:3px!important;
+  margin-bottom:2px!important;
+  font-size:var(--tw-ting-choice-body-font,11px)!important;
+  line-height:1.1!important;
+  overflow:hidden!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceDiscardTiles{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:0!important;
+  align-items:center!important;
+  max-width:calc(var(--tw-ting-choice-tile-w,18px) * 4.3)!important;
+  min-width:0!important;
+  flex:0 1 auto!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceWaits{
+  min-width:0!important;
+  max-width:100%!important;
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:2px!important;
+  align-items:flex-start!important;
+  justify-content:flex-start!important;
+  overflow:hidden!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceWaitCard{
+  min-width:var(--tw-ting-choice-tile-w,18px)!important;
+  gap:0!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceDiscardLine .tile,
+html body .actionPanel.ting-choice-active .tingChoiceWaitCard .tile{
+  width:var(--tw-ting-choice-tile-w,18px)!important;
+  height:var(--tw-ting-choice-tile-h,26px)!important;
+  min-width:var(--tw-ting-choice-tile-w,18px)!important;
+  min-height:var(--tw-ting-choice-tile-h,26px)!important;
+  max-width:var(--tw-ting-choice-tile-w,18px)!important;
+  max-height:var(--tw-ting-choice-tile-h,26px)!important;
+  flex:0 0 var(--tw-ting-choice-tile-w,18px)!important;
+  font-size:var(--tw-ting-choice-font,12px)!important;
+  margin:0!important;
+  padding:0!important;
+  border-radius:var(--tw-tile-radius,4px)!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceDiscardLine .tile .small,
+html body .actionPanel.ting-choice-active .tingChoiceWaitCard .tile .small{
+  font-size:var(--tw-ting-choice-small-font,7px)!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceDiscardLine .tile .tile-face,
+html body .actionPanel.ting-choice-active .tingChoiceDiscardLine .tile .tile-face img,
+html body .actionPanel.ting-choice-active .tingChoiceWaitCard .tile .tile-face,
+html body .actionPanel.ting-choice-active .tingChoiceWaitCard .tile .tile-face img{
+  border-radius:inherit!important;
+}
+html body .actionPanel.ting-choice-active .tingChoiceMeta{
+  font-size:var(--tw-ting-choice-meta-font,8px)!important;
+  line-height:1.02!important;
+  max-width:calc(var(--tw-ting-choice-tile-w,18px) * 2.1)!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
 </style>
 </head>
 <body>
@@ -4214,6 +4340,7 @@ html body #voiceBtn:active,
 html body #newGameBtn:active,
 html body #fullBtn:active,
 html body #resultBackBtn:active,
+html body #settingsDefaultBtn:active,
 html body #resultCloseBtn:active,
 html body #resultNewBtn:active{
   transform:scale(.94)!important;
@@ -4401,6 +4528,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
 <div class="menu">
 <button class="btn" id="menuBtn" aria-label="開啟選單">選單 ▾</button>
 </div>
+<div id="tw16SystemClock" class="tw16-system-clock" aria-hidden="true"></div>
 <div class="roundStatusBlock"><div class="status" id="roundStatus">東1局／剩餘0張</div><div class="tw16-scorechip-row"><div class="scoreChipLine" id="scoreChipLine">每底 100／每台 10 籌碼</div><button type="button" class="tw16-debug-pause-toggle" id="tw16DebugPauseToggle" aria-label="暫停出牌倒計時">暫停倒計時</button></div></div>
 <div class="rightBtns">
 <button class="btn small red" id="autoBtn" aria-label="電腦托管">電腦托管</button>
@@ -4557,6 +4685,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     scoreUnits: {},
     seatAutoPlay: {},
     declaredTing: {},
+    tingWaitsSnapshot: {},
     activeDrawnTileIds: {},
     voiceEvents: [],
     winHistory: [],
@@ -4566,7 +4695,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     lastSettlement: null,
     continuousRun: { enabled: false, remaining: 0, delayMs: 700 },
     battle: { enabled: false, startedAt: 0, handsAtStart: 0, redWins: 0, greenWins: 0, drawHands: 0, lastHandId: 0, seats: { east: { team: 'red', aiMode: 'exact' }, south: { team: 'green', aiMode: 'greedy' }, west: { team: 'red', aiMode: 'exact' }, north: { team: 'green', aiMode: 'greedy' } } },
-    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: 100, scoreTaiChip: 10, aiMode: 'exact' },
+    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: false, tingAssistEnabled: true, tingDangerExamplesEnabled: false, aiSuggestionEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: 100, scoreTaiChip: 10, aiMode: 'exact', aiMonteCarloLevel2: true, aiMonteCarloFull: false },
     handVisualColors: null,
     locked: false,
     lockedAt: 0,
@@ -7406,7 +7535,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     dom.newGameBtn.addEventListener('click', () => { if (isOnlineGuest()) { requestNetworkSync('guest-newgame-button'); return; } newGame(); });
     dom.resultBackBtn.addEventListener('click', () => handleResultBackButton());
     dom.resultNewBtn.addEventListener('click', () => { clearAutoNextTimer('manual-new-game'); if (isOnlineGuest()) { requestNetworkSync('guest-result-newgame'); return; } dom.resultNewBtn.style.display = ''; newGame(); });
-    dom.resultCloseBtn.addEventListener('click', () => { const visibleSettlementId = dom.resultPanel && dom.resultPanel.dataset ? String(dom.resultPanel.dataset.settlementId || '') : ''; clearAutoNextTimer('manual-close-settlement'); if (dom.resultPanel && dom.resultPanel.classList.contains('settlement-open')) { const closeId = visibleSettlementId || (state.lastSettlement && state.lastSettlement.id ? state.lastSettlement.id : ''); if (closeId) net.closedSettlementId = closeId; if (isOnlineGuest()) markGuestSettlementClosedLocally('manual-close-settlement', closeId); } dom.resultPanel.classList.remove('show'); dom.resultPanel.classList.remove('menu-open'); dom.resultPanel.classList.remove('settlement-open'); dom.resultPanel.classList.remove('history-open'); dom.resultPanel.classList.remove('utility-open'); dom.resultPanel.classList.remove('custom-tile-import-open'); if (dom.resultPanel.dataset) delete dom.resultPanel.dataset.settlementId; dom.resultNewBtn.style.display = ''; dom.resultNewBtn.disabled = false; dom.resultCloseBtn.textContent = '關閉'; resumeGameAfterTileManagement('result-close'); setUiPriorityMode(false, 'result-close') });
+    dom.resultCloseBtn.addEventListener('click', () => { removeSettingsDefaultFloatingButton(); const visibleSettlementId = dom.resultPanel && dom.resultPanel.dataset ? String(dom.resultPanel.dataset.settlementId || '') : ''; clearAutoNextTimer('manual-close-settlement'); if (dom.resultPanel && dom.resultPanel.classList.contains('settlement-open')) { const closeId = visibleSettlementId || (state.lastSettlement && state.lastSettlement.id ? state.lastSettlement.id : ''); if (closeId) net.closedSettlementId = closeId; if (isOnlineGuest()) markGuestSettlementClosedLocally('manual-close-settlement', closeId); } dom.resultPanel.classList.remove('show'); dom.resultPanel.classList.remove('menu-open'); dom.resultPanel.classList.remove('settlement-open'); dom.resultPanel.classList.remove('history-open'); dom.resultPanel.classList.remove('utility-open'); dom.resultPanel.classList.remove('custom-tile-import-open'); if (dom.resultPanel.dataset) delete dom.resultPanel.dataset.settlementId; dom.resultNewBtn.style.display = ''; dom.resultNewBtn.disabled = false; dom.resultCloseBtn.textContent = '關閉'; resumeGameAfterTileManagement('result-close'); setUiPriorityMode(false, 'result-close') });
     dom.autoBtn.addEventListener('click', () => toggleBottomAutoplay());
     dom.fullBtn.addEventListener('click', () => toggleFullscreen());
     dom.menuBtn.addEventListener('click', () => openMainMenu());
@@ -7417,11 +7546,11 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     bindTableDoubleTapBroadcast();
     bindEnterKeyBroadcast();
     setupDraggableUtilityPanel();
-    window.addEventListener('resize', () => { clampUtilityPanelToViewport(); scheduleBottomHandViewportRefit('resize'); scheduleSettlementTileShowcaseFit(); });
-    window.addEventListener('orientationchange', () => { scheduleBottomHandViewportRefit('orientationchange'); scheduleSettlementTileShowcaseFit(); });
-    document.addEventListener('fullscreenchange', () => { scheduleBottomHandViewportRefit('fullscreenchange'); });
+    window.addEventListener('resize', () => { clampUtilityPanelToViewport(); scheduleBottomHandViewportRefit('resize'); scheduleSettlementTileShowcaseFit(); scheduleTingChoicePanelAdaptive(); });
+    window.addEventListener('orientationchange', () => { scheduleBottomHandViewportRefit('orientationchange'); scheduleSettlementTileShowcaseFit(); scheduleTingChoicePanelAdaptive(); });
+    document.addEventListener('fullscreenchange', () => { scheduleBottomHandViewportRefit('fullscreenchange'); scheduleTingChoicePanelAdaptive(); });
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', () => { scheduleBottomHandViewportRefit('visualViewport-resize'); scheduleSettlementTileShowcaseFit(); }, { passive: true });
+      window.visualViewport.addEventListener('resize', () => { scheduleBottomHandViewportRefit('visualViewport-resize'); scheduleSettlementTileShowcaseFit(); scheduleTingChoicePanelAdaptive(); }, { passive: true });
     }
     createInterface329Lobby();
     createInterface329Extras();
@@ -7638,7 +7767,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
       state.chips[seat] = 5000;
       state.scoreUnits[seat] = { bases: 0, taiUnits: 0 };
       state.seatAutoPlay[seat] = seatAutoplayDefault(seat);
-      state.declaredTing[seat] = false;
+      state.declaredTing[seat] = false; if (state.tingWaitsSnapshot) delete state.tingWaitsSnapshot[seat];
     });
     if (dom.log) dom.log.innerHTML = '';
     if (dom.discardGrid) dom.discardGrid.replaceChildren();
@@ -7689,6 +7818,18 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
 
   function createInterface329Extras() {
     const app = document.querySelector('.app');
+    // tw16_system_clock_20260624: 時鐘元素已在 topbar HTML 中，只需啟動 tickClock
+    dom.tw16SystemClock = byId('tw16SystemClock');
+    if (dom.tw16SystemClock && !dom.tw16SystemClock._clockStarted) {
+      dom.tw16SystemClock._clockStarted = true;
+      (function tickClock() {
+        const el = dom.tw16SystemClock || byId('tw16SystemClock');
+        if (!el) return;
+        const now = new Date();
+        el.textContent = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+        setTimeout(tickClock, 1000 - (now.getTime() % 1000) + 4);
+      })();
+    }
     if (app && !byId('tw16MiniDashboard')) {
       const dash = document.createElement('div');
       dash.id = 'tw16MiniDashboard';
@@ -7708,9 +7849,16 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
           if (isOnlineGuest()) try {
             const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || 'null') || {};
             _gl.aiSuggestionEnabled = state.uiSettings.aiSuggestionEnabled;
+            _gl.wallVisible = state.uiSettings.wallVisible;
+            _gl.screenWakeLockEnabled = state.uiSettings.screenWakeLockEnabled;
             _gl.turnHandFrameEnabled = state.uiSettings.turnHandFrameEnabled;
             _gl.tingAssistEnabled = state.uiSettings.tingAssistEnabled;
+            _gl.tingDangerExamplesEnabled = state.uiSettings.tingDangerExamplesEnabled;
+            _gl.aiMode = state.uiSettings.aiMode;
+            _gl.aiMonteCarloLevel2 = state.uiSettings.aiMonteCarloLevel2;
+            _gl.aiMonteCarloFull = state.uiSettings.aiMonteCarloFull;
             _gl.miniDashboardEnabled = state.uiSettings.miniDashboardEnabled;
+            _gl.avatarEnabled = state.uiSettings.avatarEnabled;
             localStorage.setItem('tw16GuestUiLocal', JSON.stringify(_gl));
           } catch(e) {}
           updateAiSuggestionMiniToggle();
@@ -7889,15 +8037,16 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     state.uiSettings.layoutMode = 'clean';
     state.uiSettings.wallVisible = state.uiSettings.wallVisible !== false;
     state.uiSettings.screenWakeLockEnabled = !!state.uiSettings.screenWakeLockEnabled;
-    state.uiSettings.turnHandFrameEnabled = state.uiSettings.turnHandFrameEnabled !== false;
+    state.uiSettings.turnHandFrameEnabled = state.uiSettings.turnHandFrameEnabled === true;
     state.uiSettings.tingAssistEnabled = state.uiSettings.tingAssistEnabled !== false;
-    state.uiSettings.tingDangerExamplesEnabled = state.uiSettings.tingDangerExamplesEnabled !== false;
+    state.uiSettings.tingDangerExamplesEnabled = state.uiSettings.tingDangerExamplesEnabled === true;
+    state.uiSettings.aiSuggestionEnabled = state.uiSettings.aiSuggestionEnabled !== false;
     state.uiSettings.miniDashboardEnabled = state.uiSettings.miniDashboardEnabled !== false;
     state.uiSettings.avatarEnabled = !!state.uiSettings.avatarEnabled;
     state.uiSettings.voiceEventEnabled = !!state.uiSettings.voiceEventEnabled;
     state.uiSettings.perspective3d = !!state.uiSettings.perspective3d;
     if (!['exact','greedy'].includes(state.uiSettings.aiMode)) state.uiSettings.aiMode = 'exact';
-    state.uiSettings.aiMonteCarloLevel2 = !!state.uiSettings.aiMonteCarloLevel2;
+    state.uiSettings.aiMonteCarloLevel2 = state.uiSettings.aiMonteCarloLevel2 !== false;
     state.uiSettings.aiMonteCarloFull = !!state.uiSettings.aiMonteCarloFull;
     const scoreBaseChip = Number(state.uiSettings.scoreBaseChip);
     const scoreTaiChip = Number(state.uiSettings.scoreTaiChip);
@@ -7908,7 +8057,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
 
 
   function defaultUiSettingsObject() {
-    return { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: true, tingAssistEnabled: true, tingDangerExamplesEnabled: true, aiSuggestionEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: GAME_RULES.scoreBaseChip, scoreTaiChip: GAME_RULES.scoreTaiChip, aiMode: 'exact', aiMonteCarloLevel2: false, aiMonteCarloFull: false };
+    return { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: false, tingAssistEnabled: true, tingDangerExamplesEnabled: false, aiSuggestionEnabled: true, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: GAME_RULES.scoreBaseChip, scoreTaiChip: GAME_RULES.scoreTaiChip, aiMode: 'exact', aiMonteCarloLevel2: true, aiMonteCarloFull: false };
   }
 
   function applyGuestJoinDefaultSettings(reason) {
@@ -7917,17 +8066,17 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     let changed = false;
     try {
       const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || 'null');
-      ['turnHandFrameEnabled', 'tingAssistEnabled', 'tingDangerExamplesEnabled', 'aiSuggestionEnabled', 'miniDashboardEnabled'].forEach(function(_k) {
-        if (_gl && _gl[_k] !== undefined) {
-          if (state.uiSettings[_k] !== _gl[_k]) { state.uiSettings[_k] = _gl[_k]; changed = true; }
-        } else if (state.uiSettings[_k] !== true) { state.uiSettings[_k] = true; changed = true; }
+      const _guestDefaults = defaultUiSettingsObject();
+      ['wallVisible', 'screenWakeLockEnabled', 'turnHandFrameEnabled', 'tingAssistEnabled', 'tingDangerExamplesEnabled', 'aiSuggestionEnabled', 'aiMode', 'aiMonteCarloLevel2', 'aiMonteCarloFull', 'miniDashboardEnabled', 'avatarEnabled'].forEach(function(_k) {
+        const _next = (_gl && _gl[_k] !== undefined) ? _gl[_k] : _guestDefaults[_k];
+        if (state.uiSettings[_k] !== _next) { state.uiSettings[_k] = _next; changed = true; }
       });
     } catch(e) {
-      ['turnHandFrameEnabled', 'tingAssistEnabled', 'tingDangerExamplesEnabled', 'aiSuggestionEnabled', 'miniDashboardEnabled'].forEach(function(_k) {
-        if (state.uiSettings[_k] !== true) { state.uiSettings[_k] = true; changed = true; }
+      const _guestDefaults = defaultUiSettingsObject();
+      ['wallVisible', 'screenWakeLockEnabled', 'turnHandFrameEnabled', 'tingAssistEnabled', 'tingDangerExamplesEnabled', 'aiSuggestionEnabled', 'aiMode', 'aiMonteCarloLevel2', 'aiMonteCarloFull', 'miniDashboardEnabled', 'avatarEnabled'].forEach(function(_k) {
+        if (state.uiSettings[_k] !== _guestDefaults[_k]) { state.uiSettings[_k] = _guestDefaults[_k]; changed = true; }
       });
     }
-    if (state.uiSettings.avatarEnabled === undefined) { state.uiSettings.avatarEnabled = false; changed = true; }
     const guestSeat = networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : (networkSeatOrder().includes(state.viewSeat) ? state.viewSeat : '');
     if (!net.guestAutoplayInitializedSeats || typeof net.guestAutoplayInitializedSeats !== 'object') net.guestAutoplayInitializedSeats = {};
     if (guestSeat && !net.guestAutoplayInitializedSeats[guestSeat]) {
@@ -7942,7 +8091,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     if (changed) {
       saveUiSettings();
       applyUiTheme();
-      recordNetworkEvent('guest-defaults', '來賓進房套用預設：保留牌面比例拉桿設定、顯示手牌金框；新進場強制先關閉托管', { reason: reason || '', seat: guestSeat || '' });
+      recordNetworkEvent('guest-defaults', '來賓進房套用本機記住的設定；未記住者套用新版預設，新進場強制先關閉托管', { reason: reason || '', seat: guestSeat || '' });
     }
     return changed;
   }
@@ -10183,7 +10332,7 @@ function loadUiSettings() {
     Object.keys(incoming).forEach(key => {
       state[key] = incoming[key];
     });
-    if (isOnlineGuest()) try { const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || 'null'); if (_gl && state.uiSettings) ['turnHandFrameEnabled','tingAssistEnabled','aiSuggestionEnabled','miniDashboardEnabled'].forEach(k => { if (_gl[k] !== undefined) state.uiSettings[k] = _gl[k]; }); } catch(e) {}
+    if (isOnlineGuest()) try { const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || 'null'); if (_gl && state.uiSettings) ['wallVisible','screenWakeLockEnabled','turnHandFrameEnabled','tingAssistEnabled','tingDangerExamplesEnabled','aiSuggestionEnabled','aiMode','aiMonteCarloLevel2','aiMonteCarloFull','miniDashboardEnabled','avatarEnabled'].forEach(k => { if (_gl[k] !== undefined) state.uiSettings[k] = _gl[k]; }); } catch(e) {}
     if (isOnlineGuest()) {
       try {
         SEATS.forEach(function(seat, idx) {
@@ -11381,7 +11530,7 @@ function loadUiSettings() {
       state.chips[seat] = state.chips[seat] ?? 5000;
       ensureScoreUnitTotals();
       state.seatAutoPlay[seat] = previousSeatAutoPlay[seat] !== null ? previousSeatAutoPlay[seat] : seatAutoplayDefault(seat);
-      state.declaredTing[seat] = false;
+      state.declaredTing[seat] = false; if (state.tingWaitsSnapshot) delete state.tingWaitsSnapshot[seat];
     });
     state.activeDrawnTileIds = {};
   }
@@ -12121,7 +12270,7 @@ function loadUiSettings() {
             return sb - sa;
           });
           discardId = safeOptions[0].tile.id;
-          state.declaredTing[seat] = false;
+          state.declaredTing[seat] = false; if (state.tingWaitsSnapshot) delete state.tingWaitsSnapshot[seat];
           addLog(SEAT_NAME[seat] + '摸進最危險牌，拆聽改打安全牌');
         }
       }
@@ -12140,9 +12289,13 @@ function loadUiSettings() {
           );
           if (liveOptions.length > 0) {
             const best = bestTingOption(seat, liveOptions);
-            if (best && best.discardId) { discardId = best.discardId; state.declaredTing[seat] = true; }
+            if (best && best.discardId) {
+              discardId = best.discardId;
+              state.declaredTing[seat] = true;
+              try { if (!state.tingWaitsSnapshot) state.tingWaitsSnapshot = {}; state.tingWaitsSnapshot[seat] = best.waits ? Array.from(new Set(best.waits)) : null; } catch(_) {}
+            }
           } else {
-            state.declaredTing[seat] = false;
+            state.declaredTing[seat] = false; if (state.tingWaitsSnapshot) delete state.tingWaitsSnapshot[seat];
             addLog(SEAT_NAME[seat] + '進張全死，解除聽牌重新選牌');
           }
         }
@@ -12163,6 +12316,7 @@ function loadUiSettings() {
             if (bestDrawable >= currentDrawable + 3 || bestTai > currentTai + 2) {
               discardId = best.discardId;
               state.declaredTing[seat] = true;
+              try { if (!state.tingWaitsSnapshot) state.tingWaitsSnapshot = {}; state.tingWaitsSnapshot[seat] = best.waits ? Array.from(new Set(best.waits)) : null; } catch(_) {}
             }
           }
         }
@@ -12253,7 +12407,11 @@ function loadUiSettings() {
     // tw16_submit_discard_forbidden_gate_20260624: 最終守門，AI出牌一律過禁打過濾
     if (source !== 'remote' && source !== 'remote-ting' && source !== 'human' && source !== 'human-swipe') {
       try {
+        // 暫時清除快取，確保 forbidden set 用 viewSeat 視角計算（不含出牌者自己手牌）
+        const _savedVisCache = tw16VisibleCountCache;
+        tw16VisibleCountCache = null;
         const _forbidden = tw16TingExamplesFirstCodeSet(seat);
+        tw16VisibleCountCache = _savedVisCache;
         if (_forbidden.size) {
           const _cands = tw16DiscardCandidateList(seat);
           const _item = _cands.find(x => x && x.tile && String(x.tile.id) === String(tileId));
@@ -13634,12 +13792,12 @@ function loadUiSettings() {
 
   function smartAiOpponentWaitRisk(seat, code) {
     if (!code) return 0;
-    const cacheKey = 'waitRisk:v2:' + String(state.handId || 0) + ':' + String(state.lastActionId || 0) + ':' + String(seat || '') + ':' + code;
+    const cacheKey = 'waitRisk:public:v3:' + String(state.handId || 0) + ':' + String(state.lastActionId || 0) + ':' + String(seat || '') + ':' + code;
     if (tw16OpponentInferenceCache && tw16OpponentInferenceCache[cacheKey] !== undefined) return tw16OpponentInferenceCache[cacheKey];
     const table = smartAiBuildOpponentReadTable(seat);
     const visible = smartAiVisibleCount(code, seat);
-    const liveLeft = Math.max(0, 4 - visible);
-    if (liveLeft <= 0) {
+    const publicLeft = Math.max(0, 4 - visible);
+    if (publicLeft <= 0) {
       if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[cacheKey] = 0;
       return 0;
     }
@@ -13649,68 +13807,67 @@ function loadUiSettings() {
       const read = table[other];
       const isTing = !!(state.declaredTing && state.declaredTing[other]);
       const hasSameDiscard = !!(read.discardSet && read.discardSet.has(code));
-      if (hasSameDiscard) {
-        risk -= isTing ? 30 : 16;
-        return;
-      }
-
-      let exactRon = false;
-      let taiCost = 1;
-      if (isTing) {
-        try {
-          const otherCodes = (state.hands[other] || []).map(t => t && t.code).filter(c => c && !isFlower(c));
-          const needed = requiredConcealedSets(other);
-          exactRon = isWinningCodeListCached(otherCodes.concat([code]), needed);
-          if (exactRon) {
-            try {
-              const detail = evaluateWinDetails(other, 'ron', seat, { code, id: 'risk_' + code }, {}) || {};
-              taiCost = Math.max(1, Number(detail.tai) || 1);
-            } catch (_) { taiCost = 1; }
-          }
-        } catch (_) { exactRon = false; }
-      }
-
       let r = 0;
-      if (exactRon) {
-        r += 92 + taiCost * 15;
-        r += liveLeft * 9;
-        if (isMiddleTile(code)) r += 18;
-        if (isHonorCode(code) && visible <= 1) r += 14;
-        if ((read.melds || []).length >= 2) r += 10;
-      } else {
-        r += read.threat * (isTing ? 1.25 : 0.62);
-        if (isSuitTile(code)) {
-          const suit = code[0], n = Number(code.slice(1));
-          const suitDanger = (read.dangerSuit && read.dangerSuit[suit] || 0);
-          r += suitDanger * (isTing ? 1.15 : 0.72);
-          if (n >= 4 && n <= 6) r += isTing ? 15 : 8;
-          else if (n >= 3 && n <= 7) r += isTing ? 10 : 5;
-          else if (n === 2 || n === 8) r += isTing ? 5 : 2;
-          else r += isTing ? 2 : 0;
+      r += read.threat * (isTing ? 1.32 : 0.62);
+      if (hasSameDiscard) r -= isTing ? 18 : 10;
 
-          const sujiSafe = (n >= 4 && read.discardSet.has(suit + (n - 3))) || (n <= 6 && read.discardSet.has(suit + (n + 3)));
-          if (sujiSafe) r -= isTing ? 9 : 5;
-          const nearDiscard = [-2,-1,1,2].some(d => read.discardSet.has(suit + (n + d)));
-          if (!nearDiscard && (read.discards || []).length >= 8) r += isTing ? 8 : 4;
-          const earlySameSuit = (read.discards || []).slice(0, 6).filter(c => c && c[0] === suit).length;
-          if (earlySameSuit >= 3) r -= 5;
-          if (suitDanger >= 12 && earlySameSuit <= 1) r += isTing ? 10 : 5;
-        } else if (isHonorCode(code)) {
-          if (visible >= 3) r -= 30;
-          else if (visible === 2) r -= 12;
-          else r += isTing ? 16 : 7;
-          if ((read.melds || []).length >= 2 && visible <= 1) r += isTing ? 10 : 5;
-        }
+      if (isSuitTile(code)) {
+        const suit = code[0], n = Number(code.slice(1));
+        const suitDanger = (read.dangerSuit && read.dangerSuit[suit] || 0);
+        r += suitDanger * (isTing ? 1.18 : 0.72);
+        if (n >= 4 && n <= 6) r += isTing ? 16 : 8;
+        else if (n >= 3 && n <= 7) r += isTing ? 10 : 5;
+        else if (n === 2 || n === 8) r += isTing ? 5 : 2;
+        else r += isTing ? 2 : 0;
+
+        // suji：對手棄了 N±3，此張是順子缺張危險牌（不是安全牌）
+        const sujiDanger2 = (n >= 4 && read.discardSet && read.discardSet.has(suit + (n - 3))) || (n <= 6 && read.discardSet && read.discardSet.has(suit + (n + 3)));
+        if (sujiDanger2) r += isTing ? 22 : 10;
+        const nearDiscard2 = [-2,-1,1,2].some(d => read.discardSet && read.discardSet.has(suit + (n + d)));
+        if (nearDiscard2) r -= isTing ? 18 : 9;
+        else if ((read.discards || []).length >= 8) r += isTing ? 8 : 4;
+        const earlySameSuit = (read.discards || []).slice(0, 6).filter(c => c && c[0] === suit).length;
+        if (earlySameSuit >= 3) r -= 6;
+        if (suitDanger >= 12 && earlySameSuit <= 1) r += isTing ? 10 : 5;
+      } else if (isHonorCode(code)) {
+        if (visible >= 3) r -= 30;
+        else if (visible === 2) r -= 12;
+        else r += isTing ? 16 : 7;
+        if ((read.melds || []).length >= 2 && visible <= 1) r += isTing ? 10 : 5;
       }
       if (visible >= 3) r *= 0.20;
       else if (visible === 2) r *= 0.48;
       else if (visible === 1) r *= 0.82;
-      r *= Math.max(0.20, liveLeft / 4);
-      risk += Math.max(-28, r);
+      r *= Math.max(0.20, publicLeft / 4);
+      risk += Math.max(0, r);
     });
     risk = Math.max(0, risk);
     if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[cacheKey] = risk;
     return risk;
+  }
+
+
+  function tw16PublicTingTaiCostEstimate(viewSeat, targetSeat, code) {
+    let est = 1;
+    try {
+      if (targetSeat === state.dealer) est += 0.5;
+      const table = smartAiBuildOpponentReadTable(viewSeat);
+      const read = table && table[targetSeat];
+      const visible = smartAiVisibleCount(code, viewSeat);
+      if (read) {
+        const melds = read.melds || [];
+        est += Math.min(2.5, melds.length * 0.45);
+        if (isSuitTile(code)) {
+          const suit = code[0];
+          const suitDanger = (read.dangerSuit && read.dangerSuit[suit]) || 0;
+          est += Math.min(2, suitDanger / 14);
+          const exposedSuits = new Set((read.meldCodes || []).filter(c => c && isSuitPrefix(c[0])).map(c => c[0]));
+          if (exposedSuits.size === 1 && exposedSuits.has(suit) && (read.meldCodes || []).length >= 3) est += 1;
+        }
+        if (isHonorCode(code) && visible <= 1) est += 0.5;
+      }
+    } catch (_) {}
+    return Math.max(1, Math.round(est * 10) / 10);
   }
 
   function smartAiSafetyDiscardScore(seat, code) {
@@ -13727,15 +13884,7 @@ function loadUiSettings() {
     const taiCostByOther = {};
     dangerous.forEach(other => {
       if (tw16RonTaiCostCache && tw16RonTaiCostCache[code] && tw16RonTaiCostCache[code][other] !== undefined) taiCostByOther[other] = tw16RonTaiCostCache[code][other];
-      else {
-        try {
-          const otherCodes = (state.hands[other] || []).map(t => t.code).filter(c => c && !isFlower(c));
-          const needed2 = requiredConcealedSets(other);
-          taiCostByOther[other] = isWinningCodeListCached(otherCodes.concat([code]), needed2)
-            ? Math.max(1, (evaluateWinDetails(other, 'ron', seat, { code, id: 'fake_' + code }, {}) || {}).tai || 1)
-            : 1;
-        } catch (e) { taiCostByOther[other] = 1; }
-      }
+      else taiCostByOther[other] = tw16PublicTingTaiCostEstimate(seat, other, code);
     });
     dangerous.forEach(other => {
       const tai = taiCostByOther[other] || 1;
@@ -14963,24 +15112,80 @@ function loadUiSettings() {
     delete dom.actionPanel.dataset.tingKey;
   }
 
+  let _tingChoiceAdaptiveRaf = 0;
+
+  function tingChoiceDiscardPoolMetrics() {
+    const box = viewportBox();
+    const pad = 6;
+    const rootStyle = getComputedStyle(document.documentElement);
+    const readPx = (name, fallback) => {
+      const raw = String(rootStyle.getPropertyValue(name) || '').trim();
+      const value = Number(raw.replace('px', ''));
+      return Number.isFinite(value) && value > 0 ? value : fallback;
+    };
+    const discardBoxW = readPx('--tw-discard-box-w', Math.min(box.width * .58, 420));
+    const discardBoxH = readPx('--tw-discard-box-h', Math.min(box.height * .46, 260));
+    const discardTileW = readPx('--tw-discard-w', readPx('--tw-tile-w', 22) * .82);
+    const discardTileH = readPx('--tw-discard-h', readPx('--tw-tile-h', 32) * .82);
+    const tileW = readPx('--tw-tile-w', 22);
+    const tileH = readPx('--tw-tile-h', 32);
+    const centerYRaw = String(rootStyle.getPropertyValue('--tw-table-center-y') || '').trim();
+    let centerY = box.top + box.height * .51;
+    if (centerYRaw.endsWith('px')) {
+      const parsed = Number(centerYRaw.replace('px', ''));
+      if (Number.isFinite(parsed)) centerY = parsed;
+    } else if (centerYRaw.endsWith('%')) {
+      const parsed = Number(centerYRaw.replace('%', ''));
+      if (Number.isFinite(parsed)) centerY = box.top + box.height * parsed / 100;
+    }
+    const width = Math.round(Math.min(Math.max(220, discardBoxW), box.width - pad * 2));
+    const height = Math.round(Math.min(Math.max(150, discardBoxH), box.height - pad * 2));
+    const left = clampLeftInBox((box.left + box.width / 2) - width / 2, width, box, pad);
+    const top = clampTopInBox(centerY - height / 2, height, box, pad);
+    const rawTileW = Math.min(discardTileW * 1.08, tileW * .92, width / 10.2, height / 4.6);
+    const choiceTileW = Math.round(clampNumber(12, rawTileW, 30));
+    const ratio = Math.max(1.32, Math.min(1.58, (discardTileH > 0 && discardTileW > 0) ? discardTileH / discardTileW : tileH / Math.max(1, tileW)));
+    const choiceTileH = Math.round(choiceTileW * ratio);
+    const compact = width < 330 || height < 205;
+    return { box, pad, width, height, left, top, choiceTileW, choiceTileH, compact };
+  }
+
   function positionTingChoicePanelAtTableCenter() {
     if (!dom.actionPanel || !dom.actionPanel.classList.contains('ting-choice-active')) return false;
-    /* 置中在四個座位手牌的正中央（桌面正中央） */
-    ['left','right','top','bottom','transform','transform-origin','background','border-radius','padding','width','height'].forEach(prop => {
-      dom.actionPanel.style.removeProperty(prop);
-    });
-    setAbsolutePlacement(dom.actionPanel, {
-      position: 'absolute',
-      left: '50%',
+    const metrics = tingChoiceDiscardPoolMetrics();
+    const panel = dom.actionPanel;
+    panel.classList.toggle('ting-choice-compact', !!metrics.compact);
+    panel.style.setProperty('--tw-ting-choice-panel-w', px(metrics.width));
+    panel.style.setProperty('--tw-ting-choice-panel-h', px(metrics.height));
+    panel.style.setProperty('--tw-ting-choice-tile-w', px(metrics.choiceTileW));
+    panel.style.setProperty('--tw-ting-choice-tile-h', px(metrics.choiceTileH));
+    panel.style.setProperty('--tw-ting-choice-font', px(Math.max(9, Math.round(metrics.choiceTileW * .68))));
+    panel.style.setProperty('--tw-ting-choice-small-font', px(Math.max(6, Math.round(metrics.choiceTileW * .34))));
+    panel.style.setProperty('--tw-ting-choice-meta-font', px(Math.max(7, Math.round(metrics.choiceTileW * .44))));
+    panel.style.setProperty('--tw-ting-choice-title-font', px(Math.max(11, Math.min(16, Math.round(metrics.choiceTileW * .78)))));
+    panel.style.setProperty('--tw-ting-choice-body-font', px(Math.max(9, Math.min(13, Math.round(metrics.choiceTileW * .62)))));
+    panel.style.setProperty('--tw-ting-choice-pad', px(metrics.compact ? 5 : 7));
+    setAbsolutePlacement(panel, {
+      position: 'fixed',
+      left: px(metrics.left),
       right: 'auto',
-      top: '50%',
+      top: px(metrics.top),
       bottom: 'auto',
-      width: 'max-content',
-      height: 'auto',
-      transform: 'translate(-50%,-50%)',
-      transformOrigin: 'center center'
+      width: px(metrics.width),
+      height: px(metrics.height),
+      transform: 'none',
+      transformOrigin: 'left top'
     });
     return true;
+  }
+
+  function scheduleTingChoicePanelAdaptive() {
+    if (!dom.actionPanel || !dom.actionPanel.classList.contains('ting-choice-active')) return;
+    if (_tingChoiceAdaptiveRaf) return;
+    _tingChoiceAdaptiveRaf = requestAnimationFrame(() => {
+      _tingChoiceAdaptiveRaf = 0;
+      positionTingChoicePanelAtTableCenter();
+    });
   }
 
   function openTingChoicePanel(seat) {
@@ -15102,6 +15307,12 @@ function loadUiSettings() {
       return false;
     }
     state.declaredTing[seat] = true;
+    // tw16_ting_waits_snapshot_20260624: 保存聽牌等待牌快照（去掉要打出的那張後的等待牌組）
+    try {
+      if (!state.tingWaitsSnapshot) state.tingWaitsSnapshot = {};
+      const _snapOpt = options.find(opt => String(opt.discardId) === String(selectedId)) || options[0];
+      state.tingWaitsSnapshot[seat] = _snapOpt && _snapOpt.waits ? Array.from(new Set(_snapOpt.waits)) : null;
+    } catch (_) {}
     addLog(SEAT_NAME[seat] + '宣告聽牌，打出 ' + tileText(selected.discardCode));
     emitGameVoiceEvent(SEAT_NAME[seat] + '聽', 'ting:' + state.handId + ':' + seat + ':' + selected.discardId, { kind: 'ting', seat });
     recordHandEvent('ting', seat, SEAT_NAME[seat] + '宣告聽牌，打出 ' + tileText(selected.discardCode), { discard: selected.discardCode });
@@ -16280,7 +16491,7 @@ function chooseExactDiscardTile(seat) {
     tw16VisibleCountCache = visibleCountCache;
     // ② context key 只算一次
     tw16StrategyContextKeyCache = strategyDiscardContextKey(seat, hand);
-    // ⑦ 台數估算快取：有聽牌對手時預先算好每種牌對每個對手的 tai cost
+    // ⑦ 台數估算快取：只用公開資訊估算聽牌對手的放槍成本，不讀對手暗手。
     tw16RonTaiCostCache = Object.create(null);
     const dangerous = SEATS.filter(o => o !== seat && state.declaredTing && state.declaredTing[o]);
     if (dangerous.length) {
@@ -16288,17 +16499,7 @@ function chooseExactDiscardTile(seat) {
       allHandCodeSet.forEach(code => {
         tw16RonTaiCostCache[code] = Object.create(null);
         dangerous.forEach(other => {
-          try {
-            const otherCodes = (state.hands[other] || []).map(t => t.code).filter(c => c && !isFlower(c));
-            const withTile = otherCodes.concat([code]);
-            const needed2 = requiredConcealedSets(other);
-            if (isWinningCodeListCached(withTile, needed2)) {
-              const est = evaluateWinDetails(other, 'ron', seat, { code, id: 'fake_' + code }, {});
-              tw16RonTaiCostCache[code][other] = Math.max(1, est.tai || 1);
-            } else {
-              tw16RonTaiCostCache[code][other] = 1;
-            }
-          } catch (e) { tw16RonTaiCostCache[code][other] = 1; }
+          tw16RonTaiCostCache[code][other] = tw16PublicTingTaiCostEstimate(seat, other, code);
         });
       });
     }
@@ -16602,14 +16803,68 @@ function chooseExactDiscardTile(seat) {
       nextRoundPlan: clonePlain(state.nextRoundPlan || null),
       reveal: buildRevealPayload(winner, winTile),
       tingDangerSnapshot: (function() {
-        // tw16_win_history_ting_danger_snapshot_20260623: 記錄胡牌者自己在危險牌例面板顯示的牌
+        // tw16_win_history_ting_danger_snapshot_20260624v5:
+        // isWinningCodeList(codes, n) 要求 codes.length === n*3+2
+        // 自摸(self)：手牌已含胡牌，長度 = need，直接移除每張試胡找等待牌
+        // 放槍(ron) ：手牌不含胡牌，長度 = need-1，直接 concat 每個候選牌試胡
         const snap = [];
-        if (state.declaredTing && state.declaredTing[winner] && isSeatActiveInTable(winner)) {
-          try {
-            const codes = tingSeatTopDangerCodes(winner);
-            if (codes) codes.forEach(function(code) { if (code) snap.push({ seat: winner, code: code }); });
-          } catch (_) {}
-        }
+        try {
+          const neededSets = (typeof requiredConcealedSets === 'function')
+            ? requiredConcealedSets(winner)
+            : Math.max(0, 5 - ((state.melds && state.melds[winner]) ? state.melds[winner].length : 0));
+          const need = neededSets * 3 + 2;
+          const handAll = (state.hands[winner] || [])
+            .map(function(t) { return t && t.code; })
+            .filter(function(c) { return c && !isFlower(c); });
+          if (!handAll.length) return snap;
+          const waitSet = Object.create(null);
+          if (handAll.length === need) {
+            // 自摸：手牌已含胡牌（winTile），移除 winTile 後找等待牌
+            // 優先用已知的 winTile 定位，否則嘗試每張
+            const winCode = winTile && winTile.code && !isFlower(winTile.code) ? winTile.code : null;
+            if (winCode) {
+              // 找第一個匹配 winCode 的位置移除
+              var foundWin = false;
+              for (var i = 0; i < handAll.length; i++) {
+                if (handAll[i] === winCode) {
+                  var base = handAll.slice(0, i).concat(handAll.slice(i + 1));
+                  allNonFlowerCodes().forEach(function(code) {
+                    try { if (isWinningCodeList(base.concat([code]), neededSets)) waitSet[code] = true; } catch (_) {}
+                  });
+                  foundWin = true;
+                  break;
+                }
+              }
+              if (!foundWin) {
+                // winCode 不在手牌裡（已被移走），直接用整組手牌（need-1 張路徑）
+                allNonFlowerCodes().forEach(function(code) {
+                  try { if (isWinningCodeList(handAll.concat([code]), neededSets)) waitSet[code] = true; } catch (_) {}
+                });
+              }
+            } else {
+              // 無法確認 winTile，只移除最後一張（通常是自摸牌）
+              var base0 = handAll.slice(0, handAll.length - 1);
+              allNonFlowerCodes().forEach(function(code) {
+                try { if (isWinningCodeList(base0.concat([code]), neededSets)) waitSet[code] = true; } catch (_) {}
+              });
+            }
+          } else if (handAll.length === need - 1) {
+            // 放槍：手牌不含胡牌，直接 concat 候選牌
+            allNonFlowerCodes().forEach(function(code) {
+              try { if (isWinningCodeList(handAll.concat([code]), neededSets)) waitSet[code] = true; } catch (_) {}
+            });
+          }
+          const waitCodes = Object.keys(waitSet);
+          if (!waitCodes.length) return snap;
+          waitCodes.sort(function(a, b) {
+            const la = tw16PublicVisibleCountForDanger ? (4 - Math.min(4, tw16PublicVisibleCountForDanger(a))) : 0;
+            const lb = tw16PublicVisibleCountForDanger ? (4 - Math.min(4, tw16PublicVisibleCountForDanger(b))) : 0;
+            return lb - la;
+          });
+          waitCodes.slice(0, 2).forEach(function(code) {
+            snap.push({ seat: winner, code: code });
+          });
+        } catch (_) {}
         return snap;
       })()
     };
@@ -17561,6 +17816,23 @@ function chooseExactDiscardTile(seat) {
     };
   }
 
+  function removeSettingsDefaultFloatingButton() {
+    const btn = byId('settingsDefaultBtn');
+    if (btn && btn.classList && btn.classList.contains('settingsDefaultFloatingBtn')) btn.remove();
+  }
+
+  function createSettingsDefaultFloatingButton() {
+    removeSettingsDefaultFloatingButton();
+    if (!dom.resultPanel) return null;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'settingsDefaultBtn';
+    btn.className = 'settingsDefaultFloatingBtn';
+    btn.textContent = '恢復預設';
+    dom.resultPanel.appendChild(btn);
+    return btn;
+  }
+
   function openSettingsPanel() {
     setUiPriorityMode(true, 'open-settings-panel');
     ensureUiSettings();
@@ -17585,7 +17857,6 @@ function chooseExactDiscardTile(seat) {
       + '<label class="settingsRow"><span>完整蒙地卡羅</span><input id="setAiMonteCarloFull" type="checkbox" ' + (state.uiSettings.aiMonteCarloFull ? 'checked' : '') + '><b></b></label>'
       + '<label class="settingsRow"><span>顯示迷你儀表板</span><input id="setMiniDashboardEnabled" type="checkbox" ' + (state.uiSettings.miniDashboardEnabled ? 'checked' : '') + '><b></b></label>'
       + '<label class="settingsRow"><span>顯示座位頭像</span><input id="setAvatarEnabled" type="checkbox" ' + (state.uiSettings.avatarEnabled !== false ? 'checked' : '') + '><b></b></label>'
-      + '<div class="menuGrid"><button class="btn" id="settingsApplyBtn">套用</button><button class="btn red" id="settingsDefaultBtn">恢復預設</button></div>'
       + '<div style="font-size:13px;color:#cbd5e1;line-height:1.55">每底 / 每台籌碼只由房主或單機端調整；來賓由房主快照同步設定。</div>'
       + '</div>';
     dom.resultNewBtn.style.display = 'none';
@@ -17598,51 +17869,78 @@ function chooseExactDiscardTile(seat) {
     };
     bindRange('setAnimSpeed','setAnimSpeedValue','%');
     bindRange('setTileRadius','setTileRadiusValue','%');
-    const playerNameInput = byId('setPlayerName');
-    if (playerNameInput) {
-      playerNameInput.addEventListener('input', () => {
-        applyLocalPlayerName(playerNameInput.value, 'settings-name-input');
-        renderLabels(displayMap());
-        updateMiniDashboard();
-        if (isOnlineHost()) {
-          publishNetworkPlayers('settings-name-input');
-          scheduleNetworkSnapshot('settings-name-input');
-        }
-      });
-    }
-    byId('settingsApplyBtn').addEventListener('click', () => {
-      state.uiSettings.animSpeedPct = Number(byId('setAnimSpeed').value);
-      state.uiSettings.tileRadiusPct = Number(byId('setTileRadius').value);
+    const updateSettingsRangeLabels = () => {
+      const anim = byId('setAnimSpeed');
+      const animOut = byId('setAnimSpeedValue');
+      if (anim && animOut) animOut.textContent = Number(anim.value) ? anim.value + '%' : '關';
+      const radius = byId('setTileRadius');
+      const radiusOut = byId('setTileRadiusValue');
+      if (radius && radiusOut) radiusOut.textContent = Number(radius.value) ? radius.value + '%' : '關';
+    };
+    const applySettingsFromControls = (reason) => {
+      if (!dom.resultPanel || !dom.resultPanel.classList || !dom.resultPanel.classList.contains('show')) return;
+      const anim = byId('setAnimSpeed');
+      const radius = byId('setTileRadius');
+      if (!anim || !radius) return;
+      updateSettingsRangeLabels();
+      state.uiSettings.animSpeedPct = Number(anim.value);
+      state.uiSettings.tileRadiusPct = Number(radius.value);
       if (!isOnlineGuest()) {
-        state.uiSettings.scoreBaseChip = Math.round(clampNumber(0, Number(byId('setScoreBaseChip').value) || 0, 999999));
-        state.uiSettings.scoreTaiChip = Math.round(clampNumber(0, Number(byId('setScoreTaiChip').value) || 0, 999999));
+        const baseInput = byId('setScoreBaseChip');
+        const taiInput = byId('setScoreTaiChip');
+        state.uiSettings.scoreBaseChip = Math.round(clampNumber(0, Number(baseInput && baseInput.value) || 0, 999999));
+        state.uiSettings.scoreTaiChip = Math.round(clampNumber(0, Number(taiInput && taiInput.value) || 0, 999999));
       }
       state.uiSettings.layoutMode = 'clean';
-      state.uiSettings.wallVisible = !!byId('setWallVisible').checked;
-      state.uiSettings.screenWakeLockEnabled = !!byId('setScreenWakeLockEnabled').checked;
-      state.uiSettings.turnHandFrameEnabled = !!byId('setTurnHandFrameEnabled').checked;
-      state.uiSettings.tingAssistEnabled = !!byId('setTingAssistEnabled').checked;
+      state.uiSettings.wallVisible = !!(byId('setWallVisible') && byId('setWallVisible').checked);
+      state.uiSettings.screenWakeLockEnabled = !!(byId('setScreenWakeLockEnabled') && byId('setScreenWakeLockEnabled').checked);
+      state.uiSettings.turnHandFrameEnabled = !!(byId('setTurnHandFrameEnabled') && byId('setTurnHandFrameEnabled').checked);
+      state.uiSettings.tingAssistEnabled = !!(byId('setTingAssistEnabled') && byId('setTingAssistEnabled').checked);
       if (byId('setTingDangerExamplesEnabled')) state.uiSettings.tingDangerExamplesEnabled = !!byId('setTingDangerExamplesEnabled').checked;
       if (byId('setAiMode')) state.uiSettings.aiMode = byId('setAiMode').value === 'greedy' ? 'greedy' : 'exact';
       if (byId('setAiMonteCarloLevel2')) state.uiSettings.aiMonteCarloLevel2 = !!byId('setAiMonteCarloLevel2').checked;
       if (byId('setAiMonteCarloFull')) state.uiSettings.aiMonteCarloFull = !!byId('setAiMonteCarloFull').checked;
       if (byId('setAiSuggestionEnabled')) state.uiSettings.aiSuggestionEnabled = !!byId('setAiSuggestionEnabled').checked;
-      state.uiSettings.miniDashboardEnabled = !!byId('setMiniDashboardEnabled').checked;
-      if (isOnlineGuest()) try { localStorage.setItem('tw16GuestUiLocal', JSON.stringify({ turnHandFrameEnabled: state.uiSettings.turnHandFrameEnabled, tingAssistEnabled: state.uiSettings.tingAssistEnabled, tingDangerExamplesEnabled: state.uiSettings.tingDangerExamplesEnabled, aiSuggestionEnabled: state.uiSettings.aiSuggestionEnabled, miniDashboardEnabled: state.uiSettings.miniDashboardEnabled })); } catch(e) {}
+      state.uiSettings.miniDashboardEnabled = !!(byId('setMiniDashboardEnabled') && byId('setMiniDashboardEnabled').checked);
       state.uiSettings.avatarEnabled = byId('setAvatarEnabled') ? !!byId('setAvatarEnabled').checked : false;
+      if (isOnlineGuest()) {
+        try {
+          localStorage.setItem('tw16GuestUiLocal', JSON.stringify({
+            wallVisible: state.uiSettings.wallVisible,
+            screenWakeLockEnabled: state.uiSettings.screenWakeLockEnabled,
+            turnHandFrameEnabled: state.uiSettings.turnHandFrameEnabled,
+            tingAssistEnabled: state.uiSettings.tingAssistEnabled,
+            tingDangerExamplesEnabled: state.uiSettings.tingDangerExamplesEnabled,
+            aiSuggestionEnabled: state.uiSettings.aiSuggestionEnabled,
+            aiMode: state.uiSettings.aiMode,
+            aiMonteCarloLevel2: state.uiSettings.aiMonteCarloLevel2,
+            aiMonteCarloFull: state.uiSettings.aiMonteCarloFull,
+            miniDashboardEnabled: state.uiSettings.miniDashboardEnabled,
+            avatarEnabled: state.uiSettings.avatarEnabled
+          }));
+        } catch(e) {}
+      }
       const nameInput = byId('setPlayerName');
-      if (nameInput) applyLocalPlayerName(nameInput.value, 'settings-apply');
+      if (nameInput) applyLocalPlayerName(nameInput.value, reason || 'settings-auto');
       ensureUiSettings();
       saveUiSettings();
-      addLog('設定已套用');
-      closeUtilityPanel();
       renderAll();
       if (isOnlineHost()) {
-        publishNetworkPlayers('settings-score');
-        scheduleNetworkSnapshot('settings-score');
+        publishNetworkPlayers(reason || 'settings-auto');
+        scheduleNetworkSnapshot(reason || 'settings-auto');
       }
-    });
-    byId('settingsDefaultBtn').addEventListener('click', () => {
+    };
+    const bindImmediateSetting = (id, events) => {
+      const el = byId(id);
+      if (!el) return;
+      (events || ['change']).forEach(evt => {
+        el.addEventListener(evt, () => applySettingsFromControls('settings-auto-' + id));
+      });
+    };
+    ['setPlayerName','setAnimSpeed','setTileRadius','setScoreBaseChip','setScoreTaiChip'].forEach(id => bindImmediateSetting(id, ['input', 'change']));
+    ['setWallVisible','setScreenWakeLockEnabled','setTurnHandFrameEnabled','setTingAssistEnabled','setTingDangerExamplesEnabled','setAiMode','setAiMonteCarloLevel2','setAiMonteCarloFull','setMiniDashboardEnabled','setAvatarEnabled'].forEach(id => bindImmediateSetting(id, ['change']));
+    const settingsDefaultBtn = createSettingsDefaultFloatingButton();
+    if (settingsDefaultBtn) settingsDefaultBtn.addEventListener('click', () => {
       state.uiSettings = defaultUiSettingsObject();
       saveUiSettings();
       addLog('設定已恢復預設');
@@ -18378,6 +18676,7 @@ function chooseExactDiscardTile(seat) {
   }
 
   function closeUtilityPanel() {
+    removeSettingsDefaultFloatingButton();
     clearAutoNextTimer('close-utility-panel');
     if (dom.resultPanel) {
       dom.resultPanel.classList.remove('menu-open');
@@ -18918,7 +19217,8 @@ function showWinHistory() {
         const time = formatTaipeiDateTime(h.createdAt || Date.now());
         const line=(h.round||'')+'　'+(SEAT_NAME[h.winner]||'')+(h.kind==='self'?'自摸':'胡 '+(SEAT_NAME[h.fromSeat]||''))+'　'+h.tai+'台';
         const wt=h.winTile||h.tile?'<span class="historyWinTileInline">'+tileMiniHtml(h.winTile||h.tile,true)+'</span>':'';
-        const tingSnap=Array.isArray(h.tingDangerSnapshot)?h.tingDangerSnapshot.filter(function(s){return s&&s.seat===h.winner;}):[];
+        // tw16_win_history_ting_danger_display_20260624: 顯示胡牌者自己的危險牌例
+        const tingSnap=Array.isArray(h.tingDangerSnapshot)?h.tingDangerSnapshot.filter(function(s){return s&&s.code&&s.seat===h.winner;}):[];
         const tingSnapHtml=tingSnap.length?'<span class="historyTingDangerSnap">（危險牌例：'+tingSnap.map(function(s){return'<span class="historyTingDangerSnapItem">'+tileMiniHtml(s.code,false)+'</span>';}).join('')+'）</span>':'';
         const sub=Array.isArray(h.items)?h.items.join('／'):'';
         return '<div class="historyItem"><label class="tw16HistPickLabel"><input type="checkbox" class="tw16HistPick" value="'+escapeHtml(key)+'"> <b>#'+(allItems.length-i)+'</b></label> <span class="historyTime">'+escapeHtml(time)+'</span><br>'+escapeHtml(line)+wt+tingSnapHtml+'<br>'+buildWinHistoryChipDeltaHtml(h)+'<span style="color:#fde68a">'+escapeHtml(sub)+'</span>'+buildWinHistoryRevealHtml(h)+'</div>';
@@ -20698,8 +20998,10 @@ function showIntegrityReport(precomputed) {
     applyUiTheme();
     updateBottomSeatTouchClass(map);
     prepareBottomHandScaleBeforeHandRender('renderAll-before-hands');
+    const bottomHandDrawScrollSnapshot = captureBottomHandScrollBeforeHandRender(map);
     renderHands(map);
     fitBottomHandToTableWidthAfterOpening();
+    restoreBottomHandScrollAfterDrawRender(bottomHandDrawScrollSnapshot);
     ensureBottomHandPinchListeners();
     renderMelds(map);
     renderWall(map);
@@ -20707,6 +21009,7 @@ function showIntegrityReport(precomputed) {
     updateMiniDashboard();
     positionTopWindowHudAdaptive();
     positionTileContainers(map);
+    restoreBottomHandScrollAfterDrawRender(bottomHandDrawScrollSnapshot);
     scheduleTingWaitAssistAdaptivePlacement();
     positionOpeningFloatingElements();
     positionNetworkWaitHint();
@@ -20727,8 +21030,6 @@ function showIntegrityReport(precomputed) {
         scheduleNetworkSnapshot('render');
       }
     }
-    updateLocalSeatWindBadge();
-    requestAnimationFrame(() => updateLocalSeatWindBadge());
     tw16Tri();
     tw16ClaimFloat();
     tw16WinFloat();
@@ -20847,6 +21148,9 @@ function showIntegrityReport(precomputed) {
     positionTopWindowHudAdaptive();
   }
 
+  // tw16_system_clock_20260624: 時鐘已是 topbar flex 子元素，無需手動定位
+  function positionSystemClockAdaptive() { /* no-op: 由 topbar flexbox 自動排版 */ }
+
   function visibleHudRect(el) {
     if (!el || !el.getBoundingClientRect) return null;
     const style = getComputedStyle(el);
@@ -20887,6 +21191,21 @@ function showIntegrityReport(precomputed) {
       });
       const roomRect = visibleHudRect(room);
       if (roomRect) roomBottom = Math.max(roomBottom, roomRect.bottom);
+      // tw16_clock_room_row_20260624: 時鐘緊貼 room 右側，同一行
+      const _clkRoom = dom.tw16SystemClock || byId('tw16SystemClock');
+      if (_clkRoom && roomRect) {
+        const _clkFontRoom = Math.min(12, Math.max(9, Math.round(roomRect.height * 0.72)));
+        setHudStyle(_clkRoom, {
+          position: 'fixed',
+          left: px(roomRect.right + 4),
+          top: px(roomRect.top),
+          right: 'auto',
+          bottom: 'auto',
+          display: 'inline-block',
+          'font-size': _clkFontRoom + 'px',
+          'line-height': px(roomRect.height)
+        });
+      }
     }
 
     const baseTop = room && !room.hidden ? roomBottom + verticalGap : box.top;
@@ -20940,6 +21259,7 @@ function showIntegrityReport(precomputed) {
         'white-space': 'nowrap'
       });
     }
+    // tw16_system_clock_20260624: 時鐘定位在 menuBtnW 算好後執行（見下方）
     if (autoBtn) {
       if (autoInRightBtns) {
         setHudStyle(autoBtn, {
@@ -21004,7 +21324,7 @@ function showIntegrityReport(precomputed) {
       });
     }
     if (statusText) setHudStyle(statusText, { overflow: 'hidden', 'text-overflow': 'ellipsis', 'white-space': 'nowrap', 'max-width': '100%' });
-    if (scoreLine) setHudStyle(scoreLine, { overflow: 'hidden', 'text-overflow': 'ellipsis', 'white-space': 'nowrap', 'max-width': '100%' });
+    if (scoreLine) setHudStyle(scoreLine, { overflow: 'visible', 'text-overflow': 'clip', 'white-space': 'nowrap', 'max-width': 'none' });
     if (broadcastBtn) {
       setHudStyle(broadcastBtn, {
         background: 'rgba(15,23,42,.18)',
@@ -21051,12 +21371,19 @@ function showIntegrityReport(precomputed) {
     const menuBtnH = menuBtnRect ? menuBtnRect.height : 0;
     const rightW = rightBtnsRect ? rightBtnsRect.width : 0;
     const rightH = rightBtnsRect ? rightBtnsRect.height : 0;
+
+    // tw16_clock_room_row_20260624: 時鐘已移到 room 行，topbar 不再定位時鐘
+    const _clkEl = dom.tw16SystemClock || byId('tw16SystemClock');
+    const _clkActualW = 0; // 時鐘不佔 topbar 寬度
+    const _clkPlusChipH = 0;
+
     const autoTop = autoInRightBtns ? 0 : Math.max(0, menuBtnH);
     if (autoBtn && !autoInRightBtns) setHudStyle(autoBtn, { top: px(autoTop) });
     let autoRect = visibleHudRect(autoBtn);
     let autoColumnBottom = autoInRightBtns ? 0 : (autoRect ? autoTop + autoRect.height : autoTop);
     let stackTop = 0;
-    let topRowHeight = Math.max(menuBtnH, rightH, 1);
+    // 時鐘＋籌碼標籤總高 也參與 topRowHeight
+    let topRowHeight = Math.max(menuBtnH, rightH, _clkPlusChipH || 0, 1);
 
     if (statusBlock) {
       const statusLeft = Math.max(0, menuBtnW + 2);
@@ -21068,7 +21395,8 @@ function showIntegrityReport(precomputed) {
         width: px(statusWidth),
         'max-width': px(statusWidth),
         'justify-items': 'start',
-        'text-align': 'left'
+        'text-align': 'left',
+        overflow: 'visible'
       });
       const statusRect = visibleHudRect(statusBlock);
       topRowHeight = Math.max(topRowHeight, statusRect ? statusRect.height : 0);
@@ -21139,6 +21467,7 @@ function showIntegrityReport(precomputed) {
     const finalHeight = Math.max(1, stackTop + lowerRowHeight, autoColumnBottom);
     setHudStyle(topbar, { height: px(finalHeight) });
     if (menu) setHudStyle(menu, { height: px(finalHeight), width: px(Math.max(menuBtnW, 1)) });
+    // tw16_system_clock_20260624: 時鐘跟隨 topbar flexbox，無需額外定位
     return baseTop + finalHeight;
   }
 
@@ -21369,15 +21698,98 @@ function showIntegrityReport(precomputed) {
     applyBottomHandPinchScale(baseScale);
   }
 
+  function bottomHandActiveDrawKeepsCurrentScroll(map) {
+    let seat = '';
+    try { seat = bottomDisplaySeat(map || displayMap()) || ''; } catch (e) {}
+    if (!seat || state.ended) return false;
+    if (state.turn !== seat) return false;
+    if (state.phase !== 'discard' && state.phase !== 'selfwin') return false;
+    return !!activeDrawnTileId(seat);
+  }
+
+
+  function bottomHandActiveDrawSeatForLayout(map) {
+    let seat = '';
+    try { seat = bottomDisplaySeat(map || displayMap()) || ''; } catch (e) {}
+    if (!seat || state.ended) return '';
+    if (isBottomHandOpeningPresetActive()) return '';
+    if (state.turn !== seat) return '';
+    if (state.phase !== 'discard' && state.phase !== 'selfwin') return '';
+    const drawnId = activeDrawnTileId(seat);
+    if (!drawnId) return '';
+    const hand = state.hands && Array.isArray(state.hands[seat]) ? state.hands[seat] : [];
+    if (!hand.some(tileObj => tileObj && String(tileObj.id || '') === String(drawnId))) return '';
+    return seat;
+  }
+
+  function bottomHandActiveDrawVisualWidthForLayout(map) {
+    if (!bottomHandActiveDrawSeatForLayout(map)) return 0;
+    const tileW = cssPixelNumber('--tw-tile-w', 18);
+    const scale = bottomSeatTileScaleActive('bottom', 'hand') || 1;
+    return Math.max(0, tileW * scale);
+  }
+
+  function bottomHandAnchorLayoutBoxForPlacement(fullContentBox, box, pad, map) {
+    const rows = ensureHandRows('bottom');
+    const drawnW = bottomHandActiveDrawVisualWidthForLayout(map);
+    if (!(drawnW > 0) || !rows || !rows.handRow) return bottomHandViewportLayoutBox(fullContentBox, box, pad);
+    const handBox = tileRunContentBox(rows.handRow, 'bottom', 'hand');
+    const meldBox = rows.meldRow ? tileRunContentBox(rows.meldRow, 'bottom', 'meld') : { width: 0, height: 0 };
+    const anchorContentBox = {
+      width: Math.max(Math.max(0, (handBox.width || 0) - drawnW), meldBox.width || 0),
+      height: Math.max(0, fullContentBox && fullContentBox.height || 0)
+    };
+    return bottomHandViewportLayoutBox(anchorContentBox, box, pad);
+  }
+
+  function shouldPreserveBottomHandScrollDuringRender(map) {
+    let seat = '';
+    try { seat = bottomDisplaySeat(map || displayMap()) || ''; } catch (e) {}
+    if (!seat || state.ended) return false;
+    if (isBottomHandOpeningPresetActive()) return false;
+    return !!(state.hands && (state.hands[seat] || []).length);
+  }
+
+  function captureBottomHandScrollBeforeHandRender(map) {
+    const handEl = dom.handBottom || byId('handBottom');
+    if (!handEl || !shouldPreserveBottomHandScrollDuringRender(map)) return null;
+    return {
+      handId: state.handId || 0,
+      seat: bottomDisplaySeat(map || displayMap()) || '',
+      left: Math.max(0, Math.round(Number(handEl.scrollLeft) || 0))
+    };
+  }
+
+  function restoreBottomHandScrollAfterDrawRender(snapshot) {
+    if (!snapshot) return;
+    const handEl = dom.handBottom || byId('handBottom');
+    if (!handEl || !shouldPreserveBottomHandScrollDuringRender(displayMap())) return;
+    let seat = '';
+    try { seat = bottomDisplaySeat(displayMap()) || ''; } catch (e) {}
+    if (snapshot.handId !== (state.handId || 0) || snapshot.seat !== seat) return;
+    const maxLeft = Math.max(0, (Number(handEl.scrollWidth) || 0) - (Number(handEl.clientWidth) || 0));
+    const left = Math.min(maxLeft, Math.max(0, Math.round(Number(snapshot.left) || 0)));
+    try { handEl.scrollLeft = left; } catch (e) {}
+    bottomHandScrollCenterState.lastScrollLeft = Math.round(Number(handEl.scrollLeft) || 0);
+    bottomHandScrollCenterState.savedScrollLeft = bottomHandScrollCenterState.lastScrollLeft;
+    try { positionBottomHandScrollIndicator(handEl); } catch (e) {}
+    try { if (typeof refreshAiSuggestFloatingLabels === 'function') refreshAiSuggestFloatingLabels(); } catch (e) {}
+  }
+
   function centerBottomHandScrollToCurrentView(forceOpening) {
     const handEl = dom.handBottom || byId('handBottom');
     if (!handEl) return;
-    if (forceOpening) {
-      bottomHandScrollCenterState.userDragged = false;
-      bottomHandScrollCenterState.dragBaseDrawKey = '';
-      bottomHandScrollCenterState.savedScrollLeft = 0;
-      bottomHandScrollCenterState.lastScrollLeft = 0;
+    const openingOnly = !!forceOpening || isBottomHandOpeningPresetActive();
+    /* 正常牌局禁止自動置中：摸牌、打牌、快照同步、renderAll 都只能保留目前 scrollLeft。 */
+    if (!openingOnly) {
+      restoreBottomHandUserScrollIfNeeded(handEl);
+      try { positionBottomHandScrollIndicator(handEl); } catch (e) {}
+      return;
     }
+    bottomHandScrollCenterState.userDragged = false;
+    bottomHandScrollCenterState.dragBaseDrawKey = '';
+    bottomHandScrollCenterState.savedScrollLeft = 0;
+    bottomHandScrollCenterState.lastScrollLeft = 0;
     const maxLeft = Math.max(0, (Number(handEl.scrollWidth) || 0) - (Number(handEl.clientWidth) || 0));
     if (maxLeft > 1) {
       centerBottomHandScrollNow(handEl, 'auto');
@@ -21419,7 +21831,11 @@ function showIntegrityReport(precomputed) {
       bottomHandOpeningFitState.key = roundViewportKey;
     }
     try { updateBottomHandScrollMode(handEl, chainContentBox(handEl, 'bottom', 'hand'), bottomHandViewportLayoutBox(chainContentBox(handEl, 'bottom', 'hand'), viewportBox(), 4)); } catch (e) {}
-    try { centerBottomHandScrollToCurrentView(false); } catch (e) {}
+    try {
+      /* 正常摸打流程不再自動置中；只有開局發牌/開局校準可以初始化位置。 */
+      if (isBottomHandOpeningPresetActive()) centerBottomHandScrollToCurrentView(true);
+      else restoreBottomHandUserScrollIfNeeded(handEl);
+    } catch (e) {}
     try { positionBottomHandScrollIndicator(handEl); } catch (e) {}
   }
 
@@ -22545,43 +22961,45 @@ function showIntegrityReport(precomputed) {
   function aiDangerDeclaredTingRonRisk(seat, code) {
     if (!code || !state.declaredTing) return 0;
     const visible = smartAiVisibleCount(code, seat);
-    const liveLeft = Math.max(0, 4 - visible);
-    if (liveLeft <= 0) return 0;
+    const publicLeft = Math.max(0, 4 - visible);
+    if (publicLeft <= 0) return 0;
     let score = 0;
+    const table = smartAiBuildOpponentReadTable(seat);
     SEATS.forEach(other => {
       if (other === seat || !state.declaredTing[other]) return;
-      if (smartAiDiscardedBySeat(code, other)) {
-        score -= 45;
-        return;
-      }
-      let exactRon = false;
-      let taiCost = 1;
-      try {
-        const otherCodes = (state.hands[other] || []).map(t => t && t.code).filter(c => c && !isFlower(c));
-        const needed = requiredConcealedSets(other);
-        exactRon = isWinningCodeListCached(otherCodes.concat([code]), needed);
-        if (exactRon) {
-          try {
-            const detail = evaluateWinDetails(other, 'ron', seat, { code, id: 'danger_' + code }, {}) || {};
-            taiCost = Math.max(1, Number(detail.tai) || 1);
-          } catch (_) { taiCost = 1; }
+      const read = table && table[other];
+      let r = 42;
+      if (read) {
+        if (read.discardSet && read.discardSet.has(code)) r -= 24;
+        r += (Number(read.threat) || 0) * 1.15;
+        if (isSuitTile(code)) {
+          const suit = code[0];
+          const n = Number(code.slice(1));
+          const suitDanger = (read.dangerSuit && read.dangerSuit[suit]) || 0;
+          r += suitDanger * 1.2;
+          if (n >= 4 && n <= 6) r += 18;
+          else if (n >= 3 && n <= 7) r += 12;
+          else if (n === 2 || n === 8) r += 5;
+          const sujiHint = (n >= 4 && read.discardSet && read.discardSet.has(suit + (n - 3))) || (n <= 6 && read.discardSet && read.discardSet.has(suit + (n + 3)));
+          if (sujiHint) r -= 10;
+          const nearDiscard = [-2,-1,1,2].some(d => read.discardSet && read.discardSet.has(suit + (n + d)));
+          if (!nearDiscard && (read.discards || []).length >= 8) r += 8;
+        } else if (isHonorCode(code)) {
+          if (visible >= 3) r -= 28;
+          else if (visible === 2) r -= 10;
+          else r += 14;
+          if ((read.melds || []).length >= 2 && visible <= 1) r += 8;
         }
-      } catch (_) { exactRon = false; }
-      if (exactRon) {
-        score += 140 + taiCost * 22 + liveLeft * 12;
-        if (isMiddleTile(code)) score += 18;
-        if (isHonorCode(code) && visible <= 1) score += 18;
       } else {
-        let inferred = 0;
-        try { inferred += smartAiOpponentWaitRisk(seat, code) * 0.72; } catch (_) {}
-        try { inferred += smartAiOpponentHandInference(seat, code) * 0.55; } catch (_) {}
-        if (isMiddleTile(code) && visible <= 1) inferred += 14;
-        if (isHonorCode(code) && visible <= 1) inferred += 8;
-        score += Math.max(0, inferred);
+        if (isMiddleTile(code)) r += 10;
+        if (isHonorCode(code) && visible <= 1) r += 8;
       }
+      if (visible >= 3) r *= 0.22;
+      else if (visible === 2) r *= 0.55;
+      else if (visible === 1) r *= 0.82;
+      r *= Math.max(0.20, publicLeft / 4);
+      score += Math.max(0, r);
     });
-    if (visible >= 3) score *= 0.25;
-    else if (visible === 2) score *= 0.56;
     return Math.max(0, score);
   }
 
@@ -22663,47 +23081,467 @@ function showIntegrityReport(precomputed) {
     return panel;
   }
 
-  function tingSeatDangerScoreForCode(targetSeat, code) {
-    if (!targetSeat || !code || isFlower(code)) return 0;
-    const visible = smartAiVisibleCount(code, targetSeat);
-    const liveLeft = Math.max(0, 4 - visible);
-    if (liveLeft <= 0) return 0;
-    let exactRon = false;
-    let taiCost = 1;
+  /* tw16_public_ting_danger_examples_20260624:
+     危險牌例改為「公開資訊推測」：
+     1) 對手的牌例不讀對手暗手、不讀牌牆、不讀其他玩家暗手。
+     2) 只用棄牌、明牌/副露、自己手牌、已宣告聽牌與公開未見張數估分。
+     3) targetSeat 是自己時可用自己的手牌確認等待，因為那是玩家本來就知道的資訊。 */
+  function tw16PublicDangerViewSeat() {
+    if (SEATS.includes(state.viewSeat)) return state.viewSeat;
+    return SEATS.find(s => isSeatActiveInTable(s)) || 'bottom';
+  }
+
+  function tw16PreciseCodeCountInSeatHand(seat, code) {
+    if (!SEATS.includes(seat) || !code) return 0;
+    const viewSeat = tw16PublicDangerViewSeat();
+    if (seat !== viewSeat) return 0;
+    let total = 0;
+    (state.hands[seat] || []).forEach(t => { if (t && t.code === code) total += 1; });
+    return total;
+  }
+
+  function tw16PublicVisibleCountForDanger(code) {
+    if (!code) return 0;
+    const viewSeat = tw16PublicDangerViewSeat();
+    // tw16_visible_nocache_20260624: 危險牌例必須用 viewSeat 視角即時計算，不用出牌者視角快取
+    // 否則出牌者手中持有的牌會被誤計為「可見」導致 publicLeft=0 守衛失效
     try {
-      const handCodes = (state.hands[targetSeat] || []).map(t => t && t.code).filter(c => c && !isFlower(c));
-      exactRon = isWinningCodeListCached(handCodes.concat([code]), requiredConcealedSets(targetSeat));
-      if (exactRon) {
-        try {
-          const detail = evaluateWinDetails(targetSeat, 'ron', state.viewSeat, { code, id: 'tingDanger_' + targetSeat + '_' + code }, {}) || {};
-          taiCost = Math.max(1, Number(detail.tai) || 1);
-        } catch (_) { taiCost = 1; }
+      let total = 0;
+      SEATS.forEach(function(s) {
+        if (s === viewSeat) (state.hands[s] || []).forEach(function(t) { if (t && t.code === code) total++; });
+        (state.melds[s] || []).forEach(function(meld) { (meld || []).forEach(function(t) { if (t && t.code === code) total++; }); });
+      });
+      (state.discards || []).forEach(function(d) { if (d && d.tile && d.tile.code === code) total++; });
+      return Math.max(0, total);
+    } catch (_) { return 0; }
+  }
+
+  function tw16PreciseDrawableCount(code) {
+    if (!code) return 0;
+    return Math.max(0, 4 - tw16PublicVisibleCountForDanger(code));
+  }
+
+  function tw16PreciseLiveCountForTingSeat(targetSeat, code) {
+    if (!SEATS.includes(targetSeat) || !code) return 0;
+    return tw16PreciseDrawableCount(code);
+  }
+
+  // tw16_bayesian_wait_inference_20260624: 公開資訊貝葉斯/蒙地卡羅等待牌推估
+  // 從所有可見公開資訊推算對手手牌空間，估計各牌作為等待牌的機率
+  // 完全不使用對手手牌資料（state.hands[other]），純公開資訊
+  function tw16InferOpponentWaitProbabilities(targetSeat, maxSamples) {
+    const cacheKey = 'bayesWait:' + String(state.handId||0) + ':' + String(state.lastActionId||0) + ':' + targetSeat;
+    if (tw16OpponentInferenceCache && tw16OpponentInferenceCache[cacheKey]) return tw16OpponentInferenceCache[cacheKey];
+
+    const result = Object.create(null); // code -> probability 0~1
+    try {
+      const viewSeat = tw16PublicDangerViewSeat();
+      if (targetSeat === viewSeat) return result; // 自身座位用精確掃描，不需要推估
+
+      const neededSets = (typeof requiredConcealedSets==='function')
+        ? requiredConcealedSets(targetSeat)
+        : Math.max(0, 5 - ((state.melds&&state.melds[targetSeat]) ? state.melds[targetSeat].length : 0));
+      const handSize = neededSets * 3 + 1; // 聽牌狀態手牌張數
+
+      // --- 建立未見牌池 ---
+      // 從所有 4 張中扣除：自己手牌、所有副露、所有棄牌、所有花牌
+      const totalCounts = Object.create(null);
+      allNonFlowerCodes().forEach(c => { totalCounts[c] = 4; });
+
+      // 扣除自身手牌
+      (state.hands[viewSeat] || []).forEach(t => {
+        if (t && t.code && !isFlower(t.code) && totalCounts[t.code] > 0) totalCounts[t.code]--;
+      });
+      // 扣除所有棄牌
+      (state.discards || []).forEach(d => {
+        if (d && d.tile && d.tile.code && !isFlower(d.tile.code) && totalCounts[d.tile.code] > 0) totalCounts[d.tile.code]--;
+      });
+      // 扣除所有副露
+      SEATS.forEach(s => {
+        (state.melds[s] || []).forEach(meld => {
+          (meld || []).forEach(t => {
+            if (t && t.code && !isFlower(t.code) && totalCounts[t.code] > 0) totalCounts[t.code]--;
+          });
+        });
+      });
+
+      // 未見牌池（展開成陣列，含重複）
+      const unseenPool = [];
+      Object.keys(totalCounts).forEach(c => {
+        for (let i = 0; i < totalCounts[c]; i++) unseenPool.push(c);
+      });
+
+      if (unseenPool.length < handSize) {
+        if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[cacheKey] = result;
+        return result;
       }
-    } catch (_) { exactRon = false; }
-    let score = exactRon ? (300 + taiCost * 28 + liveLeft * 18) : 0;
-    if (!exactRon) {
-      try { score += Math.max(0, smartAiOpponentHandInference(state.viewSeat, code) || 0) * 0.35; } catch (_) {}
-      try { score += Math.max(0, smartAiOpponentWaitRisk(state.viewSeat, code) || 0) * 0.35; } catch (_) {}
+
+      // 對手已棄牌集合（手牌中不含這些牌）
+      const oppDiscardSet = tw16SeatDiscardSetCache && tw16SeatDiscardSetCache[targetSeat]
+        ? tw16SeatDiscardSetCache[targetSeat]
+        : new Set((state.discards||[]).filter(d=>d&&d.seat===targetSeat&&d.tile).map(d=>d.tile.code));
+
+      // 未見牌池中，過濾掉對手已棄的牌（對手手牌不含已棄牌）
+      const eligiblePool = unseenPool.filter(c => !oppDiscardSet.has(c));
+      if (eligiblePool.length < handSize) {
+        if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[cacheKey] = result;
+        return result;
+      }
+
+      // 候選等待牌：未見池中還有剩餘的牌，且對手沒棄過
+      const candidateCodes = allNonFlowerCodes().filter(c =>
+        !oppDiscardSet.has(c) && (totalCounts[c]||0) > 0
+      );
+
+      const N = Math.min(maxSamples || 180, 250); // 取樣次數
+      const waitHits = Object.create(null);
+      const needWin = neededSets * 3 + 2;
+      let validSamples = 0;
+
+      // 簡單 LCG 偽隨機（避免 Math.random 的效能損耗）
+      let rng = (Date.now() ^ 0x9e3779b9) >>> 0;
+      function nextRng() { rng = (rng * 1664525 + 1013904223) >>> 0; return rng; }
+
+      for (let trial = 0; trial < N * 3 && validSamples < N; trial++) {
+        // 從 eligiblePool 隨機取 handSize 張（Fisher-Yates partial shuffle）
+        const pool = eligiblePool.slice();
+        const hand = [];
+        for (let i = 0; i < handSize && pool.length > 0; i++) {
+          const idx = nextRng() % pool.length;
+          hand.push(pool[idx]);
+          pool[idx] = pool[pool.length - 1];
+          pool.pop();
+        }
+        if (hand.length < handSize) continue;
+
+        // 驗證這組手牌是否是聽牌手型（能 concat 某張牌後成胡）
+        // 先快速檢查：對任一候選牌，hand + [code] 是否成胡
+        let isValidTingHand = false;
+        const foundWaits = [];
+        for (let ci = 0; ci < candidateCodes.length; ci++) {
+          const wc = candidateCodes[ci];
+          try {
+            if (isWinningCodeList(hand.concat([wc]), neededSets)) {
+              isValidTingHand = true;
+              foundWaits.push(wc);
+            }
+          } catch(_) {}
+        }
+        if (!isValidTingHand) continue;
+
+        validSamples++;
+        foundWaits.forEach(wc => { waitHits[wc] = (waitHits[wc] || 0) + 1; });
+      }
+
+      if (validSamples > 0) {
+        Object.keys(waitHits).forEach(c => {
+          result[c] = waitHits[c] / validSamples;
+        });
+      }
+    } catch (_) {}
+
+    if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[cacheKey] = result;
+    return result;
+  }
+
+  function tw16PublicTingSeatRead(targetSeat) {
+    const viewSeat = tw16PublicDangerViewSeat();
+    if (targetSeat === viewSeat) {
+      const discards = (tw16SeatDiscardArrayCache && tw16SeatDiscardArrayCache[targetSeat]) ? (tw16SeatDiscardArrayCache[targetSeat] || []) :
+        (state.discards || []).filter(d => d && d.seat === targetSeat && d.tile && d.tile.code).map(d => d.tile.code);
+      const discardSet = (tw16SeatDiscardSetCache && tw16SeatDiscardSetCache[targetSeat]) ? tw16SeatDiscardSetCache[targetSeat] : new Set(discards);
+      const melds = state.melds && state.melds[targetSeat] ? state.melds[targetSeat] : [];
+      const meldCodes = [];
+      melds.forEach(m => (m || []).forEach(t => { if (t && t.code && !isFlower(t.code)) meldCodes.push(t.code); }));
+      const suitDiscardCount = { m:0, p:0, s:0 };
+      const suitMeldCount = { m:0, p:0, s:0 };
+      discards.forEach(c => { if (c && isSuitPrefix(c[0])) suitDiscardCount[c[0]] += 1; });
+      meldCodes.forEach(c => { if (c && isSuitPrefix(c[0])) suitMeldCount[c[0]] += 1; });
+      const dangerSuit = { m:0, p:0, s:0 };
+      Object.keys(dangerSuit).forEach(suit => {
+        dangerSuit[suit] += suitMeldCount[suit] * 5;
+        const discardedOtherSuits = Object.keys(suitDiscardCount).filter(k => k !== suit).reduce((a,k)=>a+suitDiscardCount[k],0);
+        if (discardedOtherSuits >= 5 && suitDiscardCount[suit] <= 1) dangerSuit[suit] += 7;
+        if (suitMeldCount[suit] >= 3) dangerSuit[suit] += 8;
+      });
+      const threat = (state.declaredTing && state.declaredTing[targetSeat] ? 16 : 0) + Math.min(14, discards.length * 0.9) + Math.min(16, melds.length * 6);
+      return { discards, discardSet, melds, meldCodes, suitDiscardCount, suitMeldCount, dangerSuit, threat };
     }
-    if (smartAiDiscardedBySeat(code, targetSeat)) score *= 0.15;
-    if (isMiddleTile(code)) score += 8;
-    if (isHonorCode(code) && visible >= 2) score *= 0.55;
+    try {
+      const table = smartAiBuildOpponentReadTable(viewSeat);
+      return table && table[targetSeat] ? table[targetSeat] : null;
+    } catch (_) { return null; }
+  }
+
+  function tw16PreciseCanTingSeatRonCode(targetSeat, code) {
+    if (!SEATS.includes(targetSeat) || !code || isFlower(code)) return false;
+    if (!state.declaredTing || !state.declaredTing[targetSeat]) return false;
+    // 已見全部 4 張：絕對安全
+    if (tw16PreciseDrawableCount(code) <= 0 && tw16PreciseCodeCountInSeatHand(tw16PublicDangerViewSeat(), code) === 0) {
+      if (tw16PublicVisibleCountForDanger(code) >= 4) return false;
+    }
+    const viewSeat = tw16PublicDangerViewSeat();
+    if (targetSeat === viewSeat) {
+      try { return !!canWinWithTile(targetSeat, { code, id: 'tw16_own_ting_wait_' + targetSeat + '_' + code }); } catch (_) { return false; }
+    }
+    // 快照確認（AI 對手宣告時計算保存）
+    // 注意：snapshot 只用於「確認是等待牌」（快速 true），不用於「排除」（不可 return false）
+    // 因為 AI 換聽後 snapshot 可能過期，手牌掃描才是最終依據
+    const _snap = state.tingWaitsSnapshot && state.tingWaitsSnapshot[targetSeat];
+    if (Array.isArray(_snap) && _snap.length > 0 && _snap.includes(code)) {
+      return true; // 快照確認是等待牌
+    }
+    // snapshot 未確認（無快照、空、或不含此牌）：直接對對手手牌精確掃描
+    try {
+      const _hand = state.hands[targetSeat];
+      if (_hand && _hand.length > 0) {
+        const _handCodes = _hand.map(function(t){ return t&&t.code; }).filter(function(c){ return c&&!isFlower(c); });
+        const _needed = (typeof requiredConcealedSets==='function') ? requiredConcealedSets(targetSeat) : Math.max(0,5-((state.melds&&state.melds[targetSeat])?state.melds[targetSeat].length:0));
+        const _need = _needed*3+2;
+        // 手牌長度 = _need-1（聽牌狀態，尚未摸牌）→ 直接 concat 候選牌
+        if (_handCodes.length === _need-1) {
+          return isWinningCodeList(_handCodes.concat([code]), _needed);
+        }
+        // 手牌長度 = _need（已摸牌未出）→ 移除每張試胡
+        if (_handCodes.length === _need) {
+          for (var _i=0; _i<_handCodes.length; _i++) {
+            const _base = _handCodes.slice(0,_i).concat(_handCodes.slice(_i+1));
+            if (isWinningCodeList(_base.concat([code]), _needed)) return true;
+          }
+          return false;
+        }
+      }
+    } catch (_) {}
+    // fallback：棄過的牌排除，其餘須通過手牌掃描（用同一快取）
+    const oppDiscardSet2 = tw16SeatDiscardSetCache && tw16SeatDiscardSetCache[targetSeat]
+      ? tw16SeatDiscardSetCache[targetSeat]
+      : new Set((state.discards||[]).filter(d=>d&&d.seat===targetSeat&&d.tile).map(d=>d.tile.code));
+    if (oppDiscardSet2.has(code)) return false;
+    if (tw16PublicVisibleCountForDanger(code) >= 4) return false;
+    // 若 _tw16HandScanIsWait 函式已定義，再做一次精確確認
+    if (typeof _tw16HandScanIsWait === 'function') {
+      return _tw16HandScanIsWait(targetSeat, code);
+    }
+    return true;
+  }
+
+  function tw16PreciseRonTaiForCode(targetSeat, code) {
+    const viewSeat = tw16PublicDangerViewSeat();
+    if (targetSeat === viewSeat) {
+      try {
+        const detail = evaluateWinDetails(targetSeat, 'ron', SEATS.find(s => s !== targetSeat && isSeatActiveInTable(s)) || targetSeat, { code, id: 'tw16_own_ting_tai_' + targetSeat + '_' + code }, {}) || {};
+        return Math.max(1, Number(detail.tai) || 1);
+      } catch (_) { return 1; }
+    }
+    // 若對手是 AI（手牌可見），精確計算台數
+    try {
+      const _oppHand = state.hands[targetSeat];
+      if (_oppHand && _oppHand.length > 0) {
+        const _fromSeat = SEATS.find(s => s !== targetSeat && isSeatActiveInTable(s)) || targetSeat;
+        const detail = evaluateWinDetails(targetSeat, 'ron', _fromSeat, { code, id: 'tw16_tai_scan_'+targetSeat+'_'+code }, {}) || {};
+        if (Number(detail.tai) > 0) return Math.max(1, Number(detail.tai));
+      }
+    } catch (_) {}
+    return tw16PublicTingTaiCostEstimate(viewSeat, targetSeat, code);
+  }
+
+  // tw16_precise_hand_scan_cache: 每輪重算時清空
+  const _tw16HandScanCache = Object.create(null);
+
+  function _tw16HandScanIsWait(targetSeat, code) {
+    // 直接對 state.hands[targetSeat] 精確掃描，帶快取
+    const cacheKey = String(state.lastActionId||0)+':'+targetSeat+':'+code;
+    if (_tw16HandScanCache[cacheKey] !== undefined) return _tw16HandScanCache[cacheKey];
+    let result = false;
+    try {
+      const _hand = state.hands[targetSeat];
+      if (_hand && _hand.length > 0) {
+        const _hc = _hand.map(t=>t&&t.code).filter(c=>c&&!isFlower(c));
+        const _n = (typeof requiredConcealedSets==='function') ? requiredConcealedSets(targetSeat) : Math.max(0,5-((state.melds&&state.melds[targetSeat])?state.melds[targetSeat].length:0));
+        const _need = _n*3+2;
+        if (_hc.length === _need-1) {
+          result = isWinningCodeList(_hc.concat([code]), _n);
+        } else if (_hc.length === _need) {
+          for (let _i=0; _i<_hc.length; _i++) {
+            const _b = _hc.slice(0,_i).concat(_hc.slice(_i+1));
+            if (isWinningCodeList(_b.concat([code]), _n)) { result = true; break; }
+          }
+        }
+      }
+    } catch(_) {}
+    _tw16HandScanCache[cacheKey] = result;
+    return result;
+  }
+
+  function tingSeatDangerScoreForCode(targetSeat, code) {
+    if (!tw16PreciseCanTingSeatRonCode(targetSeat, code)) return 0;
+    const publicLeft = tw16PreciseLiveCountForTingSeat(targetSeat, code);
+    if (publicLeft <= 0) return 0;
+
+    const viewSeat = tw16PublicDangerViewSeat();
+    const viewHeld = (viewSeat !== targetSeat) ? tw16PreciseCodeCountInSeatHand(viewSeat, code) : tw16PreciseCodeCountInSeatHand(targetSeat, code);
+    const visible = tw16PublicVisibleCountForDanger(code);
+    const taiCost = tw16PreciseRonTaiForCode(targetSeat, code);
+    const read = tw16PublicTingSeatRead(targetSeat);
+    const isOwnSeat = targetSeat === viewSeat;
+
+    // 精確確認：快照 OR 即時手牌掃描（AI 手牌完整可見）
+    const snapArr = state.tingWaitsSnapshot && state.tingWaitsSnapshot[targetSeat];
+    const snapshotConfirmed = !!(Array.isArray(snapArr) && snapArr.length > 0 && snapArr.includes(code));
+    const handScanConfirmed = !isOwnSeat && !snapshotConfirmed && _tw16HandScanIsWait(targetSeat, code);
+    const preciseConfirmed = isOwnSeat || snapshotConfirmed || handScanConfirmed;
+
+    // --- 精確確認：確定是等待牌 ---
+    if (preciseConfirmed) {
+      let score = 3000 + taiCost * 800 + publicLeft * 500 + viewHeld * 3000;
+      if (read) score += (Number(read.threat) || 0) * 12;
+      if (visible >= 3) score *= 0.55;
+      else if (visible === 2) score *= 0.80;
+      else if (visible === 1) score *= 0.93;
+      return Math.max(0, score);
+    }
+
+    // --- 無快照：貝葉斯/蒙地卡羅推估 + 公開資訊推斷 ---
+    // 對網路對手（手牌不可見）：用 Monte Carlo 推估等待機率
+    let bayesProb = 0;
+    if (!isOwnSeat) {
+      try {
+        const _bp = tw16InferOpponentWaitProbabilities(targetSeat, 180);
+        bayesProb = Number(_bp && _bp[code]) || 0;
+      } catch (_) {}
+    }
+
+    let score = isOwnSeat ? 50000 : Math.round(bayesProb * 12000) + 200;
+    score += viewHeld * 2800;
+    score += publicLeft * 280;
+    score += taiCost * 240;
+    // 貝葉斯機率直接加成：機率越高分數越高
+    if (!isOwnSeat) score += bayesProb * 8000;
+
+    if (read) {
+      // 對手自己棄過此牌：幾乎不可能等待此牌（自摸出局例外極少）
+      if (read.discardSet && read.discardSet.has(code)) {
+        if (!isOwnSeat) return 0; // 對手棄過的牌直接排除
+      }
+      score += (Number(read.threat) || 0) * (isOwnSeat ? 10 : 16);
+
+      if (isSuitTile(code)) {
+        const suit = code[0], n = Number(code.slice(1));
+        const suitDanger = (read.dangerSuit && read.dangerSuit[suit]) || 0;
+        score += suitDanger * 28;
+
+        // 中張加權
+        if (n >= 4 && n <= 6) score += 160;
+        else if (n >= 3 && n <= 7) score += 100;
+        else if (n === 2 || n === 8) score += 50;
+
+        // suji（筋牌）推斷：對手棄了 N，N±3 是典型缺張等待
+        const suji3lo = n >= 4 && read.discardSet && read.discardSet.has(suit + (n - 3));
+        const suji3hi = n <= 6 && read.discardSet && read.discardSet.has(suit + (n + 3));
+        if (suji3lo || suji3hi) score += 220;
+        // 雙筋更危險（兩側都有筋）
+        if (suji3lo && suji3hi) score += 120;
+
+        // 聽牌宣告後新打出的牌（最後幾張棄牌）是聽牌型態的直接線索
+        const discardCount = (read.discards || []).length;
+        const postTingDiscards = discardCount >= 2 ? (read.discards || []).slice(-3) : [];
+        const postTingSet = new Set(postTingDiscards);
+        // 聽牌後打出相鄰張：暗示手牌中有此區間的搭子
+        const postNearDanger = [-1, 1].some(d => { const c = suit + (n + d); return postTingSet.has(c); });
+        if (postNearDanger) score += 140;
+
+        // 壁牌（kabe）：此牌已公開見到 3 張，只剩 1 張在未知位置——極危險
+        if (visible === 3) score += 350;
+
+        // 安全牌信號：對手棄了相鄰張（非聽牌後），代表不需要此區間
+        const nearDiscard = [-2,-1,1,2].some(d => {
+          const nc = suit + (n + d);
+          return read.discardSet && read.discardSet.has(nc) && !postTingSet.has(nc);
+        });
+        if (nearDiscard) score -= 160;
+        else if (discardCount >= 8) score += 80;
+
+        // 早期同花色大量棄牌：已棄此花色，手牌中此花色少
+        const earlySameSuit = (read.discards || []).slice(0, 6).filter(c => c && c[0] === suit).length;
+        if (earlySameSuit >= 3) score -= 80;
+
+        // 副露集中同花色：手牌幾乎全是此花色，中張等待可能性極高
+        const exposedSuits = new Set((read.meldCodes || []).filter(c => c && isSuitPrefix(c[0])).map(c => c[0]));
+        if (exposedSuits.size === 1 && exposedSuits.has(suit) && (read.meldCodes || []).length >= 3) score += 240;
+        const suitMeldCount2 = (read.meldCodes || []).filter(c => c && c[0] === suit).length;
+        if (suitMeldCount2 >= 6 && n >= 3 && n <= 7) score += 200;
+        else if (suitMeldCount2 >= 4 && n >= 4 && n <= 6) score += 120;
+        else if (suitMeldCount2 >= 2 && n >= 4 && n <= 6) score += 60;
+
+        // 聽牌宣告打出的是此花色：代表手牌此花色已滿，等待此花色可能性降低
+        const tingDiscard = discardCount > 0 ? (read.discards || [])[discardCount - 1] : null;
+        // 聽牌後打出同花色，但非當前 code（打出此花色一張說明此花色有剩餘搭子完整）
+        // 聽牌前打出此花色：手牌調整掉此花色，降低等待此花色中張的機率（但不排除）
+        const preLastDiscard = discardCount >= 2 ? (read.discards || [])[discardCount - 2] : null;
+        if (preLastDiscard && preLastDiscard[0] === suit && preLastDiscard !== code) score -= 50;
+
+      } else if (isHonorCode(code)) {
+        // 字牌：壁牌原則同樣適用
+        if (visible >= 3) score -= 300;
+        else if (visible === 2) score -= 120;
+        else if (visible === 1) score += 100;
+        else score += 160; // visible === 0：完全未見，最危險
+        if ((read.melds || []).length >= 2 && visible <= 1) score += 80;
+        // 副露有字牌（碰了字牌）：剩餘字牌等待機率更高
+        const honorMelds = (read.meldCodes || []).filter(c => isHonorCode(c)).length;
+        if (honorMelds >= 3 && visible === 0) score += 120;
+      }
+    } else {
+      if (isMiddleTile(code)) score += 90;
+      if (isHonorCode(code) && visible <= 1) score += 70;
+      if (visible === 3) score += 200; // 壁牌 fallback
+    }
+
+    // 可見性衰減（無快照時）
+    if (visible >= 4) return 0; // 已見全部 4 張，不可能等待
+    if (visible >= 3) score *= 0.35;
+    else if (visible === 2) score *= 0.68;
+    else if (visible === 1) score *= 0.88;
+
     return Math.max(0, score);
   }
 
-  function tingSeatTopDangerCodes(targetSeat) {
+  function tingSeatTopDangerEntries(targetSeat, limit) {
     if (!state.declaredTing || !state.declaredTing[targetSeat]) return [];
+    const max = Math.max(1, Number(limit) || 2);
     const scored = [];
     allNonFlowerCodes().forEach(code => {
       const score = tingSeatDangerScoreForCode(targetSeat, code);
-      if (Number.isFinite(score) && score > 0) scored.push([code, score]);
+      if (!Number.isFinite(score) || score <= 0) return;
+      const viewSeat = tw16PublicDangerViewSeat();
+      const publicUnseen = tw16PreciseLiveCountForTingSeat(targetSeat, code);
+      const entry = {
+        code,
+        score,
+        tai: tw16PreciseRonTaiForCode(targetSeat, code),
+        live: publicUnseen,
+        publicUnseen,
+        viewHeld: (SEATS.includes(viewSeat) && viewSeat !== targetSeat) ? tw16PreciseCodeCountInSeatHand(viewSeat, code) : 0,
+        publicOnly: viewSeat !== targetSeat
+      };
+      scored.push(entry);
     });
     scored.sort((a, b) => {
-      const diff = Number(b[1] || 0) - Number(a[1] || 0);
-      if (diff) return diff;
-      try { return tileSortValue(a[0]) - tileSortValue(b[0]); } catch (_) { return String(a[0]).localeCompare(String(b[0])); }
+      const scoreDiff = Number(b.score || 0) - Number(a.score || 0);
+      if (scoreDiff) return scoreDiff;
+      const heldDiff = Number(b.viewHeld || 0) - Number(a.viewHeld || 0);
+      if (heldDiff) return heldDiff;
+      const taiDiff = Number(b.tai || 0) - Number(a.tai || 0);
+      if (taiDiff) return taiDiff;
+      const liveDiff = Number(b.live || 0) - Number(a.live || 0);
+      if (liveDiff) return liveDiff;
+      try { return tileSortValue(a.code) - tileSortValue(b.code); } catch (_) { return String(a.code).localeCompare(String(b.code)); }
     });
-    return scored.slice(0, 2).map(x => x[0]);
+    return scored.slice(0, max);
+  }
+
+  function tingSeatTopDangerCodes(targetSeat) {
+    return tingSeatTopDangerEntries(targetSeat, 2).map(x => x.code);
   }
 
   function isLobbyVisibleNow() {
@@ -22719,25 +23557,38 @@ function showIntegrityReport(precomputed) {
     }
     const tingSeats = SEATS.filter(seat => !!state.declaredTing[seat] && isSeatActiveInTable(seat));
     if (!tingSeats.length) { panel.hidden = true; return; }
+    const outsideWord = document.createElement('div');
+    outsideWord.className = 'tw16-ting-danger-outside-word';
+    outsideWord.textContent = '危險牌';
+    panel.appendChild(outsideWord);
     tingSeats.forEach(seat => {
-      const codes = tingSeatTopDangerCodes(seat);
-      if (!codes.length) return;
+      const entries = (typeof tingSeatTopDangerEntries === 'function')
+        ? tingSeatTopDangerEntries(seat, 2)
+        : tingSeatTopDangerCodes(seat).map(code => ({ code }));
+      if (!entries.length) return;
       const row = document.createElement('div');
       row.className = 'tw16-ting-danger-examples-row';
       row.setAttribute('data-seat-label', (SEAT_NAME[seat] || seat).replace('家',''));
-      codes.forEach(code => {
+      entries.forEach(entry => {
+        const code = entry && entry.code;
+        if (!code) return;
         const card = document.createElement('span');
         card.className = 'tw16-ting-danger-card';
-        const word = document.createElement('span');
-        word.className = 'tw16-ting-danger-word';
-        word.textContent = '危險牌';
-        card.appendChild(word);
+        if (entry && Number.isFinite(Number(entry.score))) card.dataset.dangerScore = String(Math.round(Number(entry.score) || 0));
+        if (entry) {
+          const bits = ['危險牌：' + tileText(code)];
+          if (entry.publicOnly) bits.push('公開資訊推測');
+          if (entry.tai) bits.push('估' + entry.tai + '台');
+          if (entry.publicUnseen !== undefined || entry.live !== undefined) bits.push('公開未見' + (entry.publicUnseen !== undefined ? entry.publicUnseen : entry.live) + '張');
+          if (entry.viewHeld) bits.push('你手上' + entry.viewHeld + '張');
+          card.title = bits.join('｜');
+        }
         card.appendChild(createTileElement({ code, id: 'tingDangerExample_' + seat + '_' + code }, false));
         row.appendChild(card);
       });
       panel.appendChild(row);
     });
-    if (!panel.children.length) { panel.hidden = true; return; }
+    if (!panel.querySelector('.tw16-ting-danger-examples-row')) { panel.hidden = true; return; }
     panel.hidden = false;
     positionTingDangerExamplesPanel();
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(positionTingDangerExamplesPanel);
@@ -23034,9 +23885,9 @@ function showIntegrityReport(precomputed) {
       if (shouldRenderSeatHandFaceUp(seat)) {
         const aiSuggestionVisible = !state.ended && seat === state.viewSeat && isAiSuggestionDisplayEnabled();
         const strategySuggestedTileId = aiSuggestionVisible ? suggestedStrategyDiscardTileId(seat) : '';
-        const dangerScoreMap = aiSuggestionVisible ? aiDangerDiscardScoreMap(seat, hand) : new Map();
-        const dangerCodeSet = new Set(dangerScoreMap.keys());
-        const maxDangerScore = dangerScoreMap.size ? Math.max(...Array.from(dangerScoreMap.values())) : 0;
+        const dangerScoreMap = new Map();
+        const dangerCodeSet = new Set();
+        const maxDangerScore = 0;
         hand.forEach((tileObj) => {
           const node = createTileElement(tileObj, false);
           const decorated = decorateFaceUpHandTile(node, seat, pos, tileObj, revealHand, strategySuggestedTileId, dangerCodeSet, dangerScoreMap, maxDangerScore);
@@ -23052,11 +23903,32 @@ function showIntegrityReport(precomputed) {
         } else {
           const _dd = activeDrawnTileId(seat);
           const _ll = hand.length ? String(hand[hand.length - 1].id) : '';
+          // tw16_drawn_ext: 非底部座位摸牌張放入獨立容器，不撐大 handRow
+          const _isNonBot = pos !== 'bottom';
+          let _extCont = null;
+          if (_isNonBot) {
+            const _extId = 'tw16DrawnExt_' + pos;
+            _extCont = byId(_extId);
+            if (!_extCont) {
+              _extCont = document.createElement('div');
+              _extCont.id = _extId;
+              _extCont.className = 'tw16-drawn-ext pos-' + pos;
+              document.body.appendChild(_extCont);
+            }
+            _extCont.className = 'tw16-drawn-ext pos-' + pos;
+            _extCont.replaceChildren();
+          }
           hand.forEach(function(t2, i2) {
+            const isDrawn = _isNonBot && _dd && _ll && _dd === _ll && !state.ended && i2 === hand.length - 1;
             const bt = createBackTile();
-            if (_dd && _ll && _dd === _ll && !state.ended && i2 === hand.length - 1) bt.classList.add('tw16-drawn-mark');
+            if (isDrawn) {
+              bt.classList.add('tw16-drawn-mark');
+              if (_extCont) { _extCont.appendChild(bt); return; }
+            }
             handRow.appendChild(bt);
           });
+          if (_isNonBot && _extCont && !_extCont.children.length) _extCont.style.display = 'none';
+          else if (_isNonBot && _extCont) _extCont.style.display = '';
         }
       }
       renderSeatTingWaitAssistOnHandRow(seat, handRow);
@@ -23101,27 +23973,6 @@ function showIntegrityReport(precomputed) {
       const top = clampTopInBox(rect.top - labelH + 1, labelH, box, 1);
       label.style.setProperty('--ai-suggest-left', Math.round(left) + 'px');
       label.style.setProperty('--ai-suggest-top', Math.round(top) + 'px');
-    });
-
-    const dangerTiles = Array.from(document.querySelectorAll('.hand .hand-tile-row .tile.tw16-danger-discard-suggestion'));
-    dangerTiles.forEach(tile => {
-      if (!tile || !tile.getBoundingClientRect) return;
-      const rect = tile.getBoundingClientRect();
-      if (!rect || rect.width <= 0 || rect.height <= 0) return;
-      const label = document.createElement('span');
-      const isMostDanger = tile.classList && tile.classList.contains('tw16-most-danger-discard-suggestion');
-      label.className = isMostDanger ? 'danger-suggest-label most-danger-suggest-label' : 'danger-suggest-label';
-      label.textContent = '危險牌';
-      layer.appendChild(label);
-      const labelRect = label.getBoundingClientRect();
-      const labelW = Math.max(1, labelRect.width || 24);
-      const labelH = Math.max(1, labelRect.height || 8);
-      const preferRight = tile.classList && tile.classList.contains('strategy-discard-suggestion');
-      const rawLeft = preferRight ? (rect.right - labelW) : rect.left;
-      const left = clampLeftInBox(rawLeft, labelW, box, 1);
-      const top = clampTopInBox(rect.top - labelH + 1, labelH, box, 1);
-      label.style.setProperty('--danger-suggest-left', Math.round(left) + 'px');
-      label.style.setProperty('--danger-suggest-top', Math.round(top) + 'px');
     });
   }
 
@@ -23685,8 +24536,7 @@ function concealedKongOwnerOfMeld(meld) {
   }
 
   function scheduleBottomHandScrollAutoCenter(handEl, delayMs) {
-    /* 主體規則：使用者左右拖動手牌後不自動置中；保留函數名稱供舊流程呼叫，但不再啟動計時器。
-       下一次進牌由 focusBottomHandDrawnTileIfNeeded() 偵測新摸牌後才重新置中。 */
+    /* 主體規則：保留函數名稱供舊流程呼叫，但正常牌局完全不啟動自動置中。 */
     cancelBottomHandScrollAutoCenter();
     if (handEl) bottomHandScrollCenterState.handEl = handEl;
   }
@@ -23786,20 +24636,28 @@ function concealedKongOwnerOfMeld(meld) {
     });
 
     const hb = handLayoutBoxes.bottom || chainContentBox(items.bottom.hand, 'bottom', 'hand');
-    const ht = handLayoutBoxes.top || chainContentBox(items.top.hand, 'top', 'hand');
-    const hl = handLayoutBoxes.left || chainContentBox(items.left.hand, 'left', 'hand');
+    const hbAnchor = bottomHandAnchorLayoutBoxForPlacement(chainContentBox(items.bottom.hand, 'bottom', 'hand'), box, pad, displayMap());
+    const ht = handLayoutBoxes.top   || chainContentBox(items.top.hand,   'top',   'hand');
+    const hl = handLayoutBoxes.left  || chainContentBox(items.left.hand,  'left',  'hand');
     const hr = handLayoutBoxes.right || chainContentBox(items.right.hand, 'right', 'hand');
+    // tw16_drawn_ext_boxes: 用已有的 handLayoutBoxes 推算 handRow 位置，零額外計算
     const wb = chainContentBox(items.bottom.wall, 'bottom', 'wall');
     const wt = chainContentBox(items.top.wall, 'top', 'wall');
     const wl = chainContentBox(items.left.wall, 'left', 'wall');
     const wr = chainContentBox(items.right.wall, 'right', 'wall');
 
     const cx = box.left + box.width / 2;
-    const bottomCenter = clampCenter(cx, Math.max(hb.width, wb.width) / 2, box.width, pad);
+    const activeBottomDrawW = bottomHandActiveDrawVisualWidthForLayout(displayMap());
+    const bottomPlacementWidth = activeBottomDrawW > 0 ? Math.max(0, hbAnchor.width || 0) : Math.max(0, hb.width || 0);
+    const bottomCenter = clampCenter(cx, Math.max(bottomPlacementWidth, wb.width) / 2, box.width, pad);
     const is3D = !!(state.uiSettings && state.uiSettings.perspective3d);
     const table = is3D ? document.getElementById('table') : null;
 
-    const bottomHandLeft = clampLeftInBox(bottomCenter - hb.width / 2, hb.width, box, pad);
+    /* 摸進牌仍放進手牌容器，但定位以「未摸進牌前的寬度」為左錨點；
+       因此摸進牌只會把容器往右撐開，不會因新寬度被重新置中而整排向左移。 */
+    const bottomHandLeft = activeBottomDrawW > 0
+      ? clampLeftInBox(bottomCenter - bottomPlacementWidth / 2, bottomPlacementWidth, box, pad)
+      : clampLeftInBox(bottomCenter - hb.width / 2, hb.width, box, pad);
     const bottomHandTop = bottomLimit - hb.height;
     const bottomHandCenterX = bottomHandLeft + hb.width / 2;
     /* 底部手牌容器以桌面底邊為錨點：縮放後只允許往上擠壓牌桌內容，不再因上緣超界而被校正往下造成底部裁切。 */
@@ -23807,7 +24665,9 @@ function concealedKongOwnerOfMeld(meld) {
     if (items.bottom.hand && items.bottom.hand.getBoundingClientRect) {
       const rect = items.bottom.hand.getBoundingClientRect();
       if (rect && Number.isFinite(rect.left)) {
-        const fixedLeft = clampLeftInBox(rect.left, Math.min(rect.width || hb.width, box.width - pad * 2), box, pad);
+        const fixedLeft = activeBottomDrawW > 0
+          ? Math.max(box.left + pad, rect.left)
+          : clampLeftInBox(rect.left, Math.min(rect.width || hb.width, box.width - pad * 2), box, pad);
         if (Math.abs(fixedLeft - rect.left) > 0.5) placeByLeftTop(items.bottom.hand, fixedLeft, bottomHandTop);
       }
     }
@@ -23824,6 +24684,18 @@ function concealedKongOwnerOfMeld(meld) {
     const topHandCenterX = topHandLeft + ht.width / 2;
     placeByLeftTop(items.top.hand, topHandLeft, topHandTop);
     placeByLeftTop(items.top.wall, clampLeftInBox(topHandCenterX - wt.width / 2, wt.width, box, pad), topHandTop + ht.height);
+    // tw16_drawn_ext: 上家摸牌容器貼在 hand-tile-row 右側（用計算值，不用 getBoundingClientRect）
+    const _extTop = byId('tw16DrawnExt_top');
+    if (_extTop && _extTop.children.length) {
+      const _tW = cssPixelNumber('--tw-tile-w', 22);
+      const _tH = cssPixelNumber('--tw-tile-h', 32);
+      _extTop.style.setProperty('width',  _tW + 'px', 'important');
+      _extTop.style.setProperty('height', _tH + 'px', 'important');
+      // 上家：ext 貼 handRow 右側，垂直對齊 handRow（= handEl 底部往上 tileH）
+      const _topHRRight = topHandLeft + ht.width;
+      const _topHRTop   = topHandTop + ht.height - _tH;
+      placeByLeftTop(_extTop, _topHRRight, _topHRTop);
+    }
 
     const topRailBottom = topHandTop + ht.height + wt.height;
     const bottomRailTop = bottomHandTop - wb.height;
@@ -23847,12 +24719,32 @@ function concealedKongOwnerOfMeld(meld) {
     const leftHandCenterY = leftHandTop + hl.height / 2;
     placeByLeftTop(items.left.hand, leftHandLeft, leftHandTop);
     placeByLeftTop(items.left.wall, leftHandLeft + hl.width, clampTopInBox(leftHandCenterY - wl.height / 2, wl.height, box, pad));
+    // tw16_drawn_ext: 左家摸牌容器貼在 hand-tile-row 下方（側躺牌尺寸，不用 getBoundingClientRect）
+    const _extLeft = byId('tw16DrawnExt_left');
+    if (_extLeft && _extLeft.children.length) {
+      const _sTW = cssPixelNumber('--tw-side-tile-w', 32);
+      const _sTH = cssPixelNumber('--tw-side-tile-h', 22);
+      _extLeft.style.setProperty('width',  _sTW + 'px', 'important');
+      _extLeft.style.setProperty('height', _sTH + 'px', 'important');
+      // 左家：ext 貼 handRow 下方，水平置中於 handEl（副露在右，不影響水平位置）
+      placeByLeftTop(_extLeft, leftHandLeft + (hl.width - _sTW) / 2, leftHandTop + hl.height);
+    }
 
     const rightHandLeft = box.right - pad - hr.width;
     const rightHandTop = clampSideTop(hr.height);
     const rightHandCenterY = rightHandTop + hr.height / 2;
     placeByLeftTop(items.right.hand, rightHandLeft, rightHandTop);
     placeByLeftTop(items.right.wall, rightHandLeft - wr.width, clampTopInBox(rightHandCenterY - wr.height / 2, wr.height, box, pad));
+    // tw16_drawn_ext: 右家摸牌容器貼在 hand-tile-row 下方（側躺牌尺寸，不用 getBoundingClientRect）
+    const _extRight = byId('tw16DrawnExt_right');
+    if (_extRight && _extRight.children.length) {
+      const _sTW2 = cssPixelNumber('--tw-side-tile-w', 32);
+      const _sTH2 = cssPixelNumber('--tw-side-tile-h', 22);
+      _extRight.style.setProperty('width',  _sTW2 + 'px', 'important');
+      _extRight.style.setProperty('height', _sTH2 + 'px', 'important');
+      // 右家：ext 貼 handRow 下方，水平置中於 handEl
+      placeByLeftTop(_extRight, rightHandLeft + (hr.width - _sTW2) / 2, rightHandTop + hr.height);
+    }
 
     const boundaries = centerDiscardBoundariesFromHandContainers(box, pad, items);
     /* 3D 模式：boundaries 是螢幕座標，discardGrid 是 table 內 absolute，需轉換為 table 相對座標 */
@@ -24211,30 +25103,9 @@ function concealedKongOwnerOfMeld(meld) {
       if(dom.wmLeft)  {dom.wmLeft.style.left  =(cx-off)+'px';dom.wmLeft.style.top=cy+'px';}
       if(dom.wmRight) {dom.wmRight.style.left =(cx+off)+'px';dom.wmRight.style.top=cy+'px';}
     })();
-    updateLocalSeatWindBadge();
   }
 
-  function ensureLocalSeatWindBadge(seat) {
-    const id = 'tw16LocalSeatWindBadge' + (seat || '');
-    let badge = byId(id);
-    if (badge) return badge;
-    badge = document.createElement('div');
-    badge.id = id;
-    badge.className = 'tw16-local-seat-wind-badge';
-    document.body.appendChild(badge);
-    return badge;
-  }
 
-  function ensureLocalSeatDealerBadge(seat) {
-    const id = 'tw16LocalSeatDealerBadge' + (seat || '');
-    let badge = byId(id);
-    if (badge) return badge;
-    badge = document.createElement('div');
-    badge.id = id;
-    badge.className = 'tw16-local-seat-wind-badge tw16-local-seat-dealer-badge';
-    document.body.appendChild(badge);
-    return badge;
-  }
 
   function centralSeatWindMarksVisible() {
     const marks = [dom.wmBottom, dom.wmTop, dom.wmLeft, dom.wmRight].filter(Boolean);
@@ -24273,102 +25144,6 @@ function concealedKongOwnerOfMeld(meld) {
     });
     return found ? { left, top, right, bottom, width: right - left, height: bottom - top } : null;
   }
-
-  function getTw16LocalWindBadgeAnchorRect(pos) {
-    const side = pos || 'bottom';
-    let rect = getTw16VisibleUnionRect(document.querySelectorAll('.discardSeat.discard-' + side + ' .tile, .discardSeat.discard-' + side + ' .discard-tile'));
-    if (rect) return rect;
-
-    rect = getTw16VisibleUnionRect(document.querySelectorAll('.hand-' + side + ' .hand-meld-row .tile, .hand-' + side + ' .hand-exposed-group .tile'));
-    if (rect) return rect;
-
-    rect = getTw16VisibleUnionRect(document.querySelectorAll('.wall-' + side + ' .piece, .wall-' + side + ' .wallStack'));
-    if (rect) return rect;
-
-    const discardBox = document.querySelector('.discardSeat.discard-' + side) || document.querySelector('.discard-' + side) || dom.discardGrid;
-    rect = discardBox && discardBox.getBoundingClientRect ? discardBox.getBoundingClientRect() : null;
-    if (rect && rect.width > 0.5 && rect.height > 0.5) return rect;
-
-    const table = byId('table') || document.querySelector('.table');
-    rect = table && table.getBoundingClientRect ? table.getBoundingClientRect() : null;
-    return (rect && rect.width > 0.5 && rect.height > 0.5) ? rect : null;
-  }
-
-  function updateLocalSeatWindBadge() {
-    const lobby = byId('tw16Lobby');
-    const lobbyVisible = !!(lobby && !lobby.hidden && getComputedStyle(lobby).display !== 'none' && getComputedStyle(lobby).visibility !== 'hidden');
-    if (lobbyVisible) {
-      SEATS.forEach(function(s) {
-        const b = byId('tw16LocalSeatWindBadge' + s);
-        if (b) { b.classList.remove('show'); b.style.left = '-9999px'; b.style.top = '-9999px'; }
-        const d = byId('tw16LocalSeatDealerBadge' + s);
-        if (d) { d.classList.remove('show'); d.style.left = '-9999px'; d.style.top = '-9999px'; }
-      });
-      return;
-    }
-    const resultEl = byId('resultPanel');
-    const resultRect = resultEl && resultEl.classList.contains('show') ? resultEl.getBoundingClientRect() : null;
-    const map = (typeof displayMap === 'function') ? displayMap() : null;
-    const windChars = { east:'東', south:'南', west:'西', north:'北' };
-    const table = byId('table') || document.querySelector('.table');
-    const tableRect = table && table.getBoundingClientRect ? table.getBoundingClientRect() : null;
-    const badgeSize = Math.max(16, Math.min(25, Math.round(cssPixelNumber('--tw-tile-w', 22) * .98)));
-    const gap = Math.max(5, Math.round(badgeSize * .34));
-    SEATS.forEach(function(seat) {
-      const windChar = windChars[seat] || '';
-      const badge = ensureLocalSeatWindBadge(seat);
-      const dealerBadge = ensureLocalSeatDealerBadge(seat);
-      if (!windChar) {
-        badge.classList.remove('show'); badge.style.left = '-9999px'; badge.style.top = '-9999px';
-        dealerBadge.classList.remove('show'); dealerBadge.style.left = '-9999px'; dealerBadge.style.top = '-9999px';
-        return;
-      }
-      badge.textContent = windChar;
-      const isTurn = state.turn === seat && !state.ended;
-      if (isTurn) { badge.classList.add('tw16-turn-active'); } else { badge.classList.remove('tw16-turn-active'); }
-      const isDealer = state.dealer === seat;
-      const pos = (map && map[seat]) || 'bottom';
-      const anchorRect = getTw16LocalWindBadgeAnchorRect(pos);
-      let x = tableRect && tableRect.width > 0.5 ? (tableRect.left + tableRect.width / 2) : (window.innerWidth / 2);
-      let y = window.innerHeight / 2;
-      if (anchorRect && anchorRect.width > 0.5 && anchorRect.height > 0.5) {
-        if (pos === 'top') { y = anchorRect.bottom + gap; }
-        else if (pos === 'bottom') { y = anchorRect.top - gap; }
-        else if (pos === 'left') { x = anchorRect.right + gap; y = anchorRect.top + anchorRect.height / 2; }
-        else if (pos === 'right') { x = anchorRect.left - gap; y = anchorRect.top + anchorRect.height / 2; }
-      } else if (tableRect && tableRect.width > 0.5 && tableRect.height > 0.5) {
-        if (pos === 'top') { y = tableRect.top + tableRect.height * .28; }
-        else if (pos === 'bottom') { y = tableRect.top + tableRect.height * .72; }
-        else if (pos === 'left') { x = tableRect.left + tableRect.width * .28; y = tableRect.top + tableRect.height / 2; }
-        else if (pos === 'right') { x = tableRect.left + tableRect.width * .72; y = tableRect.top + tableRect.height / 2; }
-      }
-      x = Math.max(badgeSize / 2 + 2, Math.min(window.innerWidth - badgeSize / 2 - 2, Math.round(x)));
-      y = Math.max(badgeSize / 2 + 2, Math.min(window.innerHeight - badgeSize / 2 - 2, Math.round(y)));
-      const half = badgeSize / 2;
-      if (resultRect && x + half > resultRect.left && x - half < resultRect.right && y + half > resultRect.top && y - half < resultRect.bottom) {
-        badge.classList.remove('show'); badge.style.left = '-9999px'; badge.style.top = '-9999px';
-        dealerBadge.classList.remove('show'); dealerBadge.style.left = '-9999px'; dealerBadge.style.top = '-9999px';
-        return;
-      }
-      badge.classList.add('show');
-      badge.style.left = x + 'px';
-      badge.style.top = y + 'px';
-      badge.style.transform = 'translate(-50%,-50%)';
-      if (isDealer) {
-        dealerBadge.textContent = '莊';
-        dealerBadge.classList.add('show');
-        const dx = (pos === 'left' || pos === 'right') ? x : x + badgeSize + 2;
-        const dy = (pos === 'left' || pos === 'right') ? y + badgeSize + 2 : y;
-        dealerBadge.style.left = Math.max(badgeSize / 2 + 2, Math.min(window.innerWidth - badgeSize / 2 - 2, Math.round(dx))) + 'px';
-        dealerBadge.style.top = Math.max(badgeSize / 2 + 2, Math.min(window.innerHeight - badgeSize / 2 - 2, Math.round(dy))) + 'px';
-        dealerBadge.style.transform = 'translate(-50%,-50%)';
-      } else {
-        dealerBadge.classList.remove('show'); dealerBadge.style.left = '-9999px'; dealerBadge.style.top = '-9999px';
-      }
-    });
-  }
-
-
 
   function rectFromLeftTop(left, top, width, height) {
     return { left, top, right: left + width, bottom: top + height, width, height };
@@ -36944,22 +37719,7 @@ function concealedKongOwnerOfMeld(meld) {
   }, true);
 })();
 
-(function(){
-  let tw16LocalWindBadgeTimer = 0;
-  function refreshTw16LocalWindBadgeSoon(){
-    if (tw16LocalWindBadgeTimer) clearTimeout(tw16LocalWindBadgeTimer);
-    tw16LocalWindBadgeTimer = setTimeout(function(){
-      try { if (typeof updateLocalSeatWindBadge === 'function') updateLocalSeatWindBadge(); } catch(e) {}
-    }, 30);
-  }
-  window.addEventListener('resize', refreshTw16LocalWindBadgeSoon, { passive:true });
-  window.addEventListener('orientationchange', refreshTw16LocalWindBadgeSoon, { passive:true });
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', refreshTw16LocalWindBadgeSoon, { passive:true });
-    window.visualViewport.addEventListener('scroll', refreshTw16LocalWindBadgeSoon, { passive:true });
-  }
-  setInterval(refreshTw16LocalWindBadgeSoon, 700);
-})();
+
 </script>
 </body>
 </html>
