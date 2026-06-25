@@ -24692,8 +24692,9 @@ function concealedKongOwnerOfMeld(meld) {
       const _tH = cssPixelNumber('--tw-tile-h', 32);
       _extTop.style.setProperty('width',  _tW + 'px', 'important');
       _extTop.style.setProperty('height', _tH + 'px', 'important');
-      // 用已計算的位置值，不呼叫 getBoundingClientRect
-      placeByLeftTop(_extTop, topHandLeft + ht.width, topHandTop + ht.height - _tH);
+      const _topHandRow = items.top.hand && items.top.hand.querySelector ? items.top.hand.querySelector('.hand-tile-row') : null;
+      const _topRowBox = _topHandRow ? tileRunContentBox(_topHandRow, 'top', 'hand') : { width: ht.width, height: ht.height };
+      placeByLeftTop(_extTop, topHandLeft + _topRowBox.width, topHandTop + _topRowBox.height - _tH);
     }
 
     const topRailBottom = topHandTop + ht.height + wt.height;
@@ -24725,8 +24726,9 @@ function concealedKongOwnerOfMeld(meld) {
       const _sTH = cssPixelNumber('--tw-side-tile-h', 22);
       _extLeft.style.setProperty('width',  _sTW + 'px', 'important');
       _extLeft.style.setProperty('height', _sTH + 'px', 'important');
-      // 用已計算的位置值，不呼叫 getBoundingClientRect
-      placeByLeftTop(_extLeft, leftHandLeft + (hl.width - _sTW) / 2, leftHandTop + hl.height);
+      const _leftHandRow = items.left.hand && items.left.hand.querySelector ? items.left.hand.querySelector('.hand-tile-row') : null;
+      const _leftRowBox = _leftHandRow ? tileRunContentBox(_leftHandRow, 'left', 'hand') : { width: hl.width, height: hl.height };
+      placeByLeftTop(_extLeft, leftHandLeft + (_leftRowBox.width - _sTW) / 2, leftHandTop + _leftRowBox.height);
     }
 
     const rightHandLeft = box.right - pad - hr.width;
@@ -24741,8 +24743,9 @@ function concealedKongOwnerOfMeld(meld) {
       const _sTH2 = cssPixelNumber('--tw-side-tile-h', 22);
       _extRight.style.setProperty('width',  _sTW2 + 'px', 'important');
       _extRight.style.setProperty('height', _sTH2 + 'px', 'important');
-      // 用已計算的位置值，不呼叫 getBoundingClientRect
-      placeByLeftTop(_extRight, rightHandLeft + (hr.width - _sTW2) / 2, rightHandTop + hr.height);
+      const _rightHandRow = items.right.hand && items.right.hand.querySelector ? items.right.hand.querySelector('.hand-tile-row') : null;
+      const _rightRowBox = _rightHandRow ? tileRunContentBox(_rightHandRow, 'right', 'hand') : { width: hr.width, height: hr.height };
+      placeByLeftTop(_extRight, rightHandLeft + (_rightRowBox.width - _sTW2) / 2, rightHandTop + _rightRowBox.height);
     }
 
     const boundaries = centerDiscardBoundariesFromHandContainers(box, pad, items);
