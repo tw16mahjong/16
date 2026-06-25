@@ -24744,8 +24744,12 @@ function concealedKongOwnerOfMeld(meld) {
       _extRight.style.setProperty('width',  _sTW2 + 'px', 'important');
       _extRight.style.setProperty('height', _sTH2 + 'px', 'important');
       const _rightHandRow = items.right.hand && items.right.hand.querySelector ? items.right.hand.querySelector('.hand-tile-row') : null;
-      const _rightRowBox = _rightHandRow ? tileRunContentBox(_rightHandRow, 'right', 'hand') : { width: hr.width, height: hr.height };
-      placeByLeftTop(_extRight, rightHandLeft + (_rightRowBox.width - _sTW2) / 2, rightHandTop + _rightRowBox.height);
+      if (!_rightHandRow) { _extRight.style.display = 'none'; }
+      else {
+        _extRight.style.display = '';
+        const _rightRowRect = _rightHandRow.getBoundingClientRect();
+        placeByLeftTop(_extRight, _rightRowRect.left + (_rightRowRect.width - _sTW2) / 2, _rightRowRect.bottom);
+      }
     }
 
     const boundaries = centerDiscardBoundariesFromHandContainers(box, pad, items);
