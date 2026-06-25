@@ -22503,7 +22503,9 @@ function showIntegrityReport(precomputed) {
     dom.actionPanel.style.setProperty('background', 'rgba(20,20,20,.88)', 'important');
     dom.actionPanel.style.setProperty('border-radius', '12px', 'important');
     dom.actionPanel.style.setProperty('padding', '8px 10px', 'important');
-    dom.actionPanel.style.setProperty('max-width', Math.max(120, Math.min(box.width - pad * 2, 320)) + 'px', 'important');
+    dom.actionPanel.style.setProperty('width', 'max-content', 'important');
+    dom.actionPanel.style.setProperty('max-width', Math.max(40, box.width - pad * 2) + 'px', 'important');
+
     dom.actionPanel.style.setProperty('overflow', 'visible', 'important');
     dom.actionPanel.style.setProperty('transform-origin', 'center center', 'important');
     dom.actionPanel.style.setProperty('transform', 'translate(-50%, -50%) scale(1)', 'important');
@@ -24690,14 +24692,8 @@ function concealedKongOwnerOfMeld(meld) {
       const _tH = cssPixelNumber('--tw-tile-h', 32);
       _extTop.style.setProperty('width',  _tW + 'px', 'important');
       _extTop.style.setProperty('height', _tH + 'px', 'important');
-      const _topRows = ensureHandRows('top');
-      const _topHR = _topRows && _topRows.handRow;
-      const _topHRRect = _topHR ? _topHR.getBoundingClientRect() : null;
-      if (_topHRRect && _topHRRect.width > 0) {
-        placeByLeftTop(_extTop, _topHRRect.right, _topHRRect.top + (_topHRRect.height - _tH) / 2);
-      } else {
-        placeByLeftTop(_extTop, topHandLeft + ht.width, topHandTop + (ht.height - _tH) / 2);
-      }
+      // 用已計算的位置值，不呼叫 getBoundingClientRect
+      placeByLeftTop(_extTop, topHandLeft + ht.width, topHandTop + ht.height - _tH);
     }
 
     const topRailBottom = topHandTop + ht.height + wt.height;
@@ -24729,14 +24725,8 @@ function concealedKongOwnerOfMeld(meld) {
       const _sTH = cssPixelNumber('--tw-side-tile-h', 22);
       _extLeft.style.setProperty('width',  _sTW + 'px', 'important');
       _extLeft.style.setProperty('height', _sTH + 'px', 'important');
-      const _leftRows = ensureHandRows('left');
-      const _leftHR = _leftRows && _leftRows.handRow;
-      const _leftHRRect = _leftHR ? _leftHR.getBoundingClientRect() : null;
-      if (_leftHRRect && _leftHRRect.height > 0) {
-        placeByLeftTop(_extLeft, _leftHRRect.left + (_leftHRRect.width - _sTW) / 2, _leftHRRect.bottom);
-      } else {
-        placeByLeftTop(_extLeft, leftHandLeft + (hl.width - _sTW) / 2, leftHandTop + hl.height);
-      }
+      // 用已計算的位置值，不呼叫 getBoundingClientRect
+      placeByLeftTop(_extLeft, leftHandLeft + (hl.width - _sTW) / 2, leftHandTop + hl.height);
     }
 
     const rightHandLeft = box.right - pad - hr.width;
@@ -24751,14 +24741,8 @@ function concealedKongOwnerOfMeld(meld) {
       const _sTH2 = cssPixelNumber('--tw-side-tile-h', 22);
       _extRight.style.setProperty('width',  _sTW2 + 'px', 'important');
       _extRight.style.setProperty('height', _sTH2 + 'px', 'important');
-      const _rightRows = ensureHandRows('right');
-      const _rightHR = _rightRows && _rightRows.handRow;
-      const _rightHRRect = _rightHR ? _rightHR.getBoundingClientRect() : null;
-      if (_rightHRRect && _rightHRRect.height > 0) {
-        placeByLeftTop(_extRight, _rightHRRect.left + (_rightHRRect.width - _sTW2) / 2, _rightHRRect.bottom);
-      } else {
-        placeByLeftTop(_extRight, rightHandLeft + (hr.width - _sTW2) / 2, rightHandTop + hr.height);
-      }
+      // 用已計算的位置值，不呼叫 getBoundingClientRect
+      placeByLeftTop(_extRight, rightHandLeft + (hr.width - _sTW2) / 2, rightHandTop + hr.height);
     }
 
     const boundaries = centerDiscardBoundariesFromHandContainers(box, pad, items);
