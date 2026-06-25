@@ -25043,7 +25043,7 @@ function concealedKongOwnerOfMeld(meld) {
         wmEl.innerHTML = (isDealer ? '<span class="tw-wm-dealer">莊</span>' : '') + windChar + (isTing ? '<span class="tw-wm-ting">聽</span>' : '');
         wmEl.style.color = isSeatActiveInTable(seat) ? '' : 'transparent';
         const playPhase = state.phase === 'discard' || state.phase === 'claim' || state.phase === 'draw' || state.phase === 'selfwin';
-        wmEl.style.visibility = playPhase ? 'visible' : 'hidden';
+        wmEl.style.visibility = (state.phase === 'idle') ? 'hidden' : 'visible';
         const isActiveTurn = playPhase && state.turn === seat && !state.ended;
         wmEl.style.color = isActiveTurn ? '#ff3333' : (isSeatActiveInTable(seat) ? '' : 'transparent');
       }
