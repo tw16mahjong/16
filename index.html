@@ -9700,7 +9700,9 @@ function loadUiSettings() {
     if (pendingDeadlineExpired(pending)) return false;
     renderAll();
     clearTimeout(claimTimer);
-    claimTimer = setTimeout(() => resolvePendingIfAutoplay('wait-human:' + (reason || '')), 1000);
+    // 線上模式縮短輪詢週期（300ms），本機單機維持 1000ms
+    // 客人 intent 到達時已由 handleNetworkIntent 即時處理，此計時器只是保底輪詢
+    claimTimer = setTimeout(() => resolvePendingIfAutoplay('wait-human:' + (reason || '')), isOnlineHost() ? 300 : 1000);
     return true;
   }
 
@@ -13619,7 +13621,7 @@ function loadUiSettings() {
     return completeOwnKong(option, source);
   }
 
-  const TW16_SMART_AI_MONTE_CARLO_SAMPLES = 24;
+  const TW16_SMART_AI_MONTE_CARLO_SAMPLES = !!(navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ? 8 : 24;
   let tw16MonteCarloPoolCache = { key: '', pool: [] };  // pool 快取，同一局面只建一次
   let tw16VisibleCountCache = null;        // ① 每回合 visibleCount 快取
   let tw16StrategyContextKeyCache = null;  // ② 每回合 strategy context key 快取
@@ -15733,6 +15735,8 @@ function loadUiSettings() {
         await yieldForUiPriorityFrame();
         if (!isUiPriorityModeActive()) {
           try { chooseDiscardTile(seat); } catch (e) {}
+          // 計算後再讓一幀，讓摸牌動畫有機會渲染再繼續
+          await yieldForUiPriorityFrame();
         }
       }
     }
@@ -18884,7 +18888,10 @@ function chooseExactDiscardTile(seat) {
     const age = now - (stallMonitorState.lastChangedAt || now);
     if (state.ended) return { stalled: false, ageMs: age, action: 'ended' };
     const canKick = !state.locked && !state.pending;
-    if (canKick && age > 6500) {
+    // 線上模式：3500ms 觸發（Ably 來回延遲可達 500ms，更快恢復異常）
+    // 單機模式：維持 6500ms
+    const stallMs = isOnlineHost() ? 3500 : 6500;
+    if (canKick && age > stallMs) {
       stallMonitorState.kickCount += 1;
       stallMonitorState.lastChangedAt = now;
       addLog('卡局巡檢推動：' + SEAT_NAME[state.turn] + '／' + state.phase);
