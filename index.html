@@ -11687,6 +11687,28 @@ function loadUiSettings() {
           net.connectionState = 'suspended';
           addLog('Ably連線暫停，正在等待恢復');
           updateLobbyStatus('Ably連線暫停，正在等待恢復…');
+          // 若牌局進行中，自動儲存並重新向伺服器取得新 key 後重連
+          if (hasStartedNetworkHand(state) && !net._ablyReconnecting) {
+            net._ablyReconnecting = true;
+            const _role = net.role;
+            const _room = net.room;
+            const _name = net.name;
+            addLog('Ably 伺服器中斷偵測到牌局進行中，先儲存牌局，正在重新取得 API KEY…');
+            try { saveGameState(); } catch (e) {}
+            ensureLobbyAutoUsableAblyApiKey(_room, _role === 'host' ? 'host' : 'guest').then(function(newKey) {
+              net._ablyReconnecting = false;
+              if (!newKey) {
+                addLog('重新取得 Ably API KEY 失敗，請手動重連');
+                updateLobbyStatus('重新取得 Ably API KEY 失敗，請手動重連。');
+                return;
+              }
+              addLog('已取得新 Ably API KEY，正在重新連線（' + (_role === 'host' ? '房主' : '來賓') + '）…');
+              connectAbly(_role, _room, _name, newKey);
+            }).catch(function(e) {
+              net._ablyReconnecting = false;
+              addLog('重新取得 Ably API KEY 發生錯誤：' + (e && e.message ? e.message : e));
+            });
+          }
         });
         net.ably.connection.on('disconnected', () => {
           if (net.connectGeneration !== connectGeneration) return;
@@ -11751,6 +11773,7 @@ function loadUiSettings() {
     net.guestSyncStartedAt = 0;
     net.guestSyncAttempts = 0;
     net.lastSyncAppliedAt = 0;
+    net._ablyReconnecting = false;
     try { releaseVoiceBroadcastStream(); } catch (e) {}
     net.players = {};
     clearTimeout(net.snapshotTimer);
