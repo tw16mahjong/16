@@ -4689,6 +4689,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
   let tw16HistViewing = false;  // 本機獨立旗標：觀看胡牌歷程時暫停本機AI排程，不寫入state，不同步給其他人
   let tw16UiPriorityMode = false;  // 本機 UI 優先旗標：選單/設定/歷程開啟時暫停托管排程，不寫入state，不同步給其他人
   let tw16AiDriveRunning = false;
+  let tw16AiDriveStartedAt = 0;
   let claimTimer = null;
   let autoNextTimer = null;
   let miniDashboardCountdownTimer = null;
@@ -7921,6 +7922,51 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
           requestDebugPauseToggle(!isTileManagementPausingGame());
         }, { capture: true });
       }
+
+      // 桌面長按 3 秒開啟/關閉暫停
+      (function setupTableLongPress() {
+        const tableEl = byId('table');
+        if (!tableEl) return;
+        let lpTimer = null;
+        let lpStartX = 0, lpStartY = 0;
+        const LP_MS = 3000;
+        const LP_MOVE_LIMIT = 12;
+
+        function lpCancel() {
+          clearTimeout(lpTimer);
+          lpTimer = null;
+        }
+
+        function lpStart(x, y, ev) {
+          // 跳過按鈕、輸入框、連結等互動元件
+          if (ev && ev.target && ev.target.closest && ev.target.closest('button,input,select,a,label,[role="button"],.actionBtn,.tile,.tw16-mini-dashboard-card')) return;
+          lpCancel();
+          lpStartX = x; lpStartY = y;
+          lpTimer = setTimeout(function() {
+            lpTimer = null;
+            if (state && state.ended) return;
+            requestDebugPauseToggle(!isTileManagementPausingGame());
+          }, LP_MS);
+        }
+
+        function lpMove(x, y) {
+          if (!lpTimer) return;
+          if (Math.abs(x - lpStartX) > LP_MOVE_LIMIT || Math.abs(y - lpStartY) > LP_MOVE_LIMIT) lpCancel();
+        }
+
+        tableEl.addEventListener('pointerdown', function(ev) {
+          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+          lpStart(ev.clientX, ev.clientY, ev);
+        }, { passive: true });
+        tableEl.addEventListener('pointermove', function(ev) {
+          lpMove(ev.clientX, ev.clientY);
+        }, { passive: true });
+        tableEl.addEventListener('pointerup', lpCancel, { passive: true });
+        tableEl.addEventListener('pointercancel', lpCancel, { passive: true });
+        tableEl.addEventListener('contextmenu', function(ev) {
+          if (lpTimer) { ev.preventDefault(); lpCancel(); }
+        });
+      })();
       /* 大廳顯示時自動隱藏迷你儀表板 */
       const updateDashVisibility = () => {
         const lobby = byId('tw16Lobby');
@@ -12411,7 +12457,11 @@ function loadUiSettings() {
     autoplayTimer = setTimeout(async () => {
       await waitForGameVoiceBeforeAutoplay('ting-auto-discard:' + (reason || ''));
       const ready = await waitForHostReliableAckBeforeGameStep('ting-auto-discard:' + (reason || ''), () => !state.ended && state.turn === seat && state.phase === 'discard');
-      if (!ready) return;
+      if (!ready) {
+        // state 已改變（換手/結局等）→ 補排程確保驅動鏈不中斷
+        if (!state.ended) scheduleDriveSeat('ting-auto-discard-state-changed');
+        return;
+      }
       if (!state.declaredTing[seat] || state.ended || state.pending || state.locked || state.turn !== seat || state.phase !== 'discard') return;
       submitDiscard(seat, discardId, reason || 'ting-auto');
     }, 30);
@@ -15698,7 +15748,11 @@ function loadUiSettings() {
   }
 
   async function yieldForUiPriorityFrame() {
-    await new Promise(resolve => requestAnimationFrame(() => resolve()));
+    // 加 50ms setTimeout 保底：requestAnimationFrame 在背景分頁/螢幕熄滅時可能永遠不觸發
+    await new Promise(resolve => {
+      const t = setTimeout(resolve, 50);
+      requestAnimationFrame(() => { clearTimeout(t); resolve(); });
+    });
   }
 
   async function driveSeat(reason) {
@@ -15707,6 +15761,7 @@ function loadUiSettings() {
     if (isOnlineGuest()) return;
     if (state.openingDeal && state.openingDeal.active) return;
     tw16AiDriveRunning = true;
+    tw16AiDriveStartedAt = Date.now();
     try {
     const readyForGameStep = await waitForHostReliableAckBeforeGameStep('drive-entry:' + (reason || ''), () => !state.ended && !(state.openingDeal && state.openingDeal.active));
     if (!readyForGameStep) return;
@@ -15842,6 +15897,7 @@ function loadUiSettings() {
     }
     } finally {
       tw16AiDriveRunning = false;
+      tw16AiDriveStartedAt = 0;
     }
   }
 
@@ -18892,6 +18948,16 @@ function chooseExactDiscardTile(seat) {
   }
 
   function checkStallMonitor(reason) {
+    // tw16_stall_fix: AiDriveRunning 卡死保險
+    // rAF 在背景/螢幕熄滅時永不觸發，driveSeat 會卡在 await yieldForUiPriorityFrame
+    // 導致 tw16AiDriveRunning = true 永不釋放，stall monitor 因此完全失效
+    // 若超過 8 秒仍在執行，強制清除並重新排程
+    if (tw16AiDriveRunning && tw16AiDriveStartedAt && Date.now() - tw16AiDriveStartedAt > 8000) {
+      addLog('AI 驅動超時強制解除（tw16AiDriveRunning 逾8秒）');
+      tw16AiDriveRunning = false;
+      tw16AiDriveStartedAt = 0;
+      scheduleDriveSeat('stall-force-clear-drive');
+    }
     const sig = gameProgressSignature();
     const now = Date.now();
     if (!stallMonitorState.lastSignature || sig !== stallMonitorState.lastSignature) {
