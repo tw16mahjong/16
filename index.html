@@ -13621,7 +13621,7 @@ function loadUiSettings() {
     return completeOwnKong(option, source);
   }
 
-  const TW16_SMART_AI_MONTE_CARLO_SAMPLES = !!(navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ? 8 : 24;
+  const TW16_SMART_AI_MONTE_CARLO_SAMPLES = !!(navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ? 0 : 24;
   let tw16MonteCarloPoolCache = { key: '', pool: [] };  // pool 快取，同一局面只建一次
   let tw16VisibleCountCache = null;        // ① 每回合 visibleCount 快取
   let tw16StrategyContextKeyCache = null;  // ② 每回合 strategy context key 快取
@@ -14364,6 +14364,7 @@ function loadUiSettings() {
     }
     if (!effectivePool.length) return 0;
     const sampleCount = Math.min(TW16_SMART_AI_MONTE_CARLO_SAMPLES, effectivePool.length);
+    if (sampleCount <= 0) return 0;  // 觸控裝置：停用此 MC，改由 smartAiWaitingPotential 解析式主導
     const rand = smartAiSeededRandom([state.handId || 0, state.lastActionId || 0, seat, discardCode, afterDiscardCodes.join(',')].join('|'));
     const baseValue = basePotential && Number.isFinite(basePotential.value) ? basePotential.value : 0;
     let total = 0;
