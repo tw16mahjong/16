@@ -4082,18 +4082,19 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
   visibility:hidden!important;
 }
 /* 胡牌提醒牌例自適應縮放：JS 依手牌+副露可用寬計算後設 CSS 變數 --tw16-ta-tile-* */
+/* fallback 維持原始尺寸；JS 只在牌數過多放不下時才設定較小的值 */
 .actionPanel.ting-assist-active .tingWaitAssistCard .tile{
-  width:var(--tw16-ta-tile-w,calc(var(--tw-tile-w) * .82))!important;
-  height:var(--tw16-ta-tile-h,calc(var(--tw-tile-h) * .82))!important;
-  font-size:var(--tw16-ta-tile-fs,calc(var(--tw-tile-w) * .54))!important;
-  min-width:var(--tw16-ta-tile-w,calc(var(--tw-tile-w) * .82))!important;
-  min-height:var(--tw16-ta-tile-h,calc(var(--tw-tile-h) * .82))!important;
+  width:var(--tw16-ta-tile-w,calc(var(--tw-tile-w) * var(--tw-bottom-seat-touch-scale,1)))!important;
+  height:var(--tw16-ta-tile-h,calc(var(--tw-tile-h) * var(--tw-bottom-seat-touch-scale,1)))!important;
+  font-size:var(--tw16-ta-tile-fs,calc(var(--tw-tile-w) * .68 * var(--tw-bottom-seat-touch-scale,1)))!important;
+  min-width:var(--tw16-ta-tile-w,calc(var(--tw-tile-w) * var(--tw-bottom-seat-touch-scale,1)))!important;
+  min-height:var(--tw16-ta-tile-h,calc(var(--tw-tile-h) * var(--tw-bottom-seat-touch-scale,1)))!important;
 }
 .actionPanel.ting-assist-active .tingWaitAssistCard .tile .small{
-  font-size:calc(var(--tw16-ta-tile-fs,calc(var(--tw-tile-w) * .54)) * .5)!important;
+  font-size:calc(var(--tw16-ta-tile-fs,calc(var(--tw-tile-w) * .68 * var(--tw-bottom-seat-touch-scale,1))) * .5)!important;
 }
 .actionPanel.ting-assist-active .tingWaitAssistCount{
-  font-size:calc(var(--tw16-ta-tile-fs,calc(var(--tw-tile-w) * .54)) * .68)!important;
+  font-size:calc(var(--tw16-ta-tile-fs,calc(var(--tw-tile-w) * .68 * var(--tw-bottom-seat-touch-scale,1))) * .68)!important;
 }
 
 
@@ -20270,7 +20271,11 @@ function showIntegrityReport(precomputed) {
   async function waitForGameVoiceBeforeAutoplay(reason) {
     if (!shouldWaitForGameVoiceBeforeAutoplay(reason)) return false;
     const startedAt = Date.now();
-    const maxWaitMs = Math.max(1200, (currentGameVoiceHardStopAt || Date.now()) - Date.now() + 160);
+    // 線上對戰（房主）：AI 回合語音最長等 80ms，讓語音繼續播但不卡住遊戲流程
+    // 單機模式維持原本最長等待，語音與動畫節奏一致
+    const maxWaitMs = isOnlineHost()
+      ? 80
+      : Math.max(1200, (currentGameVoiceHardStopAt || Date.now()) - Date.now() + 160);
     while (shouldWaitForGameVoiceBeforeAutoplay(reason)) {
       const waitPromise = currentGameVoicePromise;
       if (waitPromise) {
