@@ -7923,50 +7923,91 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
         }, { capture: true });
       }
 
-      // 桌面長按 3 秒開啟/關閉暫停
-      (function setupTableLongPress() {
+      // 桌面劃叉（X）手勢開啟/關閉暫停
+      (function setupTableXGesture() {
         const tableEl = byId('table');
         if (!tableEl) return;
-        let lpTimer = null;
-        let lpStartX = 0, lpStartY = 0;
-        const LP_MS = 3000;
-        const LP_MOVE_LIMIT = 12;
 
-        function lpCancel() {
-          clearTimeout(lpTimer);
-          lpTimer = null;
+        // 手勢：在桌面空白區域劃兩撇組成 X 字形來切換暫停
+        // 使用 touchstart/touchend（行動裝置最可靠），滑鼠則用 mousedown/mouseup
+        const STROKE_MIN_DIST = 45;   // 每一撇最少像素（放寬）
+        const STROKE_MAX_MS   = 900;  // 每一撇最長時間
+        const STROKE_DIAG_MIN = 0.25; // 對角線分量最低比例（放寬）
+        const BETWEEN_MAX_MS  = 1500; // 兩撇之間最長間隔
+
+        let strokes = [];
+        let cur = null;
+
+        const SKIP_SEL = 'button,input,select,a,label,[role="button"],.actionBtn,.tile,.tw16-mini-dashboard-card';
+
+        function isCross(s1, s2) {
+          function isDiag(dx, dy) {
+            const len = Math.hypot(dx, dy);
+            if (len < STROKE_MIN_DIST) return false;
+            const ax = Math.abs(dx) / len;
+            const ay = Math.abs(dy) / len;
+            return ax > STROKE_DIAG_MIN && ay > STROKE_DIAG_MIN;
+          }
+          if (!isDiag(s1.dx, s1.dy) || !isDiag(s2.dx, s2.dy)) return false;
+
+          // X 字兩撇：一撇左上→右下（dx·dy > 0），另一撇右上→左下（dx·dy < 0）
+          // 用符號判斷比角度計算更可靠
+          const sign1 = Math.sign(s1.dx) * Math.sign(s1.dy); // 正=同向斜, 負=反向斜
+          const sign2 = Math.sign(s2.dx) * Math.sign(s2.dy);
+          return sign1 !== 0 && sign2 !== 0 && sign1 !== sign2;
         }
 
-        function lpStart(x, y, ev) {
-          // 跳過按鈕、輸入框、連結等互動元件
-          if (ev && ev.target && ev.target.closest && ev.target.closest('button,input,select,a,label,[role="button"],.actionBtn,.tile,.tw16-mini-dashboard-card')) return;
-          lpCancel();
-          lpStartX = x; lpStartY = y;
-          lpTimer = setTimeout(function() {
-            lpTimer = null;
+        function strokeEnd(x1, y1) {
+          if (!cur) return;
+          const dx = x1 - cur.x0;
+          const dy = y1 - cur.y0;
+          const dt = Date.now() - cur.t0;
+          cur = null;
+          if (dt > STROKE_MAX_MS) { strokes = []; return; }
+
+          // 清掉太舊的第一撇
+          if (strokes.length > 0 && Date.now() - strokes[0].t > BETWEEN_MAX_MS) strokes = [];
+
+          strokes.push({ dx, dy, t: Date.now() });
+          if (strokes.length > 2) strokes = strokes.slice(-2);
+
+          if (strokes.length === 2 && isCross(strokes[0], strokes[1])) {
+            strokes = [];
             if (state && state.ended) return;
             requestDebugPauseToggle(!isTileManagementPausingGame());
-          }, LP_MS);
+          }
         }
 
-        function lpMove(x, y) {
-          if (!lpTimer) return;
-          if (Math.abs(x - lpStartX) > LP_MOVE_LIMIT || Math.abs(y - lpStartY) > LP_MOVE_LIMIT) lpCancel();
-        }
+        // ── Touch 事件（行動裝置主路徑）──
+        tableEl.addEventListener('touchstart', function(ev) {
+          if (ev.touches.length !== 1) { cur = null; return; }
+          const t = ev.touches[0];
+          if (t.target && t.target.closest && t.target.closest(SKIP_SEL)) return;
+          cur = { x0: t.clientX, y0: t.clientY, t0: Date.now() };
+        }, { passive: true });
 
-        tableEl.addEventListener('pointerdown', function(ev) {
-          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
-          lpStart(ev.clientX, ev.clientY, ev);
+        tableEl.addEventListener('touchend', function(ev) {
+          if (!cur) return;
+          const t = ev.changedTouches[0];
+          strokeEnd(t.clientX, t.clientY);
         }, { passive: true });
-        tableEl.addEventListener('pointermove', function(ev) {
-          lpMove(ev.clientX, ev.clientY);
+
+        tableEl.addEventListener('touchcancel', function() { cur = null; }, { passive: true });
+
+        // ── Mouse 事件（桌機備用）──
+        tableEl.addEventListener('mousedown', function(ev) {
+          if (ev.button !== 0) return;
+          if (ev.target && ev.target.closest && ev.target.closest(SKIP_SEL)) return;
+          cur = { x0: ev.clientX, y0: ev.clientY, t0: Date.now() };
         }, { passive: true });
-        tableEl.addEventListener('pointerup', lpCancel, { passive: true });
-        tableEl.addEventListener('pointercancel', lpCancel, { passive: true });
-        tableEl.addEventListener('contextmenu', function(ev) {
-          if (lpTimer) { ev.preventDefault(); lpCancel(); }
-        });
+
+        tableEl.addEventListener('mouseup', function(ev) {
+          if (!cur) return;
+          strokeEnd(ev.clientX, ev.clientY);
+        }, { passive: true });
       })();
+
+
       /* 大廳顯示時自動隱藏迷你儀表板 */
       const updateDashVisibility = () => {
         const lobby = byId('tw16Lobby');
