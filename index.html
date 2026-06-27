@@ -8007,6 +8007,107 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
         }, { passive: true });
       })();
 
+      // 桌面畫圈手勢開關 AI 建議
+      // 判斷方式：單次連續觸控，收集移動點，分析方向變化是否繞了一圈（360°）
+      (function setupTableCircleGesture() {
+        const tableEl = byId('table');
+        if (!tableEl) return;
+
+        const SKIP_SEL = 'button,input,select,a,label,[role="button"],.actionBtn,.tile,.tw16-mini-dashboard-card';
+        const MIN_RADIUS   = 28;   // 圈的最小半徑（px）
+        const MAX_MS       = 2000; // 最長允許時間
+        const MIN_POINTS   = 8;    // 最少取樣點數
+
+        let tracking = false;
+        let points = [];
+        let startTime = 0;
+
+        function startTrack(x, y, target) {
+          if (target && target.closest && target.closest(SKIP_SEL)) return;
+          tracking = true;
+          points = [{ x, y }];
+          startTime = Date.now();
+        }
+
+        function moveTrack(x, y) {
+          if (!tracking) return;
+          const last = points[points.length - 1];
+          // 每隔至少 6px 才記錄，避免過密
+          if (Math.hypot(x - last.x, y - last.y) >= 6) points.push({ x, y });
+        }
+
+        function endTrack() {
+          if (!tracking) return;
+          tracking = false;
+          const pts = points;
+          points = [];
+          if (Date.now() - startTime > MAX_MS) return;
+          if (pts.length < MIN_POINTS) return;
+          if (isCircle(pts)) {
+            if (!state || !state.uiSettings) return;
+            state.uiSettings.aiSuggestionEnabled = !(state.uiSettings.aiSuggestionEnabled !== false);
+            try {
+              if (isOnlineGuest && isOnlineGuest()) {
+                const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || '{}');
+                _gl.aiSuggestionEnabled = state.uiSettings.aiSuggestionEnabled;
+                localStorage.setItem('tw16GuestUiLocal', JSON.stringify(_gl));
+              }
+            } catch(e) {}
+            if (typeof updateAiSuggestionMiniToggle === 'function') updateAiSuggestionMiniToggle();
+          }
+        }
+
+        function isCircle(pts) {
+          // 1. 計算質心
+          let cx = 0, cy = 0;
+          pts.forEach(p => { cx += p.x; cy += p.y; });
+          cx /= pts.length; cy /= pts.length;
+
+          // 2. 平均半徑、半徑變異數（圓形半徑應均勻）
+          const radii = pts.map(p => Math.hypot(p.x - cx, p.y - cy));
+          const rMean = radii.reduce((a, b) => a + b, 0) / radii.length;
+          if (rMean < MIN_RADIUS) return false;
+          const rStd = Math.sqrt(radii.map(r => (r - rMean) ** 2).reduce((a, b) => a + b, 0) / radii.length);
+          if (rStd / rMean > 0.45) return false; // 半徑太不均勻
+
+          // 3. 累計角度變化，需超過 300°
+          let totalAngle = 0;
+          for (let i = 1; i < pts.length; i++) {
+            const a1 = Math.atan2(pts[i-1].y - cy, pts[i-1].x - cx);
+            const a2 = Math.atan2(pts[i].y - cy, pts[i].x - cx);
+            let da = a2 - a1;
+            if (da > Math.PI)  da -= 2 * Math.PI;
+            if (da < -Math.PI) da += 2 * Math.PI;
+            totalAngle += da;
+          }
+          return Math.abs(totalAngle) >= (300 * Math.PI / 180);
+        }
+
+        // Touch
+        tableEl.addEventListener('touchstart', function(ev) {
+          if (ev.touches.length !== 1) { tracking = false; return; }
+          const t = ev.touches[0];
+          startTrack(t.clientX, t.clientY, t.target);
+        }, { passive: true });
+        tableEl.addEventListener('touchmove', function(ev) {
+          if (!tracking) return;
+          const t = ev.touches[0];
+          moveTrack(t.clientX, t.clientY);
+        }, { passive: true });
+        tableEl.addEventListener('touchend', function() { endTrack(); }, { passive: true });
+        tableEl.addEventListener('touchcancel', function() { tracking = false; points = []; }, { passive: true });
+
+        // Mouse
+        tableEl.addEventListener('mousedown', function(ev) {
+          if (ev.button !== 0) return;
+          startTrack(ev.clientX, ev.clientY, ev.target);
+        }, { passive: true });
+        tableEl.addEventListener('mousemove', function(ev) {
+          if (!tracking) return;
+          moveTrack(ev.clientX, ev.clientY);
+        }, { passive: true });
+        tableEl.addEventListener('mouseup', function() { endTrack(); }, { passive: true });
+      })();
 
       /* 大廳顯示時自動隱藏迷你儀表板 */
       const updateDashVisibility = () => {
