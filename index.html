@@ -867,7 +867,7 @@
   0%,49%{opacity:1;filter:brightness(1.45);text-shadow:0 0 10px rgba(255,232,90,.95),0 1px 3px rgba(0,0,0,.75);}
   50%,100%{opacity:.20;filter:brightness(.78);text-shadow:0 1px 2px rgba(0,0,0,.45);}
 }
-.tw-wm{position:absolute;z-index:2;pointer-events:none;font-size:16px;font-weight:900;line-height:1;color:rgba(255,255,255,.22);transform-origin:50% 50%;display:flex;flex-direction:column;align-items:center;gap:0;}
+.tw-wm{position:absolute;z-index:2;pointer-events:none;font-size:16px;font-weight:900;line-height:1;color:rgba(255,255,255,.22);transform-origin:50% 50%;display:flex;flex-direction:column;align-items:center;gap:0;left:50%;top:50%;}
 .tw-wm-dealer{position:absolute;top:-1.2em;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;justify-content:center;width:1.6em;height:1.6em;border:1.5px solid #ef4444;border-radius:999px;color:#fff;background:#ef4444;font-size:0.7em;font-weight:1000;line-height:1;text-shadow:none;}
 .tw-wm-ting{position:absolute;bottom:-1.2em;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid #ef4444;border-radius:3px;color:#ef4444;background:transparent;font-size:0.65em;font-weight:1000;line-height:1;text-shadow:none;}
 .tw16-mini-dashboard-deciding{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#f97316;color:#fff;font-size:9px;font-weight:1000;border-radius:6px;padding:2px 5px;line-height:1.3;white-space:nowrap;box-shadow:0 0 8px rgba(249,115,22,.9);animation:tw16DecidingPulse 1s infinite;z-index:7;}
@@ -1377,6 +1377,11 @@
 .tw16-drawn-ext.pos-left,.tw16-drawn-ext.pos-right{flex-direction:column;}
 .tw16-drawn-ext.pos-left .tile.back,.tw16-drawn-ext.pos-right .tile.back{width:var(--tw-side-tile-w,32px)!important;height:var(--tw-side-tile-h,22px)!important;}
 .tw16-drawn-ext.pos-top .tile.back{width:var(--tw-tile-w,22px)!important;height:var(--tw-tile-h,32px)!important;}
+.tw16-drawn-ext.pos-bottom{pointer-events:auto;}
+.tw16-drawn-ext.pos-bottom .tile{cursor:pointer;width:100%!important;height:100%!important;}
+.tw16-drawn-ext.pos-bottom .tile .tile-face{width:100%!important;height:100%!important;}
+.tw16-drawn-ext.pos-bottom .tile .tile-face img{width:100%!important;height:100%!important;object-fit:cover!important;}
+.tw16-drawn-ext.pos-bottom .tile:hover{transform:translateY(-4px);}
 .tw16-system-clock{display:inline-block;flex:0 0 auto;align-self:flex-start;pointer-events:none;user-select:none;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.04em;color:#ffe033;text-shadow:0 0 6px rgba(255,210,0,.7),0 1px 3px rgba(0,0,0,.9);line-height:1.1;white-space:nowrap;padding:0;}
 .tw16-mini-dashboard-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;align-items:start;width:100%;}
 .tw16-mini-dashboard-card{position:relative;min-width:0;min-height:0;border-radius:8px!important;padding:1px 3px 2px!important;background:transparent!important;border:1px solid rgba(255,200,50,.85)!important;box-shadow:0 0 4px rgba(255,200,50,.22)!important;color:#f8fafc;text-align:center;overflow:visible;}
@@ -1519,7 +1524,8 @@
   box-shadow:none!important;
   background:transparent!important;
 }
-.hand-bottom .hand-meld-row{grid-row:1!important;grid-column:1!important;flex-direction:row!important;}
+.hand-bottom .hand-meld-row{grid-row:1!important;grid-column:1!important;flex-direction:row!important;justify-self:center!important;}
+.hand-bottom.tw16-has-drawn .hand-meld-row{justify-self:start!important;}
 .hand-bottom .hand-tile-row{grid-row:2!important;grid-column:1!important;flex-direction:row!important;}
 .hand-top .hand-tile-row{grid-row:1!important;grid-column:1!important;flex-direction:row!important;}
 .hand-top .hand-meld-row{grid-row:2!important;grid-column:1!important;flex-direction:row!important;}
@@ -3027,7 +3033,8 @@ html body .hand .hand-row .tile.face-image.settlement-hand-win-tile::before{
 
 /* tw16_g104: visible non-autoplay strategy discard suggestion.
    The suggested hand tile is slightly enlarged, framed in red, and marked with a small red label. */
-.hand .hand-tile-row .tile.tw16-drawn-mark{
+.hand .hand-tile-row .tile.tw16-drawn-mark,
+.tw16-drawn-ext .tile.tw16-drawn-mark{
   position:relative!important;
   border:0!important;
   outline:0!important;
@@ -3041,7 +3048,8 @@ html body .hand .hand-row .tile.face-image.settlement-hand-win-tile::before{
   initial-value:0deg;
 }
 
-.hand .hand-tile-row .tile.tw16-drawn-mark::after{
+.hand .hand-tile-row .tile.tw16-drawn-mark::after,
+.tw16-drawn-ext .tile.tw16-drawn-mark::after{
   content:""!important;
   position:absolute!important;
   inset:0!important;
@@ -4073,6 +4081,20 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
 html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-seat-only="1"][data-adaptive-ready="0"]{
   visibility:hidden!important;
 }
+/* 胡牌提醒牌例自適應縮放：JS 依手牌+副露可用寬計算後設 CSS 變數 --tw16-ta-tile-* */
+.actionPanel.ting-assist-active .tingWaitAssistCard .tile{
+  width:var(--tw16-ta-tile-w,calc(var(--tw-tile-w) * .82))!important;
+  height:var(--tw16-ta-tile-h,calc(var(--tw-tile-h) * .82))!important;
+  font-size:var(--tw16-ta-tile-fs,calc(var(--tw-tile-w) * .54))!important;
+  min-width:var(--tw16-ta-tile-w,calc(var(--tw-tile-w) * .82))!important;
+  min-height:var(--tw16-ta-tile-h,calc(var(--tw-tile-h) * .82))!important;
+}
+.actionPanel.ting-assist-active .tingWaitAssistCard .tile .small{
+  font-size:calc(var(--tw16-ta-tile-fs,calc(var(--tw-tile-w) * .54)) * .5)!important;
+}
+.actionPanel.ting-assist-active .tingWaitAssistCount{
+  font-size:calc(var(--tw16-ta-tile-fs,calc(var(--tw-tile-w) * .54)) * .68)!important;
+}
 
 
 /* tw16_ting_danger_examples_20260623: 已聽牌各家危險前2牌例，錨定下方座位牌區左上，不放整個桌面左上。 */
@@ -4284,6 +4306,23 @@ html body .actionPanel.ting-choice-active .tingChoiceMeta{
   overflow:hidden!important;
   text-overflow:ellipsis!important;
 }
+/* ── 牌跡追蹤面板 ── */
+#tw16TileTrajectoryPanel{position:fixed;inset:max(8px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom)) 8px;z-index:2147483600;background:rgba(8,14,30,.97);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.72);display:flex;flex-direction:column;overflow:hidden;}
+#tw16TileTrajectoryPanel[hidden]{display:none!important;}
+.tw16-tt-close{position:absolute;top:8px;right:10px;z-index:10;width:36px;height:36px;border:none;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:20px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;}
+.tw16-tt-close:active{background:rgba(255,255,255,.26);}
+.tw16-tt-head{flex:0 0 auto;padding:10px 54px 8px 14px;font-size:17px;font-weight:1000;color:#fde68a;border-bottom:1px solid rgba(255,255,255,.10);}
+.tw16-tt-body{flex:1 1 auto;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:10px 12px;}
+.tw16-tt-group{margin-bottom:14px;}
+.tw16-tt-group-label{font-size:11px;font-weight:1000;color:#64748b;letter-spacing:.08em;margin-bottom:5px;}
+.tw16-tt-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.tw16-tt-tile{flex:0 0 auto;}
+.tw16-tt-tile .tile{width:26px!important;height:37px!important;font-size:17px!important;cursor:default!important;}
+.tw16-tt-copies{display:flex;gap:4px;flex-wrap:wrap;align-items:center;}
+.tw16-tt-chip{display:inline-block;padding:2px 6px;border-radius:6px;font-size:11px;font-weight:1000;line-height:1.4;white-space:nowrap;}
+.tw16-tt-known{background:rgba(34,197,94,.18);color:#86efac;}
+.tw16-tt-unknown{background:rgba(100,116,139,.18);color:#64748b;}
+.tw16-tt-chip-danger{background:rgba(239,68,68,.18);color:#f87171;}
 </style>
 </head>
 <body>
@@ -9141,7 +9180,7 @@ function loadUiSettings() {
 
   function eventTargetIsLocalHandTile(target) {
     if (!target || !target.closest) return false;
-    const tile = target.closest('.hand-tile-row .tile');
+    const tile = target.closest('.hand-tile-row .tile') || target.closest('.tw16-drawn-ext.pos-bottom .tile');
     if (!tile || !tile.dataset || !tile.dataset.tileId) return false;
     const seat = localHumanSeat();
     return !!tileByIdInSeatHand(seat, String(tile.dataset.tileId));
@@ -12400,6 +12439,9 @@ function loadUiSettings() {
 
   function submitDiscard(seat, tileId, source, options = {}) {
     if (isOnlineGuest() && source !== 'remote' && seat === net.assignedSeat) {
+      tw16BottomMeldFrozen = false;
+      const _hbEl = dom.handBottom || byId('handBottom');
+      if (_hbEl) _hbEl.classList.remove('tw16-has-drawn');
       return publishNetworkIntent({ action: 'discard', tileId });
     }
     const allowComputerRecovery = !!(options && options.forceComputer && isOnlineHost() && isHostDrivenSeat(seat) && !state.ended && !state.locked && !state.pending && seat === state.turn && state.phase === 'discard' && (state.hands[seat] || []).length);
@@ -12459,6 +12501,10 @@ function loadUiSettings() {
     renderAll();
     playDiscardAnimation(seat, discarded, async () => {
       if (state.lastActionId !== actionId || state.ended) return;
+      // 打出一張牌後解凍 meld-row 位置
+      tw16BottomMeldFrozen = false;
+      const _handBotEl2 = dom.handBottom || byId('handBottom');
+      if (_handBotEl2) _handBotEl2.classList.remove('tw16-has-drawn');
       pushDiscardOnce(seat, discarded);
       state.locked = false;
       state.lockedAt = 0;
@@ -13580,6 +13626,9 @@ function loadUiSettings() {
   let tw16BaseTaiPotential = null;         // ⑥ 全手牌 taiPotential 基準
   let tw16TingOptionsCache = null;         // ② getTingOptions 回合快取
   let tw16OpponentInferenceCache = null;
+  let tw16DangerVisSnap = null;      // 牌跡快照 { k: actionKey, v: {code→count} }，供 tw16PublicVisibleCountForDanger O(1) 使用
+  let tw16AnalyticalWaitCache = null; // 解析式等待推算快取 { k: cacheKey, v: result }
+  let tw16BottomMeldFrozen = false; // 摸牌後凍結 meld-row 位置，打出一張牌後才解凍
   let tw16WaitCache = null;  // ★ 有效進張快取 { key → waitingPotentialResult }（request-scope）   // ④ 對手特徵快取
   let tw16ScorePressureCache = null;       // ⑤ 分數壓力快取（回合不變）
   let tw16RonCostToleranceCache = null;    // ⑥ 放槍容忍度快取（回合不變）
@@ -13617,7 +13666,7 @@ function loadUiSettings() {
     const sorted = codes.slice().sort((a, b) => (TILE_ORDER_MAP[a] || 999) - (TILE_ORDER_MAP[b] || 999));
     const key = sorted.join(',') + '|' + concealedSetsNeeded;
     if (tw16WinCheckCache.has(key)) return tw16WinCheckCache.get(key);
-    if (tw16WinCheckCache.size > 1200) { tw16WinCheckCache = new Map(); }
+    if (tw16WinCheckCache.size > 4000) { tw16WinCheckCache = new Map(); }
     const result = isWinningCodeList(codes, concealedSetsNeeded);
     tw16WinCheckCache.set(key, result);
     return result;
@@ -16233,8 +16282,17 @@ function loadUiSettings() {
       if (!state.declaredTing[other]) return;
       if (!isSeatActiveInTable(other)) return;
       try {
-        const codes = tingSeatTopDangerCodes(other);
-        if (codes) codes.forEach(function(c) { if (c) forbidden.add(c); });
+        // 修正：只封鎖 tingWaitsSnapshot（宣告聽牌時精確記錄的等待牌）
+        // 舊版 tingSeatTopDangerEntries score>0 含基礎分200，幾乎所有未棄牌都進禁打集
+        // → _safe.length=0 → 守門失效 → AI 直接出禁打牌 → 被胡
+        // 現在只封鎖快照確認的牌：禁打集精確，safe 有合法選項，守門可靠
+        const snap = state.tingWaitsSnapshot && state.tingWaitsSnapshot[other];
+        if (Array.isArray(snap) && snap.length > 0) {
+          snap.forEach(function(code) {
+            if (code && !isFlower(code)) forbidden.add(code);
+          });
+        }
+        // 無快照時不封鎖：無精確等待資訊，封鎖推測牌只會讓守門失效
       } catch (_) {}
     });
     return forbidden;
@@ -16803,67 +16861,23 @@ function chooseExactDiscardTile(seat) {
       nextRoundPlan: clonePlain(state.nextRoundPlan || null),
       reveal: buildRevealPayload(winner, winTile),
       tingDangerSnapshot: (function() {
-        // tw16_win_history_ting_danger_snapshot_20260624v5:
-        // isWinningCodeList(codes, n) 要求 codes.length === n*3+2
-        // 自摸(self)：手牌已含胡牌，長度 = need，直接移除每張試胡找等待牌
-        // 放槍(ron) ：手牌不含胡牌，長度 = need-1，直接 concat 每個候選牌試胡
+        // tw16_win_history_ting_danger_snapshot_fix: 使用宣告聽牌時保存的快照，
+        // 不做事後重算（事後補上會導致快照與實際遊戲危險牌例不一致）
         const snap = [];
         try {
-          const neededSets = (typeof requiredConcealedSets === 'function')
-            ? requiredConcealedSets(winner)
-            : Math.max(0, 5 - ((state.melds && state.melds[winner]) ? state.melds[winner].length : 0));
-          const need = neededSets * 3 + 2;
-          const handAll = (state.hands[winner] || [])
-            .map(function(t) { return t && t.code; })
-            .filter(function(c) { return c && !isFlower(c); });
-          if (!handAll.length) return snap;
-          const waitSet = Object.create(null);
-          if (handAll.length === need) {
-            // 自摸：手牌已含胡牌（winTile），移除 winTile 後找等待牌
-            // 優先用已知的 winTile 定位，否則嘗試每張
-            const winCode = winTile && winTile.code && !isFlower(winTile.code) ? winTile.code : null;
-            if (winCode) {
-              // 找第一個匹配 winCode 的位置移除
-              var foundWin = false;
-              for (var i = 0; i < handAll.length; i++) {
-                if (handAll[i] === winCode) {
-                  var base = handAll.slice(0, i).concat(handAll.slice(i + 1));
-                  allNonFlowerCodes().forEach(function(code) {
-                    try { if (isWinningCodeList(base.concat([code]), neededSets)) waitSet[code] = true; } catch (_) {}
-                  });
-                  foundWin = true;
-                  break;
-                }
-              }
-              if (!foundWin) {
-                // winCode 不在手牌裡（已被移走），直接用整組手牌（need-1 張路徑）
-                allNonFlowerCodes().forEach(function(code) {
-                  try { if (isWinningCodeList(handAll.concat([code]), neededSets)) waitSet[code] = true; } catch (_) {}
-                });
-              }
-            } else {
-              // 無法確認 winTile，只移除最後一張（通常是自摸牌）
-              var base0 = handAll.slice(0, handAll.length - 1);
-              allNonFlowerCodes().forEach(function(code) {
-                try { if (isWinningCodeList(base0.concat([code]), neededSets)) waitSet[code] = true; } catch (_) {}
-              });
-            }
-          } else if (handAll.length === need - 1) {
-            // 放槍：手牌不含胡牌，直接 concat 候選牌
-            allNonFlowerCodes().forEach(function(code) {
-              try { if (isWinningCodeList(handAll.concat([code]), neededSets)) waitSet[code] = true; } catch (_) {}
+          const waits = state.tingWaitsSnapshot && state.tingWaitsSnapshot[winner];
+          if (Array.isArray(waits) && waits.length > 0) {
+            const waitCodes = waits.filter(function(c){ return c && !isFlower(c); });
+            if (!waitCodes.length) return snap;
+            waitCodes.sort(function(a, b) {
+              const la = tw16PublicVisibleCountForDanger ? (4 - Math.min(4, tw16PublicVisibleCountForDanger(a))) : 0;
+              const lb = tw16PublicVisibleCountForDanger ? (4 - Math.min(4, tw16PublicVisibleCountForDanger(b))) : 0;
+              return lb - la;
+            });
+            waitCodes.slice(0, 2).forEach(function(code) {
+              snap.push({ seat: winner, code: code });
             });
           }
-          const waitCodes = Object.keys(waitSet);
-          if (!waitCodes.length) return snap;
-          waitCodes.sort(function(a, b) {
-            const la = tw16PublicVisibleCountForDanger ? (4 - Math.min(4, tw16PublicVisibleCountForDanger(a))) : 0;
-            const lb = tw16PublicVisibleCountForDanger ? (4 - Math.min(4, tw16PublicVisibleCountForDanger(b))) : 0;
-            return lb - la;
-          });
-          waitCodes.slice(0, 2).forEach(function(code) {
-            snap.push({ seat: winner, code: code });
-          });
         } catch (_) {}
         return snap;
       })()
@@ -18496,6 +18510,137 @@ function chooseExactDiscardTile(seat) {
     dom.resultText.querySelectorAll('[data-menu]').forEach(btn => btn.addEventListener('click', () => handleMenuAction(btn.dataset.menu)));
   }
 
+  // ── 牌跡追蹤面板 ──────────────────────────────────────────────
+  function showTileTrajectoryPanel() {
+    // 關閉選單
+    if (dom.resultPanel) {
+      dom.resultPanel.classList.remove('show','menu-open','settlement-open','history-open','utility-open','custom-tile-import-open');
+    }
+    setUiPriorityMode(false, 'tile-trajectory-close-menu');
+    // 暫停牌局
+    pauseGameForTileManagement('tile-trajectory');
+
+    // 取得或建立面板
+    let panel = document.getElementById('tw16TileTrajectoryPanel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'tw16TileTrajectoryPanel';
+      panel.setAttribute('aria-modal', 'true');
+      document.body.appendChild(panel);
+    }
+
+    // 收集已明示牌位置（只用公開資訊）
+    const codes = allNonFlowerCodes();
+    const locMap = Object.create(null);
+    codes.forEach(function(c) { locMap[c] = []; });
+
+    let discardIdx = 0;
+    (state.discards || []).forEach(function(d) {
+      if (!d || !d.tile || !d.tile.code || isFlower(d.tile.code)) return;
+      const c = d.tile.code;
+      if (locMap[c]) locMap[c].push({ type:'discard', seat:d.seat, tile:d.tile, idx:++discardIdx });
+    });
+
+    SEATS.forEach(function(s) {
+      (state.melds[s] || []).forEach(function(meld) {
+        (meld || []).forEach(function(t) {
+          if (!t || !t.code || isFlower(t.code)) return;
+          const c = t.code;
+          if (locMap[c]) locMap[c].push({ type:'meld', seat:s, tile:t });
+        });
+      });
+    });
+
+    const viewSeat = tw16PublicDangerViewSeat();
+    (state.hands[viewSeat] || []).forEach(function(t) {
+      if (!t || !t.code || isFlower(t.code)) return;
+      const c = t.code;
+      if (locMap[c]) locMap[c].push({ type:'hand', seat:viewSeat, tile:t });
+    });
+
+    function shortSeat(seat) {
+      const m = { east:'東', south:'南', west:'西', north:'北' };
+      return seat === viewSeat ? '我' : (m[seat] || seat);
+    }
+
+    function knownCopyHtml(loc) {
+      let lbl = '';
+      if (loc.type === 'discard') lbl = '棄' + loc.idx + '(' + shortSeat(loc.seat) + ')';
+      else if (loc.type === 'meld')    lbl = '副(' + shortSeat(loc.seat) + ')';
+      else                             lbl = '手(我)';
+      return '<span class="tw16-tt-chip tw16-tt-known">' + escapeHtml(lbl) + '</span>';
+    }
+
+    function unknownCopyHtml() {
+      return '<span class="tw16-tt-chip tw16-tt-unknown">不明</span>';
+    }
+
+    // 收集危險牌：危險牌例面板的 top 顯示牌 ＋ 快照確認等待牌，取聯集
+    // 面板用 top-2 顯示，追蹤面板用較寬的 top-4 確保不遺漏，快照再補充
+    const dangerCodes = new Set();
+    try {
+      if (state.declaredTing) {
+        SEATS.forEach(function(other) {
+          if (other === viewSeat || !state.declaredTing[other] || !isSeatActiveInTable(other)) return;
+          // 1. 危險牌例面板同源：取 top-4（面板顯示 top-2，稍微寬鬆以避免遺漏）
+          try {
+            const entries = tingSeatTopDangerEntries(other, 4);
+            if (entries) entries.forEach(function(e) { if (e && e.code) dangerCodes.add(e.code); });
+          } catch (_) {}
+          // 2. 快照確認的等待牌補充（快照為空時不影響）
+          const snap = state.tingWaitsSnapshot && state.tingWaitsSnapshot[other];
+          if (Array.isArray(snap)) snap.forEach(function(c) { if (c && !isFlower(c)) dangerCodes.add(c); });
+        });
+      }
+    } catch (_) {}
+
+    const groups = [
+      { label:'萬', codes: codes.filter(function(c){ return c[0]==='m'; }) },
+      { label:'筒', codes: codes.filter(function(c){ return c[0]==='p'; }) },
+      { label:'索', codes: codes.filter(function(c){ return c[0]==='s'; }) },
+      { label:'字牌', codes: codes.filter(function(c){ return isHonorCode(c); }) },
+    ];
+
+    let bodyHtml = '';
+    groups.forEach(function(g) {
+      if (!g.codes.length) return;
+      bodyHtml += '<div class="tw16-tt-group"><div class="tw16-tt-group-label">' + escapeHtml(g.label) + '</div>';
+      g.codes.forEach(function(code) {
+        const locs = locMap[code] || [];
+        const unk = Math.max(0, 4 - locs.length);
+        const isDanger = dangerCodes.has(code);
+        bodyHtml += '<div class="tw16-tt-row">'
+          + '<div class="tw16-tt-tile">' + tileMiniHtml({ id:'tt-'+code, code:code }) + '</div>'
+          + '<div class="tw16-tt-copies">';
+        locs.forEach(function(loc) {
+          let lbl2 = '';
+          if (loc.type === 'discard') lbl2 = '棄' + loc.idx + '(' + shortSeat(loc.seat) + ')';
+          else if (loc.type === 'meld') lbl2 = '副(' + shortSeat(loc.seat) + ')';
+          else lbl2 = '手(我)';
+          const cls = isDanger ? 'tw16-tt-chip tw16-tt-chip-danger' : 'tw16-tt-chip tw16-tt-known';
+          bodyHtml += '<span class="' + cls + '">' + escapeHtml(lbl2) + '</span>';
+        });
+        for (var i = 0; i < unk; i++) {
+          bodyHtml += '<span class="tw16-tt-chip ' + (isDanger ? 'tw16-tt-chip-danger' : 'tw16-tt-unknown') + '">不明</span>';
+        }
+        bodyHtml += '</div></div>';
+      });
+      bodyHtml += '</div>';
+    });
+
+    panel.innerHTML =
+      '<button class="tw16-tt-close" aria-label="關閉">✕</button>'
+      + '<div class="tw16-tt-head">牌跡追蹤</div>'
+      + '<div class="tw16-tt-body">' + bodyHtml + '</div>';
+
+    panel.hidden = false;
+
+    panel.querySelector('.tw16-tt-close').addEventListener('click', function() {
+      panel.hidden = true;
+      resumeGameAfterTileManagement('tile-trajectory');
+    });
+  }
+
   function openMainMenu() {
     setUiPriorityMode(true, 'open-main-menu');
     clearTimeout(claimTimer);
@@ -18522,6 +18667,7 @@ function chooseExactDiscardTile(seat) {
       + '<button class="btn" data-menu="rules">規則說明</button>'
       + '<button class="btn" data-menu="voice-events-toggle">語音播報：' + (state.uiSettings.voiceEventEnabled ? '開' : '關') + '</button>'
       + '<button class="btn" data-menu="perspective3d-toggle">3D立體視角：' + (state.uiSettings.perspective3d ? '開' : '關') + '</button>'
+      + '<button class="btn" data-menu="tile-trajectory">牌跡追蹤</button>'
       + '<button class="btn" data-menu="submenu-tiles">牌圖管理</button>'
       + '<button class="btn red" data-menu="exit-lobby">退出至大廳</button>'
       + '</div>';
@@ -18535,6 +18681,7 @@ function chooseExactDiscardTile(seat) {
   function handleMenuAction(action) {
     if (dom.resultPanel && action !== 'center-panel') { dom.resultPanel.classList.remove('menu-open'); dom.resultPanel.classList.remove('history-open'); dom.resultPanel.classList.remove('utility-open'); }
     if (action === 'main-menu') { openMainMenu(); return; }
+    if (action === 'tile-trajectory') { showTileTrajectoryPanel(); return; }
     if (action === 'exit-lobby') { exitToInterface329Lobby(); return; }
     if (action === 'submenu-save') {
       openMenuSubmenu('儲存牌局',
@@ -21053,7 +21200,7 @@ function showIntegrityReport(precomputed) {
       miniDashboardRenderKey = '';
       return;
     }
-    const renderKey = Number(state.tableMode || 4) + '|' + (state.debugPauseBy || '') + '|' + SEATS.map(seat => [
+    const renderKey = Number(state.tableMode || 4) + '|' + (isTileManagementPausingGame() ? (state.debugPauseBy || '') : '') + '|' + SEATS.map(seat => [
       seat,
       seat === state.turn ? 'active' : '',
       dealerDashboardPrefixText(seat),
@@ -21074,7 +21221,7 @@ function showIntegrityReport(precomputed) {
       SEATS.forEach(seat => {
         const card = document.createElement('div');
         const _deciding = !!(state.pending && pendingHumanSeats(state.pending).includes(seat));
-        const _pausedBy = state.debugPauseBy === seat;
+        const _pausedBy = state.debugPauseBy === seat && isTileManagementPausingGame();
         card.className = 'tw16-mini-dashboard-card' + (seat === state.turn ? ' active' : '') + (!isSeatActiveInTable(seat) ? ' tw16-mini-dashboard-inactive' : '') + (_deciding ? ' deciding' : '') + (_pausedBy ? ' tw16-paused-by-card' : '');
         const name = document.createElement('div');
         name.className = 'tw16-mini-dashboard-seat';
@@ -22537,11 +22684,13 @@ function showIntegrityReport(precomputed) {
         const boxRight = Math.max(hR.right,  mValid ? mR.right : hR.right);
         const rightFromTableRight   = Math.max(0, tR.right  - boxRight);
         const bottomFromTableBottom = Math.max(0, tR.bottom - boxTop) + 8;
-        dom.actionPanel.style.setProperty('left',          'auto',                          'important');
-        dom.actionPanel.style.setProperty('top',           'auto',                          'important');
-        dom.actionPanel.style.setProperty('right',         rightFromTableRight  + 'px',     'important');
-        dom.actionPanel.style.setProperty('bottom',        bottomFromTableBottom + 'px',    'important');
-        dom.actionPanel.style.setProperty('transform',     'none',                          'important');
+        dom.actionPanel.style.setProperty('position',      'fixed',                         'important');
+        dom.actionPanel.style.setProperty('left',          '50%',                           'important');
+        dom.actionPanel.style.setProperty('top',           '50%',                           'important');
+        dom.actionPanel.style.setProperty('right',         'auto',                          'important');
+        dom.actionPanel.style.setProperty('bottom',        'auto',                          'important');
+        dom.actionPanel.style.setProperty('transform',     'translate(-50%,-50%)',          'important');
+        dom.actionPanel.style.setProperty('width',         'max-content',                   'important');
         dom.actionPanel.style.setProperty('background',    'rgba(30,30,30,.82)',            'important');
         dom.actionPanel.style.setProperty('border-radius', '10px',                         'important');
         dom.actionPanel.style.setProperty('padding',       '6px 8px',                      'important');
@@ -22668,6 +22817,26 @@ function showIntegrityReport(precomputed) {
       const boxRight = Math.max(hR.right,  mValid ? mR.right : hR.right);
       const rightFromTableRight   = Math.max(0, tR.right  - boxRight);
       const bottomFromTableBottom = Math.max(0, tR.bottom - boxTop) + 8;
+
+      // ── 自適應牌尺寸：以手牌+副露總寬為可用寬，不超過標準牌寬 ──
+      try {
+        const baseTileW = cssPixelNumber('--tw-tile-w', 24);
+        const baseTileH = cssPixelNumber('--tw-tile-h', 34);
+        const availW = Math.max(60, boxRight - (mValid ? mR.left : hR.left));
+        const group = dom.actionPanel.querySelector('.tingWaitAssistGroup');
+        const waitCount = group ? Math.max(1, group.querySelectorAll('.tingWaitAssistCard').length) : 1;
+        const titleEst = Math.round(baseTileW * 0.92) + 4; // 「聽」字估寬
+        const cardGap = 2;
+        const perTileW = Math.floor((availW - titleEst - cardGap * waitCount) / waitCount);
+        const fitW = Math.max(14, Math.min(baseTileW, perTileW));
+        const fitH = Math.round(baseTileH * fitW / baseTileW);
+        const fitFs = Math.round(fitW * 0.65);
+        dom.actionPanel.style.setProperty('--tw16-ta-tile-w', fitW + 'px');
+        dom.actionPanel.style.setProperty('--tw16-ta-tile-h', fitH + 'px');
+        dom.actionPanel.style.setProperty('--tw16-ta-tile-fs', fitFs + 'px');
+      } catch (_) {}
+      // ──────────────────────────────────────────────────────────────
+
       dom.actionPanel.style.setProperty('left',          'auto',                         'important');
       dom.actionPanel.style.setProperty('top',           'auto',                         'important');
       dom.actionPanel.style.setProperty('right',         rightFromTableRight  + 'px',    'important');
@@ -23102,20 +23271,28 @@ function showIntegrityReport(precomputed) {
     return total;
   }
 
+  // tw16_danger_vis_snap: 每局面只建一次「viewSeat視角可見張數」快照，O(tiles)建一次後O(1)查詢
+  // 解決舊版每次呼叫都重掃棄牌/副露/手牌（每張牌130次迭代）的效能問題
+  function tw16EnsureDangerVisSnap() {
+    const viewSeat = tw16PublicDangerViewSeat();
+    const snapKey = String(state.handId||0)+':'+String(state.lastActionId||0)+':'+viewSeat;
+    if (tw16DangerVisSnap && tw16DangerVisSnap.k === snapKey) return tw16DangerVisSnap.v;
+    const v = Object.create(null);
+    ALL_NON_FLOWER_CODES.forEach(c => { v[c] = 0; });
+    (state.hands[viewSeat] || []).forEach(t => { if (t && t.code && v[t.code] !== undefined) v[t.code]++; });
+    SEATS.forEach(s => {
+      (state.melds[s] || []).forEach(meld => {
+        (meld || []).forEach(t => { if (t && t.code && v[t.code] !== undefined) v[t.code]++; });
+      });
+    });
+    (state.discards || []).forEach(d => { if (d && d.tile && d.tile.code && v[d.tile.code] !== undefined) v[d.tile.code]++; });
+    tw16DangerVisSnap = { k: snapKey, v };
+    return v;
+  }
+
   function tw16PublicVisibleCountForDanger(code) {
     if (!code) return 0;
-    const viewSeat = tw16PublicDangerViewSeat();
-    // tw16_visible_nocache_20260624: 危險牌例必須用 viewSeat 視角即時計算，不用出牌者視角快取
-    // 否則出牌者手中持有的牌會被誤計為「可見」導致 publicLeft=0 守衛失效
-    try {
-      let total = 0;
-      SEATS.forEach(function(s) {
-        if (s === viewSeat) (state.hands[s] || []).forEach(function(t) { if (t && t.code === code) total++; });
-        (state.melds[s] || []).forEach(function(meld) { (meld || []).forEach(function(t) { if (t && t.code === code) total++; }); });
-      });
-      (state.discards || []).forEach(function(d) { if (d && d.tile && d.tile.code === code) total++; });
-      return Math.max(0, total);
-    } catch (_) { return 0; }
+    try { return Math.max(0, tw16EnsureDangerVisSnap()[code] || 0); } catch (_) { return 0; }
   }
 
   function tw16PreciseDrawableCount(code) {
@@ -23195,7 +23372,7 @@ function showIntegrityReport(precomputed) {
         !oppDiscardSet.has(c) && (totalCounts[c]||0) > 0
       );
 
-      const N = Math.min(maxSamples || 180, 250); // 取樣次數
+      const N = Math.min(maxSamples || 80, 120); // 取樣次數
       const waitHits = Object.create(null);
       const needWin = neededSets * 3 + 2;
       let validSamples = 0;
@@ -23223,7 +23400,7 @@ function showIntegrityReport(precomputed) {
         for (let ci = 0; ci < candidateCodes.length; ci++) {
           const wc = candidateCodes[ci];
           try {
-            if (isWinningCodeList(hand.concat([wc]), neededSets)) {
+            if (isWinningCodeListCached(hand.concat([wc]), neededSets)) {
               isValidTingHand = true;
               foundWaits.push(wc);
             }
@@ -23243,6 +23420,83 @@ function showIntegrityReport(precomputed) {
     } catch (_) {}
 
     if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[cacheKey] = result;
+    return result;
+  }
+
+  // tw16_analytical_wait_prob: 解析式等待牌機率推算，完全取代 Monte Carlo
+  // 以棄牌軌跡（筋牌/壁牌/花色分布）直接估算，O(34) vs 舊 O(N×30×遞迴)
+  function tw16AnalyticalWaitProbabilities(targetSeat) {
+    const cacheKey = 'analWait:'+String(state.handId||0)+':'+String(state.lastActionId||0)+':'+targetSeat;
+    if (tw16OpponentInferenceCache && tw16OpponentInferenceCache[cacheKey]) return tw16OpponentInferenceCache[cacheKey];
+    if (tw16AnalyticalWaitCache && tw16AnalyticalWaitCache.k === cacheKey) return tw16AnalyticalWaitCache.v;
+    const result = Object.create(null);
+    try {
+      const viewSeat = tw16PublicDangerViewSeat();
+      if (targetSeat === viewSeat) {
+        tw16AnalyticalWaitCache = { k: cacheKey, v: result }; return result;
+      }
+      const visSnap = tw16EnsureDangerVisSnap();
+      const oppDiscardSet = (tw16SeatDiscardSetCache && tw16SeatDiscardSetCache[targetSeat])
+        ? tw16SeatDiscardSetCache[targetSeat]
+        : new Set((state.discards||[]).filter(d=>d&&d.seat===targetSeat&&d.tile).map(d=>d.tile.code));
+      const oppDiscardArr = (tw16SeatDiscardArrayCache && tw16SeatDiscardArrayCache[targetSeat])
+        ? tw16SeatDiscardArrayCache[targetSeat]
+        : (state.discards||[]).filter(d=>d&&d.seat===targetSeat&&d.tile).map(d=>d.tile.code);
+      const oppMeldCodes = (state.melds[targetSeat]||[]).flatMap(m=>(m||[]).map(t=>t&&t.code).filter(Boolean));
+      const oppMeldSuits = { m:0, p:0, s:0 };
+      oppMeldCodes.forEach(c => { if (c && isSuitPrefix(c[0])) oppMeldSuits[c[0]]++; });
+      const earlyDiscardSuits = { m:0, p:0, s:0 };
+      oppDiscardArr.slice(0, 6).forEach(c => { if (c && isSuitPrefix(c[0])) earlyDiscardSuits[c[0]]++; });
+      const recentDiscardSet = new Set(oppDiscardArr.slice(-3));
+      const codes = allNonFlowerCodes();
+      // 計算總可用未見張數（對手尚未棄過、且未全數公開可見的牌）
+      let totalEligible = 0;
+      codes.forEach(c => {
+        if (!oppDiscardSet.has(c)) totalEligible += Math.max(0, 4 - (visSnap[c]||0));
+      });
+      if (totalEligible <= 0) { tw16AnalyticalWaitCache = { k: cacheKey, v: result }; return result; }
+      codes.forEach(c => {
+        if (oppDiscardSet.has(c)) { result[c] = 0; return; }
+        const visCount = visSnap[c] || 0;
+        const unseen = Math.max(0, 4 - visCount);
+        if (unseen <= 0) { result[c] = 0; return; }
+        let prob = unseen / totalEligible; // 基礎可用性機率
+        if (isSuitTile(c)) {
+          const suit = c[0], n = Number(c.slice(1));
+          // 筋牌（suji）：對手棄了 N±3，N 是典型缺張等待
+          const suji3lo = n >= 4 && oppDiscardSet.has(suit+(n-3));
+          const suji3hi = n <= 6 && oppDiscardSet.has(suit+(n+3));
+          if (suji3lo && suji3hi) prob *= 3.0;
+          else if (suji3lo || suji3hi) prob *= 2.0;
+          // 壁牌（kabe）：已見 3 張，剩 1 張極危險
+          if (visCount === 3) prob *= 3.0;
+          // 中張加權
+          if (n >= 4 && n <= 6) prob *= 1.3;
+          else if (n >= 3 && n <= 7) prob *= 1.1;
+          // 副露集中同花色：等待此花色可能性更高
+          const sm = oppMeldSuits[suit] || 0;
+          if (sm >= 3) prob *= 2.0;
+          else if (sm >= 2) prob *= 1.5;
+          else if (sm >= 1) prob *= 1.2;
+          // 早期大量棄同花色：已整理掉此花色，等待可能性低
+          const ed = earlyDiscardSuits[suit] || 0;
+          if (ed >= 3) prob *= 0.35;
+          else if (ed >= 2) prob *= 0.65;
+          // 聽牌後最近棄牌有相鄰牌：此區間有注意
+          if ([-1,1].some(d => recentDiscardSet.has(suit+(n+d)))) prob *= 1.3;
+        } else if (isHonorCode(c)) {
+          prob *= 0.8; // 字牌一般較少作等待牌
+          if (visCount === 3) prob *= 2.5;
+          else if (visCount >= 1) prob *= 0.7;
+          // 對手副露有字牌：相關字牌等待可能性升高
+          const hm = oppMeldCodes.filter(mc => isHonorCode(mc)).length;
+          if (hm >= 3 && visCount === 0) prob *= 2.0;
+        }
+        result[c] = Math.min(1, Math.max(0, prob));
+      });
+    } catch(_) {}
+    if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[cacheKey] = result;
+    tw16AnalyticalWaitCache = { k: cacheKey, v: result };
     return result;
   }
 
@@ -23286,44 +23540,17 @@ function showIntegrityReport(precomputed) {
     if (targetSeat === viewSeat) {
       try { return !!canWinWithTile(targetSeat, { code, id: 'tw16_own_ting_wait_' + targetSeat + '_' + code }); } catch (_) { return false; }
     }
-    // 快照確認（AI 對手宣告時計算保存）
-    // 注意：snapshot 只用於「確認是等待牌」（快速 true），不用於「排除」（不可 return false）
-    // 因為 AI 換聽後 snapshot 可能過期，手牌掃描才是最終依據
+    // 快照確認（宣告聽牌時計算保存）- 不可作弊：禁止讀 state.hands[targetSeat]
     const _snap = state.tingWaitsSnapshot && state.tingWaitsSnapshot[targetSeat];
     if (Array.isArray(_snap) && _snap.length > 0 && _snap.includes(code)) {
       return true; // 快照確認是等待牌
     }
-    // snapshot 未確認（無快照、空、或不含此牌）：直接對對手手牌精確掃描
-    try {
-      const _hand = state.hands[targetSeat];
-      if (_hand && _hand.length > 0) {
-        const _handCodes = _hand.map(function(t){ return t&&t.code; }).filter(function(c){ return c&&!isFlower(c); });
-        const _needed = (typeof requiredConcealedSets==='function') ? requiredConcealedSets(targetSeat) : Math.max(0,5-((state.melds&&state.melds[targetSeat])?state.melds[targetSeat].length:0));
-        const _need = _needed*3+2;
-        // 手牌長度 = _need-1（聽牌狀態，尚未摸牌）→ 直接 concat 候選牌
-        if (_handCodes.length === _need-1) {
-          return isWinningCodeList(_handCodes.concat([code]), _needed);
-        }
-        // 手牌長度 = _need（已摸牌未出）→ 移除每張試胡
-        if (_handCodes.length === _need) {
-          for (var _i=0; _i<_handCodes.length; _i++) {
-            const _base = _handCodes.slice(0,_i).concat(_handCodes.slice(_i+1));
-            if (isWinningCodeList(_base.concat([code]), _needed)) return true;
-          }
-          return false;
-        }
-      }
-    } catch (_) {}
-    // fallback：棄過的牌排除，其餘須通過手牌掃描（用同一快取）
+    // 無快照：純公開資訊排除（棄過的牌排除 + 全見排除）
     const oppDiscardSet2 = tw16SeatDiscardSetCache && tw16SeatDiscardSetCache[targetSeat]
       ? tw16SeatDiscardSetCache[targetSeat]
       : new Set((state.discards||[]).filter(d=>d&&d.seat===targetSeat&&d.tile).map(d=>d.tile.code));
     if (oppDiscardSet2.has(code)) return false;
     if (tw16PublicVisibleCountForDanger(code) >= 4) return false;
-    // 若 _tw16HandScanIsWait 函式已定義，再做一次精確確認
-    if (typeof _tw16HandScanIsWait === 'function') {
-      return _tw16HandScanIsWait(targetSeat, code);
-    }
     return true;
   }
 
@@ -23335,15 +23562,7 @@ function showIntegrityReport(precomputed) {
         return Math.max(1, Number(detail.tai) || 1);
       } catch (_) { return 1; }
     }
-    // 若對手是 AI（手牌可見），精確計算台數
-    try {
-      const _oppHand = state.hands[targetSeat];
-      if (_oppHand && _oppHand.length > 0) {
-        const _fromSeat = SEATS.find(s => s !== targetSeat && isSeatActiveInTable(s)) || targetSeat;
-        const detail = evaluateWinDetails(targetSeat, 'ron', _fromSeat, { code, id: 'tw16_tai_scan_'+targetSeat+'_'+code }, {}) || {};
-        if (Number(detail.tai) > 0) return Math.max(1, Number(detail.tai));
-      }
-    } catch (_) {}
+    // 不可作弊：禁止讀 state.hands[targetSeat]，只用公開資訊估算台數
     return tw16PublicTingTaiCostEstimate(viewSeat, targetSeat, code);
   }
 
@@ -23351,7 +23570,9 @@ function showIntegrityReport(precomputed) {
   const _tw16HandScanCache = Object.create(null);
 
   function _tw16HandScanIsWait(targetSeat, code) {
-    // 直接對 state.hands[targetSeat] 精確掃描，帶快取
+    // 不可作弊：僅允許 viewSeat 自身座位精確掃描，對手手牌不可讀
+    const viewSeat = tw16PublicDangerViewSeat();
+    if (targetSeat !== viewSeat) return false;
     const cacheKey = String(state.lastActionId||0)+':'+targetSeat+':'+code;
     if (_tw16HandScanCache[cacheKey] !== undefined) return _tw16HandScanCache[cacheKey];
     let result = false;
@@ -23387,11 +23608,11 @@ function showIntegrityReport(precomputed) {
     const read = tw16PublicTingSeatRead(targetSeat);
     const isOwnSeat = targetSeat === viewSeat;
 
-    // 精確確認：快照 OR 即時手牌掃描（AI 手牌完整可見）
+    // 精確確認：快照（宣告聽牌時保存）或自身座位確認
     const snapArr = state.tingWaitsSnapshot && state.tingWaitsSnapshot[targetSeat];
     const snapshotConfirmed = !!(Array.isArray(snapArr) && snapArr.length > 0 && snapArr.includes(code));
-    const handScanConfirmed = !isOwnSeat && !snapshotConfirmed && _tw16HandScanIsWait(targetSeat, code);
-    const preciseConfirmed = isOwnSeat || snapshotConfirmed || handScanConfirmed;
+    // 不可作弊：handScanConfirmed 禁止對非 viewSeat 使用（_tw16HandScanIsWait 已有守門）
+    const preciseConfirmed = isOwnSeat || snapshotConfirmed;
 
     // --- 精確確認：確定是等待牌 ---
     if (preciseConfirmed) {
@@ -23403,12 +23624,11 @@ function showIntegrityReport(precomputed) {
       return Math.max(0, score);
     }
 
-    // --- 無快照：貝葉斯/蒙地卡羅推估 + 公開資訊推斷 ---
-    // 對網路對手（手牌不可見）：用 Monte Carlo 推估等待機率
+    // --- 無快照：解析式推算（筋牌/壁牌/花色分析），完全取代 Monte Carlo ---
     let bayesProb = 0;
     if (!isOwnSeat) {
       try {
-        const _bp = tw16InferOpponentWaitProbabilities(targetSeat, 180);
+        const _bp = tw16AnalyticalWaitProbabilities(targetSeat);
         bayesProb = Number(_bp && _bp[code]) || 0;
       } catch (_) {}
     }
@@ -23877,6 +24097,12 @@ function showIntegrityReport(precomputed) {
       if (rows.handRow) rows.handRow.replaceChildren();
       if (rows.meldRow) rows.meldRow.replaceChildren();
     });
+    // 底座摸進牌狀態：凍結 meld-row 置中，避免手牌容器擴大時花牌副露跳位
+    const _hasBotDrawn = !!(bottomHandActiveDrawSeatForLayout && bottomHandActiveDrawSeatForLayout(map));
+    if (_hasBotDrawn) tw16BottomMeldFrozen = true;
+    // 解凍由各自路徑的動畫 callback 負責（host: playDiscardAnimation, guest: snapshotAnimation timeout）
+    const _handBotEl = dom.handBottom || byId('handBottom');
+    if (_handBotEl) _handBotEl.classList.toggle('tw16-has-drawn', tw16BottomMeldFrozen);
     SEATS.forEach(seat => {
       const pos = map[seat];
       const rows = ensureHandRows(pos);
@@ -23905,7 +24131,6 @@ function showIntegrityReport(precomputed) {
         } else {
           const _dd = activeDrawnTileId(seat);
           const _ll = hand.length ? String(hand[hand.length - 1].id) : '';
-          // tw16_drawn_ext: 非底部座位摸牌張放入獨立容器，不撐大 handRow
           const _isNonBot = pos !== 'bottom';
           let _extCont = null;
           if (_isNonBot) {
@@ -24678,6 +24903,19 @@ function concealedKongOwnerOfMeld(meld) {
     const bottomWallCenterX = bottomHandRectAfterClamp && Number.isFinite(bottomHandRectAfterClamp.left) ? bottomHandRectAfterClamp.left + bottomHandRectAfterClamp.width / 2 : bottomHandCenterX;
     const bottomWallTop = bottomHandRectAfterClamp && Number.isFinite(bottomHandRectAfterClamp.top) ? Math.max(topLimit, bottomHandRectAfterClamp.top - wb.height) : Math.max(topLimit, bottomHandTop - wb.height);
     placeByLeftTop(items.bottom.wall, clampLeftInBox(bottomWallCenterX - wb.width / 2, wb.width, box, pad), bottomWallTop);
+    // tw16-has-drawn: meld-row 改為 justify-self:start，用 margin-left 維持置中位置
+    if (tw16BottomMeldFrozen) {
+      const _meldRow = items.bottom.hand && items.bottom.hand.querySelector ? items.bottom.hand.querySelector('.hand-meld-row') : null;
+      if (_meldRow) {
+        const _cellW = hbAnchor.width || 0;
+        const _meldW = _meldRow.getBoundingClientRect().width || 0;
+        const _ml = Math.max(0, (_cellW - _meldW) / 2);
+        _meldRow.style.setProperty('margin-left', _ml + 'px', 'important');
+      }
+    } else {
+      const _meldRow = items.bottom.hand && items.bottom.hand.querySelector ? items.bottom.hand.querySelector('.hand-meld-row') : null;
+      if (_meldRow) _meldRow.style.removeProperty('margin-left');
+    }
 
     const topCenter = clampCenter(cx, Math.max(ht.width, wt.width) / 2, box.width, pad);
     const topHandLeft = clampLeftInBox(topCenter - ht.width / 2, ht.width, box, pad);
@@ -25047,7 +25285,7 @@ function concealedKongOwnerOfMeld(meld) {
         wmEl.innerHTML = (isDealer ? '<span class="tw-wm-dealer">莊</span>' : '') + windChar + (isTing ? '<span class="tw-wm-ting">聽</span>' : '');
         wmEl.style.color = isSeatActiveInTable(seat) ? '' : 'transparent';
         const playPhase = state.phase === 'discard' || state.phase === 'claim' || state.phase === 'draw' || state.phase === 'selfwin';
-        wmEl.style.visibility = (state.phase === 'idle') ? 'hidden' : 'visible';
+        wmEl.style.visibility = isSeatActiveInTable(seat) ? 'visible' : 'hidden';
         const isActiveTurn = playPhase && state.turn === seat && !state.ended;
         wmEl.style.color = isActiveTurn ? '#ff3333' : (isSeatActiveInTable(seat) ? '' : 'transparent');
       }
@@ -25099,11 +25337,22 @@ function concealedKongOwnerOfMeld(meld) {
       });
     })();
     (function(){
-      const tEl=byId('table'),gEl=byId('discardGrid');
-      if(!tEl||!gEl)return;
-      const tR=tEl.getBoundingClientRect(),gR=gEl.getBoundingClientRect();
-      if(!tR.width||!gR.width)return;
-      const cx=(gR.left+gR.right)/2-tR.left, cy=(gR.top+gR.bottom)/2-tR.top, off=18;
+      const tEl=byId('table');
+      if(!tEl)return;
+      const tR=tEl.getBoundingClientRect();
+      if(!tR.width)return;
+      const gEl=byId('discardGrid');
+      const gR=gEl?gEl.getBoundingClientRect():null;
+      let cx,cy;
+      if(gR&&gR.width>0){
+        cx=(gR.left+gR.right)/2-tR.left; cy=(gR.top+gR.bottom)/2-tR.top;
+      } else {
+        const cEl=byId('center');
+        const cR=cEl?cEl.getBoundingClientRect():null;
+        if(cR&&cR.width>0){ cx=(cR.left+cR.right)/2-tR.left; cy=(cR.top+cR.bottom)/2-tR.top; }
+        else { cx=tR.width/2; cy=tR.height/2; }
+      }
+      const off=18;
       if(dom.wmBottom){dom.wmBottom.style.left=cx+'px';dom.wmBottom.style.top=(cy+off)+'px';}
       if(dom.wmTop)   {dom.wmTop.style.left   =cx+'px';dom.wmTop.style.top   =(cy-off)+'px';}
       if(dom.wmLeft)  {dom.wmLeft.style.left  =(cx-off)+'px';dom.wmLeft.style.top=cy+'px';}
