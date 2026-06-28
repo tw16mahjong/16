@@ -1309,7 +1309,7 @@
   pointer-events:none!important;
   overflow:hidden!important;
 }
-.actionBtn{min-width:42px!important;min-height:42px!important;font-size:18px!important;line-height:1.1!important;padding:2px 4px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;text-shadow:none!important;}
+.actionBtn{min-width:0!important;min-height:0!important;font-size:18px!important;line-height:1.1!important;padding:2px 4px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;text-shadow:none!important;}
 .actionBtn.gray{background:transparent!important;color:#fff!important;border:0!important;box-shadow:none!important;}
 .claimHint{background:transparent!important;border:0!important;color:#fde68a!important;box-shadow:none!important;font-size:10px!important;}
 .result{
@@ -2533,11 +2533,27 @@
   border: 1px solid #ef4444 !important;
   border-radius: 8px !important;
 }
-/* 胡按鈕字體明顯放大 */
+/* 胡按鈕字體明顯放大，但不撐大底框 */
+.actionBtn[data-action="win"],
+.actionBtn.win-btn {
+  position: relative !important;
+  overflow: visible !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 2px 8px !important;
+  margin: 4px 0 !important;
+}
 .actionBtn[data-action="win"] .actionBtnLabel,
 .actionBtn.win-btn .actionBtnLabel{
-  font-size: 30px !important;
+  font-size: 60px !important;
   line-height: 1 !important;
+  display: inline-block !important;
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  white-space: nowrap !important;
+  pointer-events: auto !important;
 }
 .actionBtnLabel{
   line-height: 1 !important;
@@ -2561,9 +2577,29 @@
 .actionBtn.win-btn {
   background: transparent !important;
   border: 1px solid #ef4444 !important;
-  border-radius: 8px !important;
-  color: #fde68a !important;
   box-shadow: none !important;
+  position: relative !important;
+  overflow: visible !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 2px 8px !important;
+  margin: 4px 0 !important;
+  width: max-content !important;
+  min-width: 0 !important;
+  border-radius: 8px !important;
+}
+.actionBtn[data-action="win"] .actionBtnLabel,
+.actionBtn.win-btn .actionBtnLabel {
+  font-size: 60px !important;
+  line-height: 1 !important;
+  display: inline-block !important;
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  white-space: nowrap !important;
+  pointer-events: auto !important;
+  color: #fde68a !important;
 }
 .actionBtn.gray,
 .actionBtn.actionSkipBtn.gray{
@@ -10615,7 +10651,9 @@ function loadUiSettings() {
       net.lastSnapshotAt = Date.now();
       startGuestSnapshotSync('pregame-snapshot-no-hand');
       updateRoomText();
+      const _preSnap = captureBottomHandScrollBeforeHandRender(displayMap());
       renderAll();
+      restoreBottomHandScrollAfterDrawRender(_preSnap);
       return false;
     }
     if (isOnlineGuest() && hasStartedNetworkHand(incoming) && !incoming.ended) {
@@ -10729,7 +10767,9 @@ function loadUiSettings() {
     syncSeatAutoplayDefaults('snapshot-apply');
     inferTileSerialFromState();
     updateRoomText();
+    const _snapshotHandScrollSnap = captureBottomHandScrollBeforeHandRender(displayMap());
     renderAll();
+    restoreBottomHandScrollAfterDrawRender(_snapshotHandScrollSnap);
     if (isOnlineGuest()) syncOpeningVisualsFromState('snapshot');
     const receivedSettlement = state.lastSettlement && state.lastSettlement.id ? state.lastSettlement : (msg.settlement && msg.settlement.id ? msg.settlement : null);
     if (receivedSettlement && receivedSettlement.type === 'win') ensureWinHistoryFromSettlementPayload(receivedSettlement, 'snapshot');
@@ -11934,6 +11974,7 @@ function loadUiSettings() {
     bottomHandOpeningFitState.finalizedKey = '';
     bottomHandPinchScaleState.key = '';
     bottomHandPinchScaleState.userScale = 1;
+    try { if (typeof clearBottomHandUserDraggedForNewHand === 'function') clearBottomHandUserDraggedForNewHand(); } catch(e) {}
     state.kongsThisHand = 0;
     tw16SmartShapeCache = new Map();
     tw16WinCheckCache = new Map();
@@ -22160,7 +22201,16 @@ function showIntegrityReport(precomputed) {
         const pad = Math.max(4, Math.round(Math.min(box.width, box.height) * 0.010));
         const contentBox = chainContentBox(hand, 'bottom', 'hand');
         const layoutBox = bottomHandViewportLayoutBox(contentBox, box, pad);
+        const _savedLeft = Math.max(0, Math.round(Number(bottomHandScrollCenterState.savedScrollLeft) || 0));
         updateBottomHandScrollMode(hand, contentBox, layoutBox);
+        // updateBottomHandScrollMode 可能把 scrollLeft 歸零；若有記錄位置則立即恢復
+        if (_savedLeft > 0) {
+          const maxLeft = Math.max(0, (Number(hand.scrollWidth) || 0) - (Number(hand.clientWidth) || 0));
+          if (maxLeft > 0) {
+            try { hand.scrollLeft = Math.min(maxLeft, _savedLeft); } catch(e) {}
+            bottomHandScrollCenterState.lastScrollLeft = Math.round(Number(hand.scrollLeft) || 0);
+          }
+        }
         restoreBottomHandUserScrollIfNeeded(hand);
         positionBottomHandScrollIndicator(hand);
       } catch (e) {}
@@ -22273,10 +22323,16 @@ function showIntegrityReport(precomputed) {
     try { seat = bottomDisplaySeat(displayMap()) || ''; } catch (e) {}
     if (snapshot.handId !== (state.handId || 0) || snapshot.seat !== seat) return;
     const maxLeft = Math.max(0, (Number(handEl.scrollWidth) || 0) - (Number(handEl.clientWidth) || 0));
+    if (maxLeft <= 0) return; // 不可捲動，略過
     const left = Math.min(maxLeft, Math.max(0, Math.round(Number(snapshot.left) || 0)));
     try { handEl.scrollLeft = left; } catch (e) {}
     bottomHandScrollCenterState.lastScrollLeft = Math.round(Number(handEl.scrollLeft) || 0);
     bottomHandScrollCenterState.savedScrollLeft = bottomHandScrollCenterState.lastScrollLeft;
+    // 告知系統玩家有拖動記錄，下次 updateBottomHandScrollability 才不會把 scrollLeft 清回 0
+    if (bottomHandScrollCenterState.lastScrollLeft > 0) {
+      bottomHandScrollCenterState.userDragged = true;
+      bottomHandScrollCenterState.dragBaseDrawKey = currentBottomHandDrawnKey();
+    }
     try { positionBottomHandScrollIndicator(handEl); } catch (e) {}
     try { if (typeof refreshAiSuggestFloatingLabels === 'function') refreshAiSuggestFloatingLabels(); } catch (e) {}
   }
@@ -22370,7 +22426,11 @@ function showIntegrityReport(precomputed) {
     resetBottomHandPinchScaleForViewportChange();
     [0, 80, 180, 360].forEach(delay => {
       setTimeout(() => {
-        try { renderAll(); } catch (e) {}
+        try {
+          const _s = captureBottomHandScrollBeforeHandRender(displayMap());
+          renderAll();
+          restoreBottomHandScrollAfterDrawRender(_s);
+        } catch (e) {}
         try { fitBottomHandToTableWidthAfterOpening(); } catch (e) {}
         try { if (dom.resultPanel && dom.resultPanel.classList.contains('settlement-open')) fitSettlementTileShowcase(); } catch (e) {}
       }, delay);
@@ -22502,6 +22562,8 @@ function showIntegrityReport(precomputed) {
     lastCenteredDrawKey: '',
     savedScrollLeft: 0
   };
+  // 來賓手牌捲動位置持久記錄：在 applyBoxSize 改寬度之外存活，不受 clamp 影響
+  let _guestHandScrollLeft = 0;
 
   function canBottomSwipeDiscardTile(seat, tileId) {
     if (!seat || !tileId) return false;
@@ -25035,11 +25097,7 @@ function concealedKongOwnerOfMeld(meld) {
 
     if (!needsScroll && !pinchActive) {
       cancelBottomHandScrollAutoCenter();
-      if (!bottomHandScrollCenterState.userDragged) {
-        handEl.scrollLeft = 0;
-        bottomHandScrollCenterState.savedScrollLeft = 0;
-        bottomHandScrollCenterState.lastScrollLeft = 0;
-      }
+      // 牌局中永不清零 scrollLeft
       positionBottomHandScrollIndicator(handEl);
       return;
     }
@@ -25073,14 +25131,17 @@ function concealedKongOwnerOfMeld(meld) {
     bottomHandScrollCenterState.savedScrollLeft = Math.max(0, Math.round(Number(handEl.scrollLeft) || 0));
     bottomHandScrollCenterState.lastScrollLeft = bottomHandScrollCenterState.savedScrollLeft;
     bottomHandScrollCenterState.handEl = handEl;
+    // 同時更新持久記錄，確保 applyBoxSize clamp 後仍可恢復
+    _guestHandScrollLeft = bottomHandScrollCenterState.savedScrollLeft;
   }
 
 
   function restoreBottomHandUserScrollIfNeeded(handEl) {
     if (!handEl || !handEl.classList || !handEl.classList.contains('tw16-hand-scroll-x')) return;
-    if (!bottomHandScrollCenterState.userDragged) return;
+    const savedLeft = Math.max(0, Math.round(Number(bottomHandScrollCenterState.savedScrollLeft) || 0));
+    if (!bottomHandScrollCenterState.userDragged && savedLeft <= 0) return;
     const maxLeft = Math.max(0, (Number(handEl.scrollWidth) || 0) - (Number(handEl.clientWidth) || 0));
-    const left = Math.min(maxLeft, Math.max(0, Math.round(Number(bottomHandScrollCenterState.savedScrollLeft) || 0)));
+    const left = Math.min(maxLeft, savedLeft);
     if (Math.abs((Number(handEl.scrollLeft) || 0) - left) > 1) {
       try { handEl.scrollLeft = left; } catch (e) {}
     }
@@ -25113,11 +25174,19 @@ function concealedKongOwnerOfMeld(meld) {
     suppressBottomHandScrollAutoCenter(420);
     try { handEl.scrollTo({ left, top: 0, behavior: behavior || 'auto' }); }
     catch (e) { handEl.scrollLeft = left; }
-    bottomHandScrollCenterState.userDragged = false;
-    bottomHandScrollCenterState.dragBaseDrawKey = '';
+    // 注意：不在這裡清 userDragged，由 clearBottomHandUserDraggedForNewHand 在新局時才清
     bottomHandScrollCenterState.lastCenteredDrawKey = currentBottomHandDrawnKey();
     try { positionBottomHandScrollIndicator(handEl); } catch (e) {}
     try { if (typeof refreshAiSuggestFloatingLabels === 'function') refreshAiSuggestFloatingLabels(); } catch (e) {}
+  }
+
+  function clearBottomHandUserDraggedForNewHand() {
+    bottomHandScrollCenterState.userDragged = false;
+    bottomHandScrollCenterState.dragBaseDrawKey = '';
+    bottomHandScrollCenterState.savedScrollLeft = 0;
+    bottomHandScrollCenterState.lastScrollLeft = 0;
+    // 新局才清零持久捲動記錄
+    _guestHandScrollLeft = 0;
   }
 
   function scheduleBottomHandScrollAutoCenter(handEl, delayMs) {
@@ -25136,6 +25205,8 @@ function concealedKongOwnerOfMeld(meld) {
       if (current === bottomHandScrollCenterState.lastScrollLeft) return;
       bottomHandScrollCenterState.lastScrollLeft = current;
       markBottomHandUserDragged(handEl);
+      // 每次 scroll 都同步持久記錄
+      _guestHandScrollLeft = current;
       cancelBottomHandScrollAutoCenter();
       try { positionBottomHandScrollIndicator(handEl); } catch (e) {}
       try { if (typeof refreshAiSuggestFloatingLabels === 'function') refreshAiSuggestFloatingLabels(); } catch (e) {}
@@ -25211,12 +25282,31 @@ function concealedKongOwnerOfMeld(meld) {
       const handContentBox = chainContentBox(item.hand, side, 'hand');
       const handLayoutBox = side === 'bottom' ? bottomHandViewportLayoutBox(handContentBox, box, pad) : handContentBox;
       handLayoutBoxes[side] = handLayoutBox;
-      applyBoxSize(item.hand, handLayoutBox);
+      if (side === 'bottom' && item.hand) {
+        // applyBoxSize 會讓瀏覽器 clamp scrollLeft；
+        // 改用 _guestHandScrollLeft（在 applyBoxSize 外部持久存活），並在 rAF 後恢復
+        // 因為瀏覽器 clamp 是同步的，必須等 layout 後才能設回去
+        applyBoxSize(item.hand, handLayoutBox);
+        if (_guestHandScrollLeft > 0) {
+          const _handRef = item.hand;
+          const _targetLeft = _guestHandScrollLeft;
+          requestAnimationFrame(() => {
+            const maxLeft = Math.max(0, (Number(_handRef.scrollWidth) || 0) - (Number(_handRef.clientWidth) || 0));
+            if (maxLeft > 0) {
+              try { _handRef.scrollLeft = Math.min(maxLeft, _targetLeft); } catch(e) {}
+              bottomHandScrollCenterState.lastScrollLeft = Math.round(Number(_handRef.scrollLeft) || 0);
+              bottomHandScrollCenterState.savedScrollLeft = bottomHandScrollCenterState.lastScrollLeft;
+            }
+          });
+        }
+      } else {
+        applyBoxSize(item.hand, handLayoutBox);
+      }
       if (side === 'bottom') updateBottomHandScrollMode(item.hand, handContentBox, handLayoutBox);
       applyBoxSize(item.wall, chainContentBox(item.wall, side, 'wall'));
       if (item.hand) {
         item.hand.style.setProperty('align-items', 'center', 'important');
-        item.hand.style.setProperty('justify-content', side === 'bottom' && item.hand.classList.contains('tw16-hand-scroll-x') ? 'flex-start' : 'center', 'important');
+        item.hand.style.setProperty('justify-content', side === 'bottom' ? 'flex-start' : 'center', 'important');
       }
     });
 
