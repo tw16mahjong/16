@@ -2877,6 +2877,9 @@ html body .app.perspective3d .discardSeat .tile::before {
 .historyTingDangerSnapItem{display:inline-flex;align-items:center;gap:1px;}.historyTingDangerSeatLabel{font-size:.85em;color:#94a3b8;margin-right:2px;white-space:nowrap;}
 .historyTingDangerSnapSeat{font-size:10px;color:#93c5fd;font-weight:1000;margin-right:1px;}
 .historyTingDangerSnap .tile{width:20px!important;height:29px!important;font-size:13px!important;border-radius:3px!important;}
+.tw16HistAccuracyRow{position:sticky;top:0;z-index:2;background:rgba(15,23,42,.92);border:1px solid rgba(251,191,36,.35);border-radius:8px;padding:8px 10px;margin:0 0 8px;font-size:12.5px;font-weight:1000;color:#fbbf24;line-height:1.5;}
+.tw16HistAccuracyRow b{color:#fde68a;}
+.tw16HistAccuracyRow .tw16HistAccuracyNote{display:block;margin-top:2px;font-size:11px;font-weight:600;color:#94a3b8;}
 
 
 .tw16-btn-hint-wrap{position:relative;display:inline-flex;flex:0 0 auto;}
@@ -6784,11 +6787,23 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     bindTableDoubleTapBroadcast();
     bindEnterKeyBroadcast();
     setupDraggableUtilityPanel();
-    window.addEventListener('resize', () => { clampUtilityPanelToViewport(); scheduleBottomHandViewportRefit('resize'); scheduleSettlementTileShowcaseFit(); scheduleTingChoicePanelAdaptive(); });
-    window.addEventListener('orientationchange', () => { scheduleBottomHandViewportRefit('orientationchange'); scheduleSettlementTileShowcaseFit(); scheduleTingChoicePanelAdaptive(); });
-    document.addEventListener('fullscreenchange', () => { scheduleBottomHandViewportRefit('fullscreenchange'); scheduleTingChoicePanelAdaptive(); });
+    window.addEventListener('resize', () => { clampUtilityPanelToViewport(); scheduleBottomHandViewportRefit('resize'); scheduleSettlementTileShowcaseFit(); scheduleTingChoicePanelAdaptive(); scheduleTingWaitAssistAdaptivePlacement(); });
+    window.addEventListener('orientationchange', () => { scheduleBottomHandViewportRefit('orientationchange'); scheduleSettlementTileShowcaseFit(); scheduleTingChoicePanelAdaptive(); scheduleTingWaitAssistAdaptivePlacement(); });
+    document.addEventListener('fullscreenchange', () => { scheduleBottomHandViewportRefit('fullscreenchange'); scheduleTingChoicePanelAdaptive(); scheduleTingWaitAssistAdaptivePlacement(); });
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', () => { scheduleBottomHandViewportRefit('visualViewport-resize'); scheduleSettlementTileShowcaseFit(); scheduleTingChoicePanelAdaptive(); }, { passive: true });
+      window.visualViewport.addEventListener('resize', () => { scheduleBottomHandViewportRefit('visualViewport-resize'); scheduleSettlementTileShowcaseFit(); scheduleTingChoicePanelAdaptive(); scheduleTingWaitAssistAdaptivePlacement(); }, { passive: true });
+    }
+    // tw16_ting_assist_avoid_settlement: 結算窗顯示/隱藏狀態一改變，立即重新評估聽牌提示浮層，避免蓋住結算窗。
+    if (dom.resultPanel && typeof MutationObserver === 'function') {
+      let tingAssistResultShowState = dom.resultPanel.classList.contains('show');
+      const tingAssistResultObserver = new MutationObserver(() => {
+        const nowShow = dom.resultPanel.classList.contains('show');
+        if (nowShow !== tingAssistResultShowState) {
+          tingAssistResultShowState = nowShow;
+          scheduleTingWaitAssistAdaptivePlacement();
+        }
+      });
+      tingAssistResultObserver.observe(dom.resultPanel, { attributes: true, attributeFilter: ['class'] });
     }
     createInterface329Lobby();
     createInterface329Extras();
@@ -13098,7 +13113,6 @@ function loadUiSettings() {
   let tw16TingOptionsCache = null;         // ② getTingOptions 回合快取
   let tw16OpponentInferenceCache = null;
   let tw16DangerVisSnap = null;      // 牌跡快照 { k: actionKey, v: {code→count} }，供 tw16PublicVisibleCountForDanger O(1) 使用
-  let tw16AnalyticalWaitCache = null; // 解析式等待推算快取 { k: cacheKey, v: result }
   let tw16BottomMeldFrozen = false; // 摸牌後凍結 meld-row 位置，打出一張牌後才解凍
   let tw16WaitCache = null;  // ★ 有效進張快取 { key → waitingPotentialResult }（request-scope）   // ④ 對手特徵快取
   let tw16ScorePressureCache = null;       // ⑤ 分數壓力快取（回合不變）
@@ -13340,9 +13354,10 @@ function loadUiSettings() {
         else if (n === 2 || n === 8) r += isTing ? 5 : 2;
         else r += isTing ? 2 : 0;
 
-        // suji：對手棄了 N±3，此張是順子缺張危險牌（不是安全牌）
-        const sujiDanger2 = (n >= 4 && read.discardSet && read.discardSet.has(suit + (n - 3))) || (n <= 6 && read.discardSet && read.discardSet.has(suit + (n + 3)));
-        if (sujiDanger2) r += isTing ? 22 : 10;
+        // suji（筋牌）：振聽規則下，對手棄過 N±3 代表「N 兩面聽」整組振聽，N 應較安全（減少危險分），
+        // 而非加重危險。僅排除兩面聽，單跳坎張/嵌張/對倒/單騎仍可能聽 N，故只大幅減分而非歸零。
+        const sujiSafe2 = (n >= 4 && read.discardSet && read.discardSet.has(suit + (n - 3))) || (n <= 6 && read.discardSet && read.discardSet.has(suit + (n + 3)));
+        if (sujiSafe2) r -= isTing ? 22 : 10;
         const nearDiscard2 = [-2,-1,1,2].some(d => read.discardSet && read.discardSet.has(suit + (n + d)));
         if (nearDiscard2) r -= isTing ? 18 : 9;
         else if ((read.discards || []).length >= 8) r += isTing ? 8 : 4;
@@ -13934,11 +13949,13 @@ function loadUiSettings() {
         const hasSuji = (n >= 4 && (discardSet ? discardSet.has(suit + (n - 3)) : (state.discards || []).some(d => d && d.seat === other && d.tile && d.tile.code === suit + (n - 3))))
           || (n <= 6 && (discardSet ? discardSet.has(suit + (n + 3)) : (state.discards || []).some(d => d && d.seat === other && d.tile && d.tile.code === suit + (n + 3))));
         if (hasSuji) {
+          // 筋牌振聽：N±3 已被對手棄過，N 作為兩面聽的可能性大幅降低（較安全），
+          // 此牌更值得優先打出，故加分而非減分。
           const otherMelds = (state.melds[other] || []).length;
           const isTing = state.declaredTing && state.declaredTing[other];
-          if (isTing) score -= 18;
-          else if (otherMelds >= 1) score -= 6;
-          else score -= 3;
+          if (isTing) score += 18;
+          else if (otherMelds >= 1) score += 6;
+          else score += 3;
         }
       });
     }
@@ -16338,23 +16355,18 @@ function chooseExactDiscardTile(seat) {
       nextRoundPlan: clonePlain(state.nextRoundPlan || null),
       reveal: buildRevealPayload(winner, winTile),
       tingDangerSnapshot: (function() {
-        // tw16_win_history_ting_danger_snapshot_fix: 使用宣告聽牌時保存的快照，
-        // 不做事後重算（事後補上會導致快照與實際遊戲危險牌例不一致）
+        // tw16_win_history_ting_danger_snapshot_fix_20260630: 改用與即時危險牌例面板
+        // 完全相同的演算法（tingSeatTopDangerEntries，純公開資訊估算），
+        // 凍結「胡牌當下實際顯示在畫面上的內容」，不可用胡牌後才合法揭露的真實聽牌（tingWaitsSnapshot）事後改寫——
+        // 危險牌例內容本來就不該在胡牌後又改變內容
         const snap = [];
         try {
-          const waits = state.tingWaitsSnapshot && state.tingWaitsSnapshot[winner];
-          if (Array.isArray(waits) && waits.length > 0) {
-            const waitCodes = waits.filter(function(c){ return c && !isFlower(c); });
-            if (!waitCodes.length) return snap;
-            waitCodes.sort(function(a, b) {
-              const la = tw16PublicVisibleCountForDanger ? (4 - Math.min(4, tw16PublicVisibleCountForDanger(a))) : 0;
-              const lb = tw16PublicVisibleCountForDanger ? (4 - Math.min(4, tw16PublicVisibleCountForDanger(b))) : 0;
-              return lb - la;
-            });
-            waitCodes.slice(0, 2).forEach(function(code) {
-              snap.push({ seat: winner, code: code });
-            });
-          }
+          const entries = (typeof tingSeatTopDangerEntries === 'function') ? tingSeatTopDangerEntries(winner, 2) : [];
+          (entries || []).forEach(function(e) {
+            // publicOnly 標記是否為「對手座位純公開資訊推算」（真正的預測，可驗證準確率）
+            // 還是「自己座位精確確認」（看得到自己手牌，100% 正確，不算預測）
+            if (e && e.code) snap.push({ seat: winner, code: e.code, publicOnly: !!e.publicOnly });
+          });
         } catch (_) {}
         return snap;
       })()
@@ -17322,6 +17334,17 @@ function chooseExactDiscardTile(seat) {
       + '<label class="settingsRow"><span>顯示迷你儀表板</span><input id="setMiniDashboardEnabled" type="checkbox" ' + (state.uiSettings.miniDashboardEnabled ? 'checked' : '') + '><b></b></label>'
       + '<label class="settingsRow"><span>顯示座位頭像</span><input id="setAvatarEnabled" type="checkbox" ' + (state.uiSettings.avatarEnabled !== false ? 'checked' : '') + '><b></b></label>'
       + '<div style="font-size:13px;color:#cbd5e1;line-height:1.55">每底 / 每台籌碼只由房主或單機端調整；來賓由房主快照同步設定。</div>'
+      + '<div style="font-size:13px;color:#cbd5e1;line-height:1.7;margin-top:6px;padding-top:10px;border-top:1px solid rgba(255,255,255,.12)">'
+      + '貪心AI像是「先求進度、順手避險」的快棋風格；精確AI則是把台數、籌碼局勢、對手讀牌都一起算進去的全局優化，計算成本較高但決策更周全。<br>'
+      + '精確AI（chooseExactDiscardTile）：在貪心版的基礎上多疊加十幾項評估，包括：<br>'
+      + '台數潛力估算（往哪個方向打能拉高台數）<br>'
+      + '殘局感知（牌局快結束時自動轉趨保守）<br>'
+      + '籌碼壓力（領先時收縮、落後時敢拚）<br>'
+      + '放槍成本容忍度（接近流局時，對籌碼多的對手較願意冒險放槍）<br>'
+      + '對手棄牌模式推算危險牌（筋牌、對手副露花色分析等公開資訊）<br>'
+      + '七對子路線判斷、形狀連貫性評分、策略庫加分<br>'
+      + '每回合先建立一整套快取（可見牌數、副露、牌牆剩餘等）'
+      + '</div>'
       + '</div>';
     dom.resultNewBtn.style.display = 'none';
     dom.resultCloseBtn.textContent = '關閉';
@@ -18811,6 +18834,26 @@ function showWinHistory() {
     window.addEventListener('touchmove',e=>{if(!drag)return;onMove(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
     window.addEventListener('touchend',()=>{drag=null;});
   }
+  // tw16_danger_example_accuracy_stat_20260630: 統計胡牌歷程中「危險牌例」是否命中實際胡牌牌。
+  // 只計入 publicOnly===true 的紀錄（對手座位純公開資訊推算），排除自己座位（看得到自己
+  // 手牌，精確確認，100% 正確，不是真正的預測，計入會虛灌準確率）。
+  // 舊版（本次功能上線前）紀錄沒有 publicOnly 標記，視為不可驗證，不計入分母。
+  function tw16ComputeDangerExampleAccuracy(list) {
+    let testable = 0, hit = 0;
+    (list || []).forEach(function(h) {
+      if (!h || !h.winner) return;
+      const winCode = (h.winTile && h.winTile.code) || h.tile || '';
+      if (!winCode) return;
+      const snap = Array.isArray(h.tingDangerSnapshot)
+        ? h.tingDangerSnapshot.filter(function(s) { return s && s.code && s.seat === h.winner && s.publicOnly === true; })
+        : [];
+      if (!snap.length) return; // 無可驗證的公開推算紀錄，不計入統計
+      testable++;
+      if (snap.some(function(s) { return s.code === winCode; })) hit++;
+    });
+    return { testable: testable, hit: hit, rate: testable > 0 ? Math.round((hit / testable) * 1000) / 10 : null };
+  }
+
   function tw16RenderHistPanel(){
     const panel=document.getElementById('tw16HistPanel'),body=document.getElementById('tw16HistBody'),badge=document.getElementById('tw16HistBadge');
     if(!body)return;
@@ -18818,10 +18861,17 @@ function showWinHistory() {
     const allItems=trimWinHistory();
     const items=allItems.filter(item => tw16HistoryMatchesFilter(item, tw16HistFilterText));
     if(badge)badge.textContent=items.length+' / '+allItems.length+' 筆';
-    if(!items.length){body.innerHTML='<p style="text-align:center;color:#475569;padding:40px 0">'+(tw16HistFilterText?'查無符合歷程':'尚無胡牌記錄')+'</p>';return;}
+    // tw16_danger_example_accuracy_stat_20260630: 命中率統計列，永遠基於全部歷程（不受查詢篩選影響），
+    // 放在清單最上方第一列。
+    const acc = tw16ComputeDangerExampleAccuracy(allItems);
+    const accHtml = '<div class="tw16HistAccuracyRow">危險牌例命中率：'
+      + (acc.testable > 0 ? ('<b>' + acc.hit + ' / ' + acc.testable + '（' + acc.rate + '%）</b>') : '尚無可驗證紀錄')
+      + '<span class="tw16HistAccuracyNote">只計入對手座位純公開資訊推算；自己座位精確確認與舊版無標記紀錄不計入</span>'
+      + '</div>';
+    if(!items.length){body.innerHTML=accHtml+'<p style="text-align:center;color:#475569;padding:40px 0">'+(tw16HistFilterText?'查無符合歷程':'尚無胡牌記錄')+'</p>';return;}
     setTimeout(()=>{
       if(!panel||!panel.classList.contains('show'))return;
-      body.innerHTML='<div class="historyList">'+items.slice().reverse().map((h,i)=>{
+      body.innerHTML=accHtml+'<div class="historyList">'+items.slice().reverse().map((h,i)=>{
         const key = winHistoryEntryKey(h);
         const time = formatTaipeiDateTime(h.createdAt || Date.now());
         const line=(h.round||'')+'　'+(SEAT_NAME[h.winner]||'')+(h.kind==='self'?'自摸':'胡 '+(SEAT_NAME[h.fromSeat]||''))+'　'+h.tai+'台';
@@ -22789,95 +22839,52 @@ function showIntegrityReport(precomputed) {
   }
 
   // tw16_monte_carlo_removed_20260630: 舊版蒙地卡羅取樣函數已完整移除（不可使用 Monte Carlo）
-  // 等待牌機率推估一律使用下方 tw16AnalyticalWaitProbabilities 解析式公式
 
-  // tw16_analytical_wait_prob: 解析式等待牌機率推算，完全取代 Monte Carlo
-  // 以棄牌軌跡（筋牌/壁牌/花色分布）直接估算，O(34) vs 舊 O(N×30×遞迴)
-  function tw16AnalyticalWaitProbabilities(targetSeat) {
-    const cacheKey = 'analWait:'+String(state.handId||0)+':'+String(state.lastActionId||0)+':'+targetSeat;
-    if (tw16OpponentInferenceCache && tw16OpponentInferenceCache[cacheKey]) return tw16OpponentInferenceCache[cacheKey];
-    if (tw16AnalyticalWaitCache && tw16AnalyticalWaitCache.k === cacheKey) return tw16AnalyticalWaitCache.v;
-    const result = Object.create(null);
-    try {
-      const viewSeat = tw16PublicDangerViewSeat();
-      if (targetSeat === viewSeat) {
-        tw16AnalyticalWaitCache = { k: cacheKey, v: result }; return result;
-      }
-      const visSnap = tw16EnsureDangerVisSnap();
-      const oppDiscardSet = (tw16SeatDiscardSetCache && tw16SeatDiscardSetCache[targetSeat])
-        ? tw16SeatDiscardSetCache[targetSeat]
-        : new Set((state.discards||[]).filter(d=>d&&d.seat===targetSeat&&d.tile).map(d=>d.tile.code));
-      const oppDiscardArr = (tw16SeatDiscardArrayCache && tw16SeatDiscardArrayCache[targetSeat])
-        ? tw16SeatDiscardArrayCache[targetSeat]
-        : (state.discards||[]).filter(d=>d&&d.seat===targetSeat&&d.tile).map(d=>d.tile.code);
-      const oppMeldCodes = (state.melds[targetSeat]||[]).flatMap(m=>(m||[]).map(t=>t&&t.code).filter(Boolean));
-      const oppMeldSuits = { m:0, p:0, s:0 };
-      oppMeldCodes.forEach(c => { if (c && isSuitPrefix(c[0])) oppMeldSuits[c[0]]++; });
-      const earlyDiscardSuits = { m:0, p:0, s:0 };
-      oppDiscardArr.slice(0, 6).forEach(c => { if (c && isSuitPrefix(c[0])) earlyDiscardSuits[c[0]]++; });
-      const recentDiscardSet = new Set(oppDiscardArr.slice(-3));
-      const codes = allNonFlowerCodes();
-      // 計算總可用未見張數（對手尚未棄過、且未全數公開可見的牌）
-      let totalEligible = 0;
-      codes.forEach(c => {
-        if (!oppDiscardSet.has(c)) totalEligible += Math.max(0, 4 - (visSnap[c]||0));
-      });
-      if (totalEligible <= 0) { tw16AnalyticalWaitCache = { k: cacheKey, v: result }; return result; }
-      // 第一遍：算出未正規化的原始加權分數（raw），避免逐張各自 clamp 在 1 而失去相對區辨力
-      const raw = Object.create(null);
-      codes.forEach(c => {
-        if (oppDiscardSet.has(c)) { raw[c] = 0; return; }
-        const visCount = visSnap[c] || 0;
-        const unseen = Math.max(0, 4 - visCount);
-        if (unseen <= 0) { raw[c] = 0; return; }
-        let prob = unseen / totalEligible; // 基礎可用性機率
-        if (isSuitTile(c)) {
-          const suit = c[0], n = Number(c.slice(1));
-          // 筋牌（suji）：對手棄了 N±3，N 是典型缺張等待
-          const suji3lo = n >= 4 && oppDiscardSet.has(suit+(n-3));
-          const suji3hi = n <= 6 && oppDiscardSet.has(suit+(n+3));
-          if (suji3lo && suji3hi) prob *= 3.0;
-          else if (suji3lo || suji3hi) prob *= 2.0;
-          // 壁牌（kabe）：已見 3 張，剩 1 張極危險
-          if (visCount === 3) prob *= 3.0;
-          // 中張加權
-          if (n >= 4 && n <= 6) prob *= 1.3;
-          else if (n >= 3 && n <= 7) prob *= 1.1;
-          // 副露集中同花色：等待此花色可能性更高
-          const sm = oppMeldSuits[suit] || 0;
-          if (sm >= 3) prob *= 2.0;
-          else if (sm >= 2) prob *= 1.5;
-          else if (sm >= 1) prob *= 1.2;
-          // 早期大量棄同花色：已整理掉此花色，等待可能性低
-          const ed = earlyDiscardSuits[suit] || 0;
-          if (ed >= 3) prob *= 0.35;
-          else if (ed >= 2) prob *= 0.65;
-          // 聽牌後最近棄牌有相鄰牌：此區間有注意
-          if ([-1,1].some(d => recentDiscardSet.has(suit+(n+d)))) prob *= 1.3;
-        } else if (isHonorCode(c)) {
-          prob *= 0.8; // 字牌一般較少作等待牌
-          if (visCount === 3) prob *= 2.5;
-          else if (visCount >= 1) prob *= 0.7;
-          // 對手副露有字牌：相關字牌等待可能性升高
-          const hm = oppMeldCodes.filter(mc => isHonorCode(mc)).length;
-          if (hm >= 3 && visCount === 0) prob *= 2.0;
-        }
-        raw[c] = Math.max(0, prob);
-      });
-      // 第二遍：正規化為真機率分布，再依「典型聽牌型態平均聽牌種類數」校準總質量，
-      // 避免多個牌各自獨立 clamp 在 1.0 而喪失彼此間的相對區辨力（純數學校準，不涉及任何隱藏資訊）
-      let rawSum = 0;
-      codes.forEach(c => { rawSum += raw[c] || 0; });
-      const EFFECTIVE_WAIT_TYPES = 1.6; // 台灣麻將聽牌型態平均聽牌種類數的保守估計常數
-      codes.forEach(c => {
-        const r = raw[c] || 0;
-        if (r <= 0 || rawSum <= 0) { result[c] = 0; return; }
-        result[c] = Math.min(1, Math.max(0, (r / rawSum) * EFFECTIVE_WAIT_TYPES));
-      });
-    } catch(_) {}
-    if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[cacheKey] = result;
-    tw16AnalyticalWaitCache = { k: cacheKey, v: result };
-    return result;
+  // tw16_structural_wait_shape_count_20260630: 純公開資訊「組合可行性」推算，
+  // 取代原本權重堆疊式的解析推算（已移除 tw16AnalyticalWaitProbabilities）。
+  // 對候選牌 code，直接用未見牌庫（unseen pool，由「自己手牌＋全部座位副露＋全部座位
+  // 棄牌」這些公開資訊算出，不讀任何未明示的隱藏牌）檢驗它能透過哪些基本聽牌型態
+  // （兩面聽兩側／坎張／邊張／對倒單騎）在數學上仍然可能成立，型態可行越多種代表
+  // 越可能是等待張。此單一機制天然涵蓋「中張加權」（中張本來就比邊張支援更多型態）、
+  // 「壁牌」（鄰牌見光使對應型態不可行）、「筋牌」（振聽直接排除對應方向的兩面聽），
+  // 不需要三組各自獨立、容易互相矛盾的權重常數。
+  //
+  // tw16_toitoi_signal_weight_20260630: 副露型態（吃／碰／槓）本身就是公開資訊（meld 裡
+  // 的實際牌組成可直接看出是同碼刻子還是連續順子，不必讀任何隱藏牌）。若對手副露至少
+  // 兩組、且全部是刻子／槓子、完全沒有吃過順子，這是在做對對胡的強訊號——對對胡結構上
+  // 排除掉順子型聽法（兩面／坎張／邊張都需要順子骨架），單騎／對倒的相對權重應大幅提高，
+  // 順子型聽法則大幅降權（但不歸零，因為尚未完全確定最後一組一定也是刻子）。
+  function tw16MeldIsTripletType(meldGroup) {
+    if (!Array.isArray(meldGroup) || meldGroup.length < 3) return false;
+    const codes = meldGroup.map(t => t && t.code).filter(Boolean);
+    if (codes.length < 3) return false;
+    return codes.every(c => c === codes[0]);
+  }
+  function tw16StructuralWaitShapeCount(targetSeat, code) {
+    const meldGroups = (state.melds && state.melds[targetSeat]) || [];
+    const tripletMelds = meldGroups.filter(g => tw16MeldIsTripletType(g));
+    const sequenceMelds = meldGroups.filter(g => Array.isArray(g) && g.length >= 3 && !tw16MeldIsTripletType(g));
+    const toitoiSignal = meldGroups.length >= 2 && sequenceMelds.length === 0 && tripletMelds.length >= 2;
+    const tankiWeight = toitoiSignal ? 2.4 : 1; // 對倒／單騎基礎權重
+    const runWeight = toitoiSignal ? 0.15 : 1; // 順子型聽法（兩面／坎張／邊張）權重
+
+    if (!isSuitTile(code)) return tankiWeight; // 字牌只有對倒／單騎兩種型態
+    const suit = code[0], n = Number(code.slice(1));
+    const oppDiscardSet = (tw16SeatDiscardSetCache && tw16SeatDiscardSetCache[targetSeat])
+      ? tw16SeatDiscardSetCache[targetSeat]
+      : new Set((state.discards||[]).filter(d=>d&&d.seat===targetSeat&&d.tile).map(d=>d.tile.code));
+    const unseen = (c) => c ? Math.max(0, 4 - tw16PublicVisibleCountForDanger(c)) : 0;
+    let count = tankiWeight; // 對倒／單騎：任何未見牌恆可能成立的基礎型態，無法被公開資訊排除
+    // 兩面聽 A：持 (N-2,N-1) 聽 (N-3,N)；對手若棄過 N-3，此兩面聽整組振聽，排除
+    if (n >= 4 && !oppDiscardSet.has(suit+(n-3)) && unseen(suit+(n-2)) >= 1 && unseen(suit+(n-1)) >= 1) count += runWeight;
+    // 兩面聽 B：持 (N+1,N+2) 聽 (N,N+3)；對手若棄過 N+3，此兩面聽整組振聽，排除
+    if (n <= 6 && !oppDiscardSet.has(suit+(n+3)) && unseen(suit+(n+1)) >= 1 && unseen(suit+(n+2)) >= 1) count += runWeight;
+    // 坎張：持 (N-1,N+1) 聽 N（振聽規則對坎張無排除作用，需對手直接棄過 N 才振聽，已由上層 genbutsu 處理）
+    if (n >= 2 && n <= 8 && unseen(suit+(n-1)) >= 1 && unseen(suit+(n+1)) >= 1) count += runWeight;
+    // 邊張：持 (1,2) 聽 3 ／持 (8,9) 聽 7
+    if (n === 3 && unseen(suit+1) >= 1 && unseen(suit+2) >= 1) count += runWeight;
+    if (n === 7 && unseen(suit+8) >= 1 && unseen(suit+9) >= 1) count += runWeight;
+    return count;
   }
 
   function tw16PublicTingSeatRead(targetSeat) {
@@ -22918,7 +22925,11 @@ function showIntegrityReport(precomputed) {
     }
     const viewSeat = tw16PublicDangerViewSeat();
     if (targetSeat === viewSeat) {
-      try { return !!canWinWithTile(targetSeat, { code, id: 'tw16_own_ting_wait_' + targetSeat + '_' + code }); } catch (_) { return false; }
+      // 不可用 canWinWithTile：自摸瞬間手牌已含剛摸的牌（n*3+2 張），
+      // canWinWithTile 會把候選牌再疊加一次變成 n*3+3 張，永遠測不出胡，
+      // 導致胡牌歷程的危險牌例變成空白。改用 _tw16HandScanIsWait，
+      // 它已正確處理「手牌剛好多一張剛摸到的牌」與「正常聽牌等待狀態」兩種情況。
+      try { return _tw16HandScanIsWait(targetSeat, code); } catch (_) { return false; }
     }
     // 不可作弊：對手座位一律純公開資訊排除（禁止讀 state.tingWaitsSnapshot[targetSeat]，
     // 因該快照是宣告聽牌當下用真實隱藏手牌算出的精確聽牌，屬未明示資訊）
@@ -22995,95 +23006,57 @@ function showIntegrityReport(precomputed) {
       return Math.max(0, score);
     }
 
-    // --- 對手座位：一律使用解析式推算（筋牌/壁牌/花色分析），完全取代 Monte Carlo，不讀隱藏手牌 ---
-    let bayesProb = 0;
-    try {
-      const _bp = tw16AnalyticalWaitProbabilities(targetSeat);
-      bayesProb = Number(_bp && _bp[code]) || 0;
-    } catch (_) {}
+    // 對手自己棄過此牌：振聽，幾乎不可能等待此牌，直接排除
+    if (read && read.discardSet && read.discardSet.has(code)) return 0;
 
-    let score = Math.round(bayesProb * 12000) + 200;
-    score += viewHeld * 2800;
-    score += publicLeft * 280;
-    score += taiCost * 240;
-    // 貝葉斯機率直接加成：機率越高分數越高
-    score += bayesProb * 8000;
+    // --- 對手座位：純公開資訊「組合可行性」推算 ---
+    // tw16_score_rebalance_20260701: 原本 publicLeft*280 對幾乎所有候選牌都貢獻
+    // 840~1120 的均勻偏移，把 shapeCount 的真實鑑別力（最大差距僅 780）整個淹沒。
+    // 改為以 shapeCount 為壓倒性主訊號（×1000），publicLeft 只作次要
+    // tiebreaker（×25），同時加入花色保留訊號（對手清了哪個花色＝不等那個花色）
+    // 作為獨立於形態分析的第二強訊號。
+    const shapeCount = tw16StructuralWaitShapeCount(targetSeat, code);
 
-    if (read) {
-      // 對手自己棄過此牌：幾乎不可能等待此牌，直接排除
-      if (read.discardSet && read.discardSet.has(code)) return 0;
-      score += (Number(read.threat) || 0) * 16;
+    // shapeCount 是主訊號，壓倒其他所有因子
+    let score = shapeCount * 1000;
+    // publicLeft 僅作同 shapeCount 時的次要 tiebreaker（不可重疊影響 shapeCount）
+    score += publicLeft * 25;
+    score += taiCost * 120;
+    if (read) score += (Number(read.threat) || 0) * 12;
 
-      if (isSuitTile(code)) {
-        const suit = code[0], n = Number(code.slice(1));
-        const suitDanger = (read.dangerSuit && read.dangerSuit[suit]) || 0;
-        score += suitDanger * 28;
-
-        // 中張加權
-        if (n >= 4 && n <= 6) score += 160;
-        else if (n >= 3 && n <= 7) score += 100;
-        else if (n === 2 || n === 8) score += 50;
-
-        // suji（筋牌）推斷：對手棄了 N，N±3 是典型缺張等待
-        const suji3lo = n >= 4 && read.discardSet && read.discardSet.has(suit + (n - 3));
-        const suji3hi = n <= 6 && read.discardSet && read.discardSet.has(suit + (n + 3));
-        if (suji3lo || suji3hi) score += 220;
-        // 雙筋更危險（兩側都有筋）
-        if (suji3lo && suji3hi) score += 120;
-
-        // 聽牌宣告後新打出的牌（最後幾張棄牌）是聽牌型態的直接線索
-        const discardCount = (read.discards || []).length;
-        const postTingDiscards = discardCount >= 2 ? (read.discards || []).slice(-3) : [];
-        const postTingSet = new Set(postTingDiscards);
-        // 聽牌後打出相鄰張：暗示手牌中有此區間的搭子
-        const postNearDanger = [-1, 1].some(d => { const c = suit + (n + d); return postTingSet.has(c); });
-        if (postNearDanger) score += 140;
-
-        // 壁牌（kabe）：此牌已公開見到 3 張，只剩 1 張在未知位置——極危險
-        if (visible === 3) score += 350;
-
-        // 安全牌信號：對手棄了相鄰張（非聽牌後），代表不需要此區間
-        const nearDiscard = [-2,-1,1,2].some(d => {
-          const nc = suit + (n + d);
-          return read.discardSet && read.discardSet.has(nc) && !postTingSet.has(nc);
-        });
-        if (nearDiscard) score -= 160;
-        else if (discardCount >= 8) score += 80;
-
-        // 早期同花色大量棄牌：已棄此花色，手牌中此花色少
-        const earlySameSuit = (read.discards || []).slice(0, 6).filter(c => c && c[0] === suit).length;
-        if (earlySameSuit >= 3) score -= 80;
-
-        // 副露集中同花色：手牌幾乎全是此花色，中張等待可能性極高
-        const exposedSuits = new Set((read.meldCodes || []).filter(c => c && isSuitPrefix(c[0])).map(c => c[0]));
-        if (exposedSuits.size === 1 && exposedSuits.has(suit) && (read.meldCodes || []).length >= 3) score += 240;
-        const suitMeldCount2 = (read.meldCodes || []).filter(c => c && c[0] === suit).length;
-        if (suitMeldCount2 >= 6 && n >= 3 && n <= 7) score += 200;
-        else if (suitMeldCount2 >= 4 && n >= 4 && n <= 6) score += 120;
-        else if (suitMeldCount2 >= 2 && n >= 4 && n <= 6) score += 60;
-
-        // 聽牌宣告打出的是此花色：代表手牌此花色已滿，等待此花色可能性降低
-        const tingDiscard = discardCount > 0 ? (read.discards || [])[discardCount - 1] : null;
-        // 聽牌後打出同花色，但非當前 code（打出此花色一張說明此花色有剩餘搭子完整）
-        // 聽牌前打出此花色：手牌調整掉此花色，降低等待此花色中張的機率（但不排除）
-        const preLastDiscard = discardCount >= 2 ? (read.discards || [])[discardCount - 2] : null;
-        if (preLastDiscard && preLastDiscard[0] === suit && preLastDiscard !== code) score -= 50;
-
-      } else if (isHonorCode(code)) {
-        // 字牌：壁牌原則同樣適用
-        if (visible >= 3) score -= 300;
-        else if (visible === 2) score -= 120;
-        else if (visible === 1) score += 100;
-        else score += 160; // visible === 0：完全未見，最危險
-        if ((read.melds || []).length >= 2 && visible <= 1) score += 80;
-        // 副露有字牌（碰了字牌）：剩餘字牌等待機率更高
-        const honorMelds = (read.meldCodes || []).filter(c => isHonorCode(c)).length;
-        if (honorMelds >= 3 && visible === 0) score += 120;
+    if (isSuitTile(code)) {
+      const suit = code[0];
+      // 花色保留訊號（公開資訊：對手棄了多少同花色牌 vs 副露了多少同花色）
+      // 對手大量棄出花色 X = 手牌中 X 少 = 等待 X 可能性低（penalize）
+      // 對手幾乎不棄花色 X 而其他花色大量棄出 = 正在留 X = 等待 X 可能性高（reward）
+      if (read) {
+        const sdc = read.suitDiscardCount || {};
+        const smc = read.suitMeldCount || {};
+        const suits = ['m', 'p', 's'];
+        const thisSuitDiscard = sdc[suit] || 0;
+        const thisSuitMeld    = smc[suit] || 0;
+        const otherSuitDiscard = suits.filter(s => s !== suit).reduce((a, s) => a + (sdc[s] || 0), 0);
+        // 對手清其他花色而保留此花色：強烈集中訊號
+        if (otherSuitDiscard >= 4 && thisSuitDiscard <= 1) score += 500;
+        else if (otherSuitDiscard >= 3 && thisSuitDiscard <= 1) score += 320;
+        else if (otherSuitDiscard >= 2 && thisSuitDiscard === 0) score += 200;
+        // 對手大量棄出此花色：手中此花色少，等待此花色可能性低
+        if (thisSuitDiscard >= 5) score -= 400;
+        else if (thisSuitDiscard >= 3) score -= 180;
+        // 副露集中此花色
+        if (thisSuitMeld >= 6) score += 320;
+        else if (thisSuitMeld >= 4) score += 200;
+        else if (thisSuitMeld >= 2) score += 90;
       }
-    } else {
-      if (isMiddleTile(code)) score += 90;
-      if (isHonorCode(code) && visible <= 1) score += 70;
-      if (visible === 3) score += 200; // 壁牌 fallback
+    } else if (isHonorCode(code)) {
+      // 字牌：副露有相同字牌（碰過字牌代表牌型偏向字牌）
+      const meldCodes = (read && read.meldCodes) || [];
+      const honorMelds = meldCodes.filter(c => isHonorCode(c)).length;
+      if (honorMelds >= 3 && visible === 0) score += 300;
+      else if (honorMelds >= 2) score += 150;
+      else if (honorMelds >= 1) score += 60;
+      // 字牌若對手沒有任何字牌副露，大幅降權（字牌單騎較少見）
+      if (honorMelds === 0) score -= 200;
     }
 
     // 可見性衰減
@@ -23440,9 +23413,46 @@ function showIntegrityReport(precomputed) {
     return score;
   }
 
+  // tw16_ting_assist_landscape_midpoint: 橫擺時，聽牌提示水平位置 = 下家(自己)棄牌堆
+  // 與右家棄牌堆這兩堆「實際棄出的牌」彼此相鄰那一側的邊界中點（依實際牌的位置量測，不用固定容器框）。
+  function tingAssistLandscapeMidpointLeft(discardRect) {
+    let bottomEdgeX = discardRect.right;
+    const bottomTiles = document.querySelectorAll('.discardSeat.discard-bottom .discard-tile');
+    if (bottomTiles.length) {
+      let maxRight = -Infinity;
+      bottomTiles.forEach(t => {
+        const r = t.getBoundingClientRect();
+        if (r && r.width > 0 && r.right > maxRight) maxRight = r.right;
+      });
+      if (maxRight > -Infinity) bottomEdgeX = maxRight;
+    }
+    let rightEdgeX = bottomEdgeX;
+    const rightTiles = document.querySelectorAll('.discardSeat.discard-right .discard-tile');
+    if (rightTiles.length) {
+      let minLeft = Infinity;
+      rightTiles.forEach(t => {
+        const r = t.getBoundingClientRect();
+        if (r && r.width > 0 && r.left < minLeft) minLeft = r.left;
+      });
+      if (minLeft < Infinity) rightEdgeX = minLeft;
+    } else {
+      const rightSeatEl = document.querySelector('.discardSeat.discard-right') || document.querySelector('.discard-right');
+      const rightSeatRect = rightSeatEl ? rightSeatEl.getBoundingClientRect() : null;
+      if (rightSeatRect && rightSeatRect.width > 0) rightEdgeX = rightSeatRect.left;
+    }
+    return Math.round((bottomEdgeX + rightEdgeX) / 2);
+  }
+
   function adjustTingWaitAssistAdaptivePlacement() {
     const group = document.getElementById('tw16-ting-assist-fixed');
     if (!group) return;
+    // tw16_ting_assist_avoid_settlement: 結算窗開啟時，聽牌提示一律隱藏，避免蓋住結算內容。
+    const resultEl = dom.resultPanel || document.querySelector('.result');
+    if (resultEl && resultEl.classList.contains('show')) {
+      group.style.setProperty('display', 'none', 'important');
+      group.dataset.adaptiveReady = '0';
+      return;
+    }
     const discardEl = document.querySelector('.discardSeat.discard-bottom') || document.querySelector('.discard-bottom');
     if (!discardEl) return;
     const discardRect = discardEl.getBoundingClientRect();
@@ -23485,8 +23495,12 @@ function showIntegrityReport(precomputed) {
     void group.offsetWidth;
     const gw = group.offsetWidth  || 60;
     const gh = group.offsetHeight || 42;
-    // 右框線切齊棄牌池右界（右牆左邊線）；下緣貼棄牌池下邊界（不遮手牌）
-    let left = centerRight - gw;
+    // 直向：固定在棄牌池右邊界往右 1/5 棄牌池寬度處。
+    // 橫向：改為「下家(自己)最新一張棄牌右邊緣」與「右家最外側一張棄牌邊緣」的水平中點。
+    const isLandscapeForTingAssist = (window.matchMedia && window.matchMedia('(orientation: landscape)').matches) || (vw > vh);
+    let left = isLandscapeForTingAssist
+        ? tingAssistLandscapeMidpointLeft(discardRect)
+        : Math.round(discardRect.right + discardRect.width / 5);
     let top  = Math.round(discardRect.bottom - gh);
     left = Math.max(2, Math.min(left, vw - gw - 2));
     top  = Math.max(2, Math.min(top,  vh - gh - 2));
@@ -24779,10 +24793,72 @@ function concealedKongOwnerOfMeld(meld) {
         else { cx=tR.width/2; cy=tR.height/2; }
       }
       const off=18;
-      if(dom.wmBottom){dom.wmBottom.style.left=cx+'px';dom.wmBottom.style.top=(cy+off)+'px';}
-      if(dom.wmTop)   {dom.wmTop.style.left   =cx+'px';dom.wmTop.style.top   =(cy-off)+'px';}
-      if(dom.wmLeft)  {dom.wmLeft.style.left  =(cx-off)+'px';dom.wmLeft.style.top=cy+'px';}
-      if(dom.wmRight) {dom.wmRight.style.left =(cx+off)+'px';dom.wmRight.style.top=cy+'px';}
+      // tw16_wm_collision_20260701: 出牌階段若浮水印被棄牌池中的牌遮擋，
+      // 整組移往「棄牌池內右上角」空位，以四邊距同區域牌最均等為優。
+      // 非出牌階段（新局/閒置）重置回桌面正中心。
+      const playPhaseWm = state.phase === 'discard' || state.phase === 'claim' || state.phase === 'draw' || state.phase === 'selfwin';
+      let wmCX = cx, wmCY = cy; // 預設中心
+      if (playPhaseWm && gR && gR.width > 0) {
+        // 計算四個浮水印整體的包圍盒（以 off=18px 為半徑）
+        const wmHalfW = off + 18, wmHalfH = off + 18;
+        const wmRect = {
+          left: cx - wmHalfW + tR.left,
+          top:  cy - wmHalfH + tR.top,
+          right: cx + wmHalfW + tR.left,
+          bottom: cy + wmHalfH + tR.top
+        };
+        // 取棄牌池內所有已渲染的牌
+        const discardTiles = Array.from(document.querySelectorAll('.discardGrid .tile'));
+        const blocked = discardTiles.some(tile => {
+          const tr = tile.getBoundingClientRect();
+          if (!tr || tr.width <= 0) return false;
+          return tr.left < wmRect.right && tr.right > wmRect.left && tr.top < wmRect.bottom && tr.bottom > wmRect.top;
+        });
+        if (blocked) {
+          // 搜尋棄牌池右上角區域（gR 座標，相對視窗）的最佳空位
+          const searchLeft  = gR.left + gR.width * 0.55;
+          const searchRight = gR.right - wmHalfW - 2;
+          const searchTop   = gR.top + 2;
+          const searchBottom = gR.top + gR.height * 0.45;
+          // 候選格點（7×5 grid）
+          const stepX = Math.max(2, (searchRight - searchLeft) / 6);
+          const stepY = Math.max(2, (searchBottom - searchTop) / 4);
+          let bestScore = -1, bestCX = cx, bestCY = cy;
+          for (let gi = 0; gi <= 6; gi++) {
+            for (let gj = 0; gj <= 4; gj++) {
+              const px = searchLeft + gi * stepX;
+              const py = searchTop  + gj * stepY;
+              const cand = {
+                left: px - wmHalfW, top: py - wmHalfH,
+                right: px + wmHalfW, bottom: py + wmHalfH
+              };
+              // 計算候選位置到所有棄牌的最近距離
+              let minDist = Infinity;
+              discardTiles.forEach(tile => {
+                const tr = tile.getBoundingClientRect();
+                if (!tr || tr.width <= 0) return;
+                const dx = Math.max(0, Math.max(cand.left - tr.right, tr.left - cand.right));
+                const dy = Math.max(0, Math.max(cand.top  - tr.bottom, tr.top - cand.bottom));
+                const d  = Math.sqrt(dx * dx + dy * dy);
+                minDist = Math.min(minDist, d);
+              });
+              if (minDist === Infinity) minDist = 9999;
+              // 分數 = 最近距離（越大越好）
+              if (minDist > bestScore) {
+                bestScore = minDist;
+                bestCX = px - tR.left;
+                bestCY = py - tR.top;
+              }
+            }
+          }
+          wmCX = bestCX;
+          wmCY = bestCY;
+        }
+      }
+      if(dom.wmBottom){dom.wmBottom.style.left=wmCX+'px';dom.wmBottom.style.top=(wmCY+off)+'px';}
+      if(dom.wmTop)   {dom.wmTop.style.left   =wmCX+'px';dom.wmTop.style.top   =(wmCY-off)+'px';}
+      if(dom.wmLeft)  {dom.wmLeft.style.left  =(wmCX-off)+'px';dom.wmLeft.style.top=wmCY+'px';}
+      if(dom.wmRight) {dom.wmRight.style.left =(wmCX+off)+'px';dom.wmRight.style.top=wmCY+'px';}
     })();
   }
 
