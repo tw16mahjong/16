@@ -12013,25 +12013,9 @@ function loadUiSettings() {
     // 開的，不影響原本行為。宣告放在所有 try 塊之前，確保四個區塊都能正確存取到同一個值
     // （放在單一 try 區塊內會被該區塊的區塊作用域鎖住，其餘區塊讀不到，變成永遠關閉）。
     const _aiSuggestOnForTingBreak = !(state.uiSettings && state.uiSettings.aiSuggestionEnabled === false);
-    // 摸進最危險牌：寧可拆聽也不打
-    try {
-      if (isSeatAutoDrivenBySystem(seat) && _aiSuggestOnForTingBreak && state.declaredTing[seat] && tw16IsOpponentTopDangerCode(seat, tileObj.code)) {
-        const safeOptions = (tw16DiscardCandidateList(seat) || []).filter(item =>
-          item && item.tile && !isFlower(item.tile.code) && !tw16IsOpponentTopDangerCode(seat, item.tile.code)
-        );
-        if (safeOptions.length > 0) {
-          safeOptions.sort((a, b) => {
-            let sa = 0, sb = 0;
-            try { sa = smartAiDiscardCandidateScore(seat, a.tile, a.idx, state.hands[seat] || []).score || 0; } catch (e) {}
-            try { sb = smartAiDiscardCandidateScore(seat, b.tile, b.idx, state.hands[seat] || []).score || 0; } catch (e) {}
-            return sb - sa;
-          });
-          discardId = safeOptions[0].tile.id;
-          state.declaredTing[seat] = false; if (state.tingWaitsSnapshot) delete state.tingWaitsSnapshot[seat];
-          addLog(SEAT_NAME[seat] + '摸進最危險牌，拆聽改打安全牌');
-        }
-      }
-    } catch (e) { /* 靜默失敗 */ }
+    // tw16_remove_ting_break_feature_20260703: 拆聽避險功能（摸進危險牌就拆聽改打安全牌）
+    // 已完全刪除，不再以任何條件保留。宣告聽牌後，就算摸到危險牌，也只會照聽牌規則
+    // 摸打（除非胡牌），不會自動解除聽牌狀態改打別的牌。
     // ④ 進張全死偵測
     try {
       if (isSeatAutoDrivenBySystem(seat) && _aiSuggestOnForTingBreak) {
@@ -24578,7 +24562,15 @@ function showIntegrityReport(precomputed) {
 
 
   function renderHands(map) {
+    // tw16_fix_stale_tile_click_during_gesture_20260703: 手勢（點擊/滑動出牌）進行到一半時，
+    // 如果背景剛好觸發重繪（例如其他座位出牌），下方手牌整排 DOM 會被 replaceChildren()
+    // 砍掉重建，但手指還按著的是「舊」節點——等放開手指時，出牌判斷用的是舊節點綁定的
+    // 舊牌物件，可能已經跟畫面上現在顯示的牌不一致，造成「點擊的牌不是打出的牌」。
+    // 手勢進行中先跳過下方手牌那排的重建，等手勢結束（pointerup/finish）後正常流程
+    // 本來就會呼叫 renderAll() 重繪，不會漏掉更新。
+    const _skipBottomRebuild = !!(bottomSwipeDiscardState && bottomSwipeDiscardState.active);
     DISPLAY_POSITIONS.forEach(pos => {
+      if (_skipBottomRebuild && pos === 'bottom') return;
       const rows = ensureHandRows(pos);
       if (rows.handRow) rows.handRow.replaceChildren();
       if (rows.meldRow) rows.meldRow.replaceChildren();
@@ -24591,6 +24583,7 @@ function showIntegrityReport(precomputed) {
     if (_handBotEl) _handBotEl.classList.toggle('tw16-has-drawn', tw16BottomMeldFrozen);
     SEATS.forEach(seat => {
       const pos = map[seat];
+      if (_skipBottomRebuild && pos === 'bottom') return;
       const rows = ensureHandRows(pos);
       const handRow = rows.handRow;
       if (!handRow) return;
