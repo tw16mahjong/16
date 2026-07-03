@@ -362,22 +362,20 @@
   display:none!important;
 }
 
-@media (min-width:701px){
-  .discardGrid.guard-watermark-active::after{
-    content:'守門員開啟中';
-    position:absolute;
-    left:6px;
-    bottom:4px;
-    color:#000;
-    font-size:12px;
-    font-weight:1000;
-    letter-spacing:.08em;
-    line-height:1;
-    opacity:.62;
-    pointer-events:none;
-    z-index:9;
-    text-shadow:0 1px 0 rgba(255,255,255,.18);
-  }
+.discardGrid.guard-watermark-active::after{
+  content:'守門員開啟中';
+  position:absolute;
+  left:6px;
+  bottom:4px;
+  color:#000;
+  font-size:12px;
+  font-weight:1000;
+  letter-spacing:.08em;
+  line-height:1;
+  opacity:.62;
+  pointer-events:none;
+  z-index:9;
+  text-shadow:0 1px 0 rgba(255,255,255,.18);
 }
 
 
@@ -6959,7 +6957,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     lobby.id = 'tw16Lobby';
     lobby.className = 'tw16-lobby';
     lobby.innerHTML = '<div class="tw16-lobby-card">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.6.19 00:00 改版）</span></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.7.4 06:38 改版）</span></div>'
       + '<div class="tw16-lobby-title">台灣麻將 Ably 連線 / 單機</div>'
       + '<div class="tw16-lobby-sub">★連線對戰：<br><span style="color:#ef4444">每人都要設同房名</span>，設好房名後<br>1人先按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">建立房間</span><br>其餘人按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">加入房間</span><br>★單人：按<span style="background:#15803d;color:#fff;border-radius:3px;padding:0 3px;">直接離線開始</span></div>'
       + '<div class="tw16-lobby-grid">'
@@ -24922,8 +24920,7 @@ function concealedKongOwnerOfMeld(meld) {
     const openingActive = !!(state.openingDeal && state.openingDeal.active);
     const dealerReadyToDiscardFirstTile = !openingActive && state.phase === 'discard';
     const shouldShowPool = !openingActive && (dealerReadyToDiscardFirstTile || discardCount > 0);
-    const desktopWidth = Math.max(window.innerWidth || 0, (document.documentElement && document.documentElement.clientWidth) || 0);
-    const guardWatermarkActive = !!(shouldShowPool && desktopWidth >= 701 && tingDangerExamplesEnabled());
+    const guardWatermarkActive = !!(shouldShowPool && tingDangerExamplesEnabled());
     dom.discardGrid.classList.toggle('guard-watermark-active', guardWatermarkActive);
     if (!shouldShowPool) {
       dom.discardGrid.style.setProperty('display', 'none', 'important');
