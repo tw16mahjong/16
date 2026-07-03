@@ -12007,9 +12007,15 @@ function loadUiSettings() {
     if (!tileObj) return false;
     // discardId 必須在所有 try 塊之前宣告，避免 TDZ 問題
     let discardId = tileObj.id;
+    // tw16_ting_break_requires_ai_suggestion_20260703: 加入「AI建議必須開啟」這個條件——
+    // 關閉AI建議時，代表玩家希望完全照規則走（宣告聽牌後只能摸打，不做任何智慧調整），
+    // 不能再自動拆聽改打安全牌、切換聽法等任何調整。這是額外收緊的條件，AI建議預設是
+    // 開的，不影響原本行為。宣告放在所有 try 塊之前，確保四個區塊都能正確存取到同一個值
+    // （放在單一 try 區塊內會被該區塊的區塊作用域鎖住，其餘區塊讀不到，變成永遠關閉）。
+    const _aiSuggestOnForTingBreak = !(state.uiSettings && state.uiSettings.aiSuggestionEnabled === false);
     // 摸進最危險牌：寧可拆聽也不打
     try {
-      if (isSeatAutoDrivenBySystem(seat) && state.declaredTing[seat] && tw16IsOpponentTopDangerCode(seat, tileObj.code)) {
+      if (isSeatAutoDrivenBySystem(seat) && _aiSuggestOnForTingBreak && state.declaredTing[seat] && tw16IsOpponentTopDangerCode(seat, tileObj.code)) {
         const safeOptions = (tw16DiscardCandidateList(seat) || []).filter(item =>
           item && item.tile && !isFlower(item.tile.code) && !tw16IsOpponentTopDangerCode(seat, item.tile.code)
         );
@@ -12028,7 +12034,7 @@ function loadUiSettings() {
     } catch (e) { /* 靜默失敗 */ }
     // ④ 進張全死偵測
     try {
-      if (isSeatAutoDrivenBySystem(seat)) {
+      if (isSeatAutoDrivenBySystem(seat) && _aiSuggestOnForTingBreak) {
         const tingOpts = getTingOptions(seat);
         const currentOpt = tingOpts.find(o => String(o.discardId) === String(tileObj.id)) || tingOpts[0];
         const currentWaits = (currentOpt && currentOpt.waits) || [];
@@ -12054,7 +12060,7 @@ function loadUiSettings() {
     } catch (e) { /* 靜默失敗 */ }
     // ② 摸到廢牌時評估是否切換聽法
     try {
-      if (isSeatAutoDrivenBySystem(seat) && state.declaredTing[seat]) {
+      if (isSeatAutoDrivenBySystem(seat) && _aiSuggestOnForTingBreak && state.declaredTing[seat]) {
         const newOptions = getTingOptions(seat);
         if (newOptions.length > 0) {
           const currentOpt = newOptions.find(o => String(o.discardId) === String(discardId));
@@ -12075,7 +12081,7 @@ function loadUiSettings() {
     } catch (e) { discardId = tileObj.id; }
     // ⑥ 放槍風險 vs 自摸機率平衡：偏好進張集中在牌牆的聽法
     try {
-      if (isSeatAutoDrivenBySystem(seat) && state.declaredTing[seat]) {
+      if (isSeatAutoDrivenBySystem(seat) && _aiSuggestOnForTingBreak && state.declaredTing[seat]) {
         const opts = getTingOptions(seat);
         if (opts.length > 1) {
           opts.forEach(o => {
