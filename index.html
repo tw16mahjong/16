@@ -362,6 +362,23 @@
   display:none!important;
 }
 
+@media (min-width:701px){
+  .discardGrid.guard-watermark-active::after{
+    content:'守門員開啟中';
+    position:absolute;
+    left:6px;
+    bottom:4px;
+    color:#000;
+    font-size:12px;
+    font-weight:1000;
+    letter-spacing:.08em;
+    line-height:1;
+    opacity:.62;
+    pointer-events:none;
+    z-index:9;
+    text-shadow:0 1px 0 rgba(255,255,255,.18);
+  }
+}
 
 
 /* Clean Core 062: compact dice, blinking active seat label, and hidden container frames. */
@@ -3935,13 +3952,38 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
   const dom = {};
   let tileSerial = 1;
   let autoplayTimer = null;
+  // tw16_single_discard_guard_20260703: 同一個出牌回合只允許成功送出一次棄牌，
+  // 防止 AI/托管/遠端重複觸發 submitDiscard 把整手牌連續打光。
+  let tw16DiscardTurnGuardKey = '';
+  function tw16BuildDiscardTurnGuardKey(seat) {
+    const seatKey = SEATS.includes(seat) ? seat : (SEATS.includes(state.turn) ? state.turn : '');
+    return [
+      String(state.handId || 0),
+      String(seatKey || ''),
+      String(state.turn || ''),
+      String(state.phase || ''),
+      String(state.pending ? 1 : 0),
+      String((state.discards || []).length)
+    ].join('|');
+  }
+  function tw16ClearDiscardTurnGuard() {
+    tw16DiscardTurnGuardKey = '';
+  }
+  function tw16HasDiscardedThisTurn(seat) {
+    const key = tw16BuildDiscardTurnGuardKey(seat);
+    return !!(key && tw16DiscardTurnGuardKey && key === tw16DiscardTurnGuardKey);
+  }
+  function tw16MarkDiscardTurnGuard(seat) {
+    tw16DiscardTurnGuardKey = tw16BuildDiscardTurnGuardKey(seat);
+    return tw16DiscardTurnGuardKey;
+  }
   let _tw16ClaimFlash = null;
   let _tw16WinFlash = null;
   let tw16HistViewing = false;  // 本機獨立旗標：觀看胡牌歷程時暫停本機AI排程，不寫入state，不同步給其他人
   let tw16UiPriorityMode = false;  // 本機 UI 優先旗標：選單/設定/歷程開啟時暫停托管排程，不寫入state，不同步給其他人
+  let tw16SettingsPanelPausedGame = false;
   let tw16AiDriveRunning = false;
   let tw16AiDriveStartedAt = 0;
-  let discardSubmitGuard = null;
   let claimTimer = null;
   let autoNextTimer = null;
   let miniDashboardCountdownTimer = null;
@@ -6843,7 +6885,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     dom.newGameBtn.addEventListener('click', () => { if (isOnlineGuest()) { requestNetworkSync('guest-newgame-button'); return; } newGame(); });
     dom.resultBackBtn.addEventListener('click', () => handleResultBackButton());
     dom.resultNewBtn.addEventListener('click', () => { clearAutoNextTimer('manual-new-game'); if (isOnlineGuest()) { requestNetworkSync('guest-result-newgame'); return; } dom.resultNewBtn.style.display = ''; newGame(); });
-    dom.resultCloseBtn.addEventListener('click', () => { removeSettingsDefaultFloatingButton(); const visibleSettlementId = dom.resultPanel && dom.resultPanel.dataset ? String(dom.resultPanel.dataset.settlementId || '') : ''; clearAutoNextTimer('manual-close-settlement'); if (dom.resultPanel && dom.resultPanel.classList.contains('settlement-open')) { const closeId = visibleSettlementId || (state.lastSettlement && state.lastSettlement.id ? state.lastSettlement.id : ''); if (closeId) net.closedSettlementId = closeId; if (isOnlineGuest()) markGuestSettlementClosedLocally('manual-close-settlement', closeId); } dom.resultPanel.classList.remove('show'); dom.resultPanel.classList.remove('menu-open'); dom.resultPanel.classList.remove('settlement-open'); dom.resultPanel.classList.remove('history-open'); dom.resultPanel.classList.remove('utility-open'); dom.resultPanel.classList.remove('custom-tile-import-open'); if (dom.resultPanel.dataset) delete dom.resultPanel.dataset.settlementId; dom.resultNewBtn.style.display = ''; dom.resultNewBtn.disabled = false; dom.resultCloseBtn.textContent = '關閉'; resumeGameAfterTileManagement('result-close'); setUiPriorityMode(false, 'result-close') });
+    dom.resultCloseBtn.addEventListener('click', () => { removeSettingsDefaultFloatingButton(); const visibleSettlementId = dom.resultPanel && dom.resultPanel.dataset ? String(dom.resultPanel.dataset.settlementId || '') : ''; clearAutoNextTimer('manual-close-settlement'); if (dom.resultPanel && dom.resultPanel.classList.contains('settlement-open')) { const closeId = visibleSettlementId || (state.lastSettlement && state.lastSettlement.id ? state.lastSettlement.id : ''); if (closeId) net.closedSettlementId = closeId; if (isOnlineGuest()) markGuestSettlementClosedLocally('manual-close-settlement', closeId); } dom.resultPanel.classList.remove('show'); dom.resultPanel.classList.remove('menu-open'); dom.resultPanel.classList.remove('settlement-open'); dom.resultPanel.classList.remove('history-open'); dom.resultPanel.classList.remove('utility-open'); dom.resultPanel.classList.remove('custom-tile-import-open'); if (dom.resultPanel.dataset) delete dom.resultPanel.dataset.settlementId; dom.resultNewBtn.style.display = ''; dom.resultNewBtn.disabled = false; dom.resultCloseBtn.textContent = '關閉'; releaseSettingsPanelPause('result-close') || resumeGameAfterTileManagement('result-close'); setUiPriorityMode(false, 'result-close') });
     dom.autoBtn.addEventListener('click', () => toggleBottomAutoplay());
     dom.fullBtn.addEventListener('click', () => toggleFullscreen());
     dom.menuBtn.addEventListener('click', () => openMainMenu());
@@ -11320,7 +11362,6 @@ function loadUiSettings() {
     }
     clearTimeout(autoplayTimer);
     clearTimeout(claimTimer);
-    discardSubmitGuard = null;
     clearAutoNextTimer('clear');
     ensureContinuousRunObject();
     tileSerial = 1;
@@ -11981,6 +12022,7 @@ function loadUiSettings() {
   function normalDraw(seat) {
     if (state.locked || state.ended || seat !== state.turn) return null;
     clearTurnDeadline();
+    tw16ClearDiscardTurnGuard();
     const drawn = drawIntoHandWithFlowerReplacement(seat);
     if (!drawn) return endHandDraw();
     setActiveDrawnTile(seat, drawn);
@@ -12007,13 +12049,104 @@ function loadUiSettings() {
     if (!hand.length) return false;
     const tileObj = drawnId ? hand.find(t => t.id === drawnId) : hand[hand.length - 1];
     if (!tileObj) return false;
-    const discardId = tileObj.id;
-    addLog(SEAT_NAME[seat] + '聽牌自動摸打 ' + tileText(tileObj.code));
+    // discardId 必須在所有 try 塊之前宣告，避免 TDZ 問題
+    let discardId = tileObj.id;
+    // tw16_ting_break_requires_ai_suggestion_20260703: 加入「AI建議必須開啟」這個條件——
+    // 關閉AI建議時，代表玩家希望完全照規則走（宣告聽牌後只能摸打，不做任何智慧調整），
+    // 不能再自動拆聽改打安全牌、切換聽法等任何調整。這是額外收緊的條件，AI建議預設是
+    // 開的，不影響原本行為。宣告放在所有 try 塊之前，確保四個區塊都能正確存取到同一個值
+    // （放在單一 try 區塊內會被該區塊的區塊作用域鎖住，其餘區塊讀不到，變成永遠關閉）。
+    const _aiSuggestOnForTingBreak = !(state.uiSettings && state.uiSettings.aiSuggestionEnabled === false);
+    // tw16_remove_ting_break_feature_20260703: 拆聽避險功能（摸進危險牌就拆聽改打安全牌）
+    // 已完全刪除，不再以任何條件保留。宣告聽牌後，就算摸到危險牌，也只會照聽牌規則
+    // 摸打（除非胡牌），不會自動解除聽牌狀態改打別的牌。
+    // ④ 進張全死偵測
+    try {
+      if (isSeatAutoDrivenBySystem(seat) && _aiSuggestOnForTingBreak) {
+        const tingOpts = getTingOptions(seat);
+        const currentOpt = tingOpts.find(o => String(o.discardId) === String(tileObj.id)) || tingOpts[0];
+        const currentWaits = (currentOpt && currentOpt.waits) || [];
+        const allDead = currentWaits.length > 0 && currentWaits.every(w => countDrawableWaitTiles(w) <= 0);
+        if (allDead) {
+          const liveOptions = tingOpts.filter(o =>
+            (o.waits || []).some(w => countDrawableWaitTiles(w) > 0) &&
+            String(o.discardId) !== String(currentOpt && currentOpt.discardId)
+          );
+          if (liveOptions.length > 0) {
+            const best = bestTingOption(seat, liveOptions);
+            if (best && best.discardId) {
+              discardId = best.discardId;
+              state.declaredTing[seat] = true;
+              try { if (!state.tingWaitsSnapshot) state.tingWaitsSnapshot = {}; state.tingWaitsSnapshot[seat] = best.waits ? Array.from(new Set(best.waits)) : null; } catch(_) {}
+            }
+          } else {
+            state.declaredTing[seat] = false; if (state.tingWaitsSnapshot) delete state.tingWaitsSnapshot[seat];
+            addLog(SEAT_NAME[seat] + '進張全死，解除聽牌重新選牌');
+          }
+        }
+      }
+    } catch (e) { /* 靜默失敗 */ }
+    // ② 摸到廢牌時評估是否切換聽法
+    try {
+      if (isSeatAutoDrivenBySystem(seat) && _aiSuggestOnForTingBreak && state.declaredTing[seat]) {
+        const newOptions = getTingOptions(seat);
+        if (newOptions.length > 0) {
+          const currentOpt = newOptions.find(o => String(o.discardId) === String(discardId));
+          const best = bestTingOption(seat, newOptions);
+          if (best && best.discardId && String(best.discardId) !== String(discardId)) {
+            const bestDrawable = best.drawableRemaining || 0;
+            const currentDrawable = currentOpt ? (currentOpt.drawableRemaining || 0) : 0;
+            const bestTai = smartAiTingTaiScore(seat, best);
+            const currentTai = currentOpt ? smartAiTingTaiScore(seat, currentOpt) : 0;
+            if (bestDrawable >= currentDrawable + 3 || bestTai > currentTai + 2) {
+              discardId = best.discardId;
+              state.declaredTing[seat] = true;
+              try { if (!state.tingWaitsSnapshot) state.tingWaitsSnapshot = {}; state.tingWaitsSnapshot[seat] = best.waits ? Array.from(new Set(best.waits)) : null; } catch(_) {}
+            }
+          }
+        }
+      }
+    } catch (e) { discardId = tileObj.id; }
+    // ⑥ 放槍風險 vs 自摸機率平衡：偏好進張集中在牌牆的聽法
+    try {
+      if (isSeatAutoDrivenBySystem(seat) && _aiSuggestOnForTingBreak && state.declaredTing[seat]) {
+        const opts = getTingOptions(seat);
+        if (opts.length > 1) {
+          opts.forEach(o => {
+            if (o._ronRisk === undefined) {
+              o._ronRisk = (o.waits || []).reduce((sum, w) => {
+                const inOpponent = SEATS.some(other =>
+                  other !== seat && state.declaredTing && state.declaredTing[other] &&
+                  !smartAiDiscardedBySeat(w, other)
+                );
+                return sum + (inOpponent ? Math.max(0, countLiveWaitTiles(w, seat) - countDrawableWaitTiles(w)) : 0);
+              }, 0);
+            }
+          });
+          const currentOpt = opts.find(o => String(o.discardId) === String(discardId));
+          const currentRisk = currentOpt ? (currentOpt._ronRisk || 0) : 999;
+          const saferOpt = opts.find(o =>
+            String(o.discardId) !== String(discardId) &&
+            (o._ronRisk || 0) < currentRisk - 2 &&
+            (o.drawableRemaining || 0) >= (currentOpt ? (currentOpt.drawableRemaining || 0) : 0)
+          );
+          if (saferOpt) discardId = saferOpt.discardId;
+        }
+      }
+    } catch (e) { /* 靜默失敗 */ }
+    // tw16_ting_auto_forbidden_gate_20260623: 聽牌自動摸打最終禁打守門，確保不打危險牌例中的牌
+    try {
+      if (isSeatAutoDrivenBySystem(seat)) {
+        discardId = tw16ForceAvoidTingExamplesFirst(seat, discardId, tw16DiscardCandidateList(seat));
+      }
+    } catch (_) {}
+    addLog(SEAT_NAME[seat] + '聽牌自動摸打 ' + tileText((hand.find(t => t.id === discardId) || tileObj).code));
     clearTimeout(autoplayTimer);
     autoplayTimer = setTimeout(async () => {
       await waitForGameVoiceBeforeAutoplay('ting-auto-discard:' + (reason || ''));
       const ready = await waitForHostReliableAckBeforeGameStep('ting-auto-discard:' + (reason || ''), () => !state.ended && state.turn === seat && state.phase === 'discard');
       if (!ready) {
+        // state 已改變（換手/結局等）→ 補排程確保驅動鏈不中斷
         if (!state.ended) scheduleDriveSeat('ting-auto-discard-state-changed');
         return;
       }
@@ -12054,17 +12187,6 @@ function loadUiSettings() {
     return count % 3 === 2;
   }
 
-  function isDiscardSubmitGuardActive(seat) {
-    const guard = discardSubmitGuard;
-    if (!guard) return false;
-    const timeoutMs = Math.max(1200, Math.round(discardAnimationMs() * 4.5));
-    if (!guard.at || Date.now() - guard.at > timeoutMs) {
-      discardSubmitGuard = null;
-      return false;
-    }
-    return guard.handId === state.handId && guard.seat === seat && guard.turn === state.turn && guard.phase === 'discard';
-  }
-
   function submitDiscard(seat, tileId, source, options = {}) {
     if (isOnlineGuest() && source !== 'remote' && seat === net.assignedSeat) {
       tw16BottomMeldFrozen = false;
@@ -12072,12 +12194,12 @@ function loadUiSettings() {
       if (_hbEl) _hbEl.classList.remove('tw16-has-drawn');
       return publishNetworkIntent({ action: 'discard', tileId });
     }
-    const allowComputerRecovery = !!(options && options.forceComputer && isOnlineHost() && isHostDrivenSeat(seat) && !state.ended && !state.locked && !state.pending && seat === state.turn && state.phase === 'discard' && (state.hands[seat] || []).length);
-    if (!canDiscard(seat) && !allowComputerRecovery) return false;
-    if (isDiscardSubmitGuardActive(seat)) {
-      try { recordNetworkEvent('discard-submit-guard', SEAT_NAME[seat] + '略過重複出牌提交', { seat, source, tileId }); } catch (_) {}
+    if (tw16HasDiscardedThisTurn(seat)) {
+      try { recordNetworkEvent('single-discard-guard-block', SEAT_NAME[seat] + '同一回合重複棄牌被阻擋', { seat, source: source || '' }); } catch (_) {}
       return false;
     }
+    const allowComputerRecovery = !!(options && options.forceComputer && isOnlineHost() && isHostDrivenSeat(seat) && !state.ended && !state.locked && !state.pending && seat === state.turn && state.phase === 'discard' && (state.hands[seat] || []).length);
+    if (!canDiscard(seat) && !allowComputerRecovery) return false;
     // tw16_submit_discard_forbidden_gate_20260624: 最終守門，AI出牌一律過禁打過濾
     let _dangerForcedDiscard = false;
     if (source !== 'remote' && source !== 'remote-ting' && source !== 'human' && source !== 'human-swipe') {
@@ -12146,7 +12268,7 @@ function loadUiSettings() {
     const hand = state.hands[seat];
     const index = hand.findIndex(t => t.id === tileId);
     if (index < 0) return false;
-    discardSubmitGuard = { handId: state.handId, seat, turn: state.turn, phase: state.phase, tileId: String(tileId || ''), at: Date.now(), actionId: 0 };
+    tw16MarkDiscardTurnGuard(seat);
     const strategyHandBeforeDiscard = hand.map(t => t && t.code).filter(Boolean);
     const [discarded] = hand.splice(index, 1);
     recordStrategyLibraryDiscardDecision(seat, strategyHandBeforeDiscard, discarded, source, options);
@@ -12163,7 +12285,6 @@ function loadUiSettings() {
     state.lockedAt = Date.now();
     state.lastActionId += 1;
     const actionId = state.lastActionId;
-    if (discardSubmitGuard && discardSubmitGuard.handId === state.handId && discardSubmitGuard.seat === seat) discardSubmitGuard.actionId = actionId;
     if (allowComputerRecovery) addLog(SEAT_NAME[seat] + '電腦代管修正卡局後出牌 ' + tileText(discarded.code));
     else addLog(SEAT_NAME[seat] + '打出 ' + tileText(discarded.code));
     speakGameEvent(tileSpeechText(discarded.code), 'discard:' + state.handId + ':' + actionId + ':' + seat + ':' + discarded.id);
@@ -12173,9 +12294,6 @@ function loadUiSettings() {
     recordHandEvent('discard', seat, SEAT_NAME[seat] + '打出 ' + tileFullText(discarded.code), { tile: discarded.code, tileId: discarded.id, recovery: allowComputerRecovery });
     renderAll();
     playDiscardAnimation(seat, discarded, async () => {
-      if (discardSubmitGuard && discardSubmitGuard.actionId === actionId && discardSubmitGuard.seat === seat && discardSubmitGuard.handId === state.handId) {
-        discardSubmitGuard = null;
-      }
       // tw16_fix_discard_lock: 不論 actionId 是否過期，動畫結束必定先解鎖
       // 舊版在 actionId 檢查後才解鎖，若提前 return 則 state.locked 永遠不釋放 → AI 卡住不出牌
       state.locked = false;
@@ -12234,7 +12352,11 @@ function loadUiSettings() {
       function step() {
         if (i >= pairs.length) return;
         const pair = pairs[i++];
-        try { tw16MonteCarloSampleHands(pair[0], pair[1], 800); } catch (_) {}
+        // tw16_prewarm_target_alignment_20260703: 背景暖機目標必須跟即時守門實際查詢
+        // 用的樣本數（tw16GateTopDangerEntries 用 1600）完全一致，否則宣告聽牌那一刻
+        // 查詢時發現快取只有背景暖機的份量（原本800），還要臨時補上落差，加上重試
+        // 預算讓補樣本更貴，兩個疊在一起才會卡在宣告聽牌那一瞬間。
+        try { tw16MonteCarloSampleHands(pair[0], pair[1], 1600); } catch (_) {}
         setTimeout(step, 0);
       }
       setTimeout(step, 0);
@@ -15274,6 +15396,7 @@ function loadUiSettings() {
   function advanceTurn() {
     clearTimeout(claimTimer);
     state.pending = null;
+    tw16ClearDiscardTurnGuard();
     state.turn = nextSeat(state.turn);
     state.phase = 'draw';
     clearTurnDeadline();
@@ -15657,7 +15780,7 @@ function loadUiSettings() {
     const preferred = String(preferredId || '');
 
     const tingFirstId = tw16BestImmediateTingDiscardId(seat);
-    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) return tingFirstId;
+    const _tingFirstCode15603 = (candidates.find(x => String(x.tile.id) === String(tingFirstId)) || {tile:{}}).tile.code; if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId)) && !tw16IsOpponentTopDangerCode(seat, _tingFirstCode15603)) return tw16ForceAvoidTingExamplesFirst(seat, tw16AutoplayAvoidMostDangerDiscardId(seat, tingFirstId, 'immediate-ting'), candidates);
 
     const hand = state.hands[seat] || [];
     const codes = hand.map(t => t && t.code).filter(c => c && !isFlower(c));
@@ -15935,7 +16058,8 @@ function loadUiSettings() {
     const candidates = tw16DiscardCandidateList(seat);
     if (!candidates.length) return preferredId || '';
     const tingFirstId = tw16BestImmediateTingDiscardId(seat);
-    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) return tingFirstId;
+    const _tfc15881 = (candidates.find(x => String(x.tile.id) === String(tingFirstId)) || {tile:{}}).tile.code;
+    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId)) && !tw16IsOpponentTopDangerCode(seat, _tfc15881)) return tw16ForceAvoidTingExamplesFirst(seat, tingFirstId, candidates);
     const scored = candidates.map(item => tw16AiMonteCarloBaseCandidateScore(seat, item)).filter(Boolean);
     if (!scored.length) return preferredId || '';
     scored.sort((a, b) => b.baseScore - a.baseScore || tileOrder(a.code) - tileOrder(b.code) || a.idx - b.idx);
@@ -15999,6 +16123,9 @@ function loadUiSettings() {
   // 不在危險牌例內的牌，一律不是禁打名單。
   function tw16TingExamplesFirstCodeSet(seat) {
     const forbidden = new Set();
+    // tw16_disable_gate_with_panel_20260703: 使用者關閉「已聽牌危險牌例」時，
+    // 連同最終守門一起關閉；避免畫面已關閉，但出牌仍被危險牌守門攔掉。
+    if (!tingDangerExamplesEnabled()) return forbidden;
     if (!state.declaredTing) return forbidden;
     const codeRank = {}; // code -> 跨所有對手取得過的最佳（最危險/數字最小）名次
     SEATS.forEach(function(other) {
@@ -16135,7 +16262,12 @@ function loadUiSettings() {
     // 就算拆了聽牌不胡也絕對不打出其它座位最危險的牌。
     const mostDangerCode = tw16AutoplayMostDangerDiscardCode(seat, candidates);
     const tingFirstId = tw16BestImmediateTingDiscardId(seat);
-    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) return tingFirstId;
+    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) {
+      const tingTileCode = (candidates.find(x => String(x.tile.id) === String(tingFirstId)) || {tile:{}}).tile.code;
+      // 只有在聽牌打出的這張牌不是最危險牌時，才優先打出聽牌。
+      if (!mostDangerCode || tingTileCode !== mostDangerCode) return tw16ForceAvoidTingExamplesFirst(seat, tingFirstId, candidates);
+      // 如果聽牌要打的那張是最危險牌，則放棄此優先權，進入後續避險邏輯。
+    }
     let chosen = '';
     try {
       chosen = seatAiMode(seat) === 'greedy' ? chooseGreedyDiscardTile(seat) : chooseExactDiscardTile(seat);
@@ -16161,7 +16293,10 @@ function loadUiSettings() {
     // tw16_absolute_safety_greedy_20260623: 貪心版最高等級安全原則。
     const mostDangerCode = tw16AutoplayMostDangerDiscardCode(seat, candidates);
     const tingFirstId = tw16BestImmediateTingDiscardId(seat);
-    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) return tingFirstId;
+    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) {
+      const tingTileCode = (candidates.find(x => String(x.tile.id) === String(tingFirstId)) || {tile:{}}).tile.code;
+      if (!mostDangerCode || tingTileCode !== mostDangerCode) return tw16ForceAvoidTingExamplesFirst(seat, tingFirstId, candidates);
+    }
 
     const allCodes = hand.map(t => t && t.code).filter(c => c && !isFlower(c));
     const needed = requiredConcealedSets(seat);
@@ -16257,7 +16392,10 @@ function chooseExactDiscardTile(seat) {
     // tw16_absolute_safety_exact_20260623: 精確版最高等級安全原則。
     const mostDangerCode = tw16AutoplayMostDangerDiscardCode(seat, discardCandidates);
     const tingFirstId = tw16BestImmediateTingDiscardId(seat);
-    if (tingFirstId && discardCandidates.some(x => String(x.tile.id) === String(tingFirstId))) return tingFirstId;
+    if (tingFirstId && discardCandidates.some(x => String(x.tile.id) === String(tingFirstId))) {
+      const tingTileCode = (discardCandidates.find(x => String(x.tile.id) === String(tingFirstId)) || {tile:{}}).tile.code;
+      if (!mostDangerCode || tingTileCode !== mostDangerCode) return tw16ForceAvoidTingExamplesFirst(seat, tingFirstId, discardCandidates);
+    }
     const cacheKey = smartAiBuildDiscardCacheKey(seat);
     if (tw16SmartDiscardCache && tw16SmartDiscardCache.key === cacheKey) return tw16SmartDiscardCache.tileId || '';
     // ① 建立本回合的 visibleCount 快取（涵蓋所有 34 種牌，避免字牌 cache miss）
@@ -17678,8 +17816,22 @@ function chooseExactDiscardTile(seat) {
     return btn;
   }
 
+  function pauseGameForSettingsPanel() {
+    if (tw16SettingsPanelPausedGame) return true;
+    if (isTileManagementPausingGame()) return false;
+    tw16SettingsPanelPausedGame = !!pauseGameForTileManagement('settings-panel');
+    return tw16SettingsPanelPausedGame;
+  }
+
+  function releaseSettingsPanelPause(reason) {
+    if (!tw16SettingsPanelPausedGame) return false;
+    tw16SettingsPanelPausedGame = false;
+    return resumeGameAfterTileManagement(reason || 'settings-panel');
+  }
+
   function openSettingsPanel() {
     setUiPriorityMode(true, 'open-settings-panel');
+    pauseGameForSettingsPanel();
     ensureUiSettings();
     if (dom.resultPanel) {
       dom.resultPanel.classList.remove('menu-open', 'settlement-open', 'history-open');
@@ -18338,6 +18490,7 @@ function chooseExactDiscardTile(seat) {
   }
 
   function openMenuSubmenu(title, buttonsHtml, hint, options) {
+    releaseSettingsPanelPause('open-menu-submenu');
     setUiPriorityMode(true, 'open-menu-submenu');
     const submenuOptions = options && typeof options === 'object' ? options : {};
     const includeBackButton = submenuOptions.includeBackButton !== false;
@@ -18484,6 +18637,7 @@ function chooseExactDiscardTile(seat) {
   }
 
   function openMainMenu() {
+    releaseSettingsPanelPause('open-main-menu');
     setUiPriorityMode(true, 'open-main-menu');
     clearTimeout(claimTimer);
     if (dom.resultPanel) {
@@ -18669,6 +18823,7 @@ function chooseExactDiscardTile(seat) {
 
   function closeUtilityPanel() {
     removeSettingsDefaultFloatingButton();
+    releaseSettingsPanelPause('close-utility-panel');
     clearAutoNextTimer('close-utility-panel');
     if (dom.resultPanel) {
       dom.resultPanel.classList.remove('menu-open');
@@ -24477,7 +24632,15 @@ function showIntegrityReport(precomputed) {
 
 
   function renderHands(map) {
+    // tw16_fix_stale_tile_click_during_gesture_20260703: 手勢（點擊/滑動出牌）進行到一半時，
+    // 如果背景剛好觸發重繪（例如其他座位出牌），下方手牌整排 DOM 會被 replaceChildren()
+    // 砍掉重建，但手指還按著的是「舊」節點——等放開手指時，出牌判斷用的是舊節點綁定的
+    // 舊牌物件，可能已經跟畫面上現在顯示的牌不一致，造成「點擊的牌不是打出的牌」。
+    // 手勢進行中先跳過下方手牌那排的重建，等手勢結束（pointerup/finish）後正常流程
+    // 本來就會呼叫 renderAll() 重繪，不會漏掉更新。
+    const _skipBottomRebuild = !!(bottomSwipeDiscardState && bottomSwipeDiscardState.active);
     DISPLAY_POSITIONS.forEach(pos => {
+      if (_skipBottomRebuild && pos === 'bottom') return;
       const rows = ensureHandRows(pos);
       if (rows.handRow) rows.handRow.replaceChildren();
       if (rows.meldRow) rows.meldRow.replaceChildren();
@@ -24490,6 +24653,7 @@ function showIntegrityReport(precomputed) {
     if (_handBotEl) _handBotEl.classList.toggle('tw16-has-drawn', tw16BottomMeldFrozen);
     SEATS.forEach(seat => {
       const pos = map[seat];
+      if (_skipBottomRebuild && pos === 'bottom') return;
       const rows = ensureHandRows(pos);
       const handRow = rows.handRow;
       if (!handRow) return;
@@ -24758,6 +24922,9 @@ function concealedKongOwnerOfMeld(meld) {
     const openingActive = !!(state.openingDeal && state.openingDeal.active);
     const dealerReadyToDiscardFirstTile = !openingActive && state.phase === 'discard';
     const shouldShowPool = !openingActive && (dealerReadyToDiscardFirstTile || discardCount > 0);
+    const desktopWidth = Math.max(window.innerWidth || 0, (document.documentElement && document.documentElement.clientWidth) || 0);
+    const guardWatermarkActive = !!(shouldShowPool && desktopWidth >= 701 && tingDangerExamplesEnabled());
+    dom.discardGrid.classList.toggle('guard-watermark-active', guardWatermarkActive);
     if (!shouldShowPool) {
       dom.discardGrid.style.setProperty('display', 'none', 'important');
       dom.discardGrid.setAttribute('aria-hidden', 'true');
