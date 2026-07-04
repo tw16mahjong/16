@@ -3397,6 +3397,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
 .tw16-ting-danger-examples-row::before{content:attr(data-seat-label)!important;display:inline!important;color:#111!important;font-size:clamp(9px,calc(var(--tw16-ting-danger-tile-w,var(--tw-tile-w)) * .42),14px)!important;font-weight:1000!important;line-height:1!important;text-shadow:0 1px 2px rgba(255,255,255,.72)!important;}
 .tw16-ting-danger-card{position:relative!important;display:inline-flex!important;align-items:flex-end!important;justify-content:center!important;margin:0!important;padding:0!important;}
 .tw16-ting-danger-card + .tw16-ting-danger-card{margin-left:0!important;}
+.tw16-ting-danger-confirmed .tile{outline:2.5px solid #ff2020!important;outline-offset:1px!important;box-shadow:0 0 8px rgba(255,32,32,.75),0 0 3px rgba(255,32,32,.9)!important;border-radius:4px!important;}
 .tw16-ting-danger-card .tile{width:var(--tw16-ting-danger-tile-w,calc(var(--tw-tile-w) * 1.10))!important;height:var(--tw16-ting-danger-tile-h,calc(var(--tw-tile-h) * 1.10))!important;min-width:var(--tw16-ting-danger-tile-w,calc(var(--tw-tile-w) * 1.10))!important;min-height:var(--tw16-ting-danger-tile-h,calc(var(--tw-tile-h) * 1.10))!important;font-size:var(--tw16-ting-danger-font,calc(var(--tw-tile-w) * .72))!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;}
 .tw16-ting-danger-card .tile .small{font-size:var(--tw16-ting-danger-small-font,calc(var(--tw-tile-w) * .33))!important;}
 .tw16-ting-danger-word{display:none!important;}
@@ -6957,7 +6958,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     lobby.id = 'tw16Lobby';
     lobby.className = 'tw16-lobby';
     lobby.innerHTML = '<div class="tw16-lobby-card">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.7.4 改版｜2026-07-04 13:54 台灣時間）</span></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.7.4 改版｜2026-07-04 14:43 台灣時間）</span></div>'
       + '<div class="tw16-lobby-title">台灣麻將 Ably 連線 / 單機</div>'
       + '<div class="tw16-lobby-sub">★連線對戰：<br><span style="color:#ef4444">每人都要設同房名</span>，設好房名後<br>1人先按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">建立房間</span><br>其餘人按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">加入房間</span><br>★單人：按<span style="background:#15803d;color:#fff;border-radius:3px;padding:0 3px;">直接離線開始</span></div>'
       + '<div class="tw16-lobby-grid">'
@@ -12026,6 +12027,10 @@ function loadUiSettings() {
     setActiveDrawnTile(seat, drawn);
     sortHand(seat, drawn.id);
     state.phase = 'discard';
+    // tw16_gate_entries_prewarm_on_draw_20260704: 摸牌後手牌張數變了，之前背景暖機
+    // 存的排名清單會跟新手牌對不上（handLen不同，快取自然失效），這裡主動觸發一次
+    // 背景暖機，讓排名清單能在真正要做出牌判斷之前就先算好，不用臨時現算。
+    tw16MonteCarloPrewarmAllPairs();
     addLog(SEAT_NAME[seat] + '摸牌');
     setNetworkAnimationHint('draw', seat, drawn, 'draw');
     playDrawAnimation(seat, drawn);
@@ -12235,33 +12240,25 @@ function loadUiSettings() {
         tw16VisibleCountCache = _savedVisCache;
         if (_forbidden.size) {
           const _cands = tw16DiscardCandidateList(seat);
-          // tw16_revert_to_avoid_20260702: 反轉實驗結束——反轉後測到49%前5命中率，
-          // 遠高於隨機基準，反而證明危險牌例模型本來就有預測力，只是舊版「避開」統計
-          // 方法本身有選擇偏誤（永遠測的是「篩掉最看好候選之後還漏網」的牌，命中率
-          // 結構性偏低，不代表模型不準）。改回避開邏輯。
           const _item = _cands.find(x => x && x.tile && String(x.tile.id) === String(tileId));
           if (_item && _item.tile && _item.tile.code && _forbidden.has(_item.tile.code)) {
-            const _safe = _cands.filter(x => x && x.tile && x.tile.code && !isFlower(x.tile.code) && !_forbidden.has(x.tile.code));
-            if (_safe.length) {
-              const _hand = state.hands[seat] || [];
-              let _best = null;
-              _safe.forEach(function(c) {
-                let _s = 0;
-                try { _s = smartAiSafetyDiscardScore(seat, c.tile.code) || 0; } catch (_) {}
-                try { _s += smartAiTileRoughDiscardValue(c.tile.code, 1, smartAiCountsFromCodes(smartAiCodesFromHand(_hand))) || 0; } catch (_) {}
-                let _r = 0; try { _r = aiDangerDiscardScore(seat, c.tile.code); } catch (_) {}
-                if (Number.isFinite(_r)) _s -= _r * 2.5;
-                if (!_best || _s > _best.score) _best = { id: c.tile.id, code: c.tile.code, score: _s };
-              });
-              if (_best && _best.id) {
-                try { recordNetworkEvent('submit-discard-forbidden-gate', SEAT_NAME[seat] + '最終守門攔截禁打牌', { seat, source, blocked: _item.tile.code, to: _best.code }); } catch (_) {}
-                tileId = _best.id;
-              }
+            // tw16_soft_gate_redesign_20260704: 最終守門改用跟 AI 選牌同一套信心分數
+            // 比較（tw16ForceAvoidTingExamplesFirst），不再重複一份獨立的硬擋邏輯——
+            // 兩處各自維護一份「一樣的攔截判斷」卻沒有共用同一套信心/向聽/牌局階段
+            // 考量，容易顧此失彼。信心不過關或向聽代價太大時，這裡會直接拿回原本的
+            // tileId（不介入），只有真正過關又划算時才會換牌。
+            const _swapped = tw16ForceAvoidTingExamplesFirst(seat, tileId, _cands);
+            if (_swapped && String(_swapped) !== String(tileId)) {
+              try { recordNetworkEvent('submit-discard-forbidden-gate', SEAT_NAME[seat] + '最終守門攔截禁打牌', { seat, source, blocked: _item.tile.code, to: _swapped }); } catch (_) {}
+              tileId = _swapped;
             } else {
-              // tw16_danger_forced_discard_flag_20260702: 沒有安全牌可換，被迫打出守門
-              // 判定為危險的牌——這才是真正該計入「危險牌例命中率」統計的情況（守門
-              // 有判斷到危險、但無牌可換），不是單純「這張牌剛好在清單裡」而已。
-              _dangerForcedDiscard = true;
+              // tw16_danger_forced_discard_flag_20260702: 沒有安全牌可換、或不是確認
+              // 放槍——這才是真正該計入「危險牌例命中率」統計的情況，不是單純「這張牌
+              // 剛好在清單裡」而已。
+              const _dangerCheck = tw16DangerConfidenceForCode(seat, _item.tile.code);
+              if (_dangerCheck && _dangerCheck.confirmed) {
+                _dangerForcedDiscard = true;
+              }
             }
           }
         }
@@ -12341,6 +12338,12 @@ function loadUiSettings() {
     tw16MonteCarloPrewarmAllPairs();
   }
 
+  // tw16_gate_entries_prewarm_20260704: 排名清單（套用行為訊號疊加、排序、算信心分數）
+  // 這一層，之前是每次要用才現算，只有「同一輪決策內」的重複呼叫有快取，換一輪決策
+  // 還是要重新排一次。既然樣本池已經在背景持續維護，這裡順便把排名清單也一起背景算好
+  // 存起來，宣告聽牌或出牌判斷時直接讀現成的，不用臨時再排一次。
+  let tw16GatePrewarmedEntries = Object.create(null); // key: "seat|other" -> {actionId, handLen, entries}
+  function tw16GatePrewarmedKey(seat, other) { return seat + '|' + other; }
   function tw16MonteCarloPrewarmAllPairs() {
     try {
       const pairs = [];
@@ -12360,6 +12363,15 @@ function loadUiSettings() {
         // 查詢時發現快取只有背景暖機的份量（原本800），還要臨時補上落差，加上重試
         // 預算讓補樣本更貴，兩個疊在一起才會卡在宣告聽牌那一瞬間。
         try { tw16MonteCarloSampleHands(pair[0], pair[1], 1600); } catch (_) {}
+        try {
+          const entries = tw16GateTopDangerEntries(pair[0], pair[1], 8);
+          tw16GatePrewarmedEntries[tw16GatePrewarmedKey(pair[0], pair[1])] = {
+            actionId: state.lastActionId || 0,
+            handLen: (state.hands[pair[0]] || []).length,
+            otherMeldCount: meldSetCount(pair[1]),
+            entries: entries
+          };
+        } catch (_) {}
         setTimeout(step, 0);
       }
       setTimeout(step, 0);
@@ -16124,43 +16136,87 @@ function loadUiSettings() {
   // 完全移除，抽樣失敗時直接不設限，不再退回已證實較不準的舊方法。
   // 取每位聽牌對手的前5名（與面板顯示張數一致）聯集起來，作為守門的禁打依據。
   // 不在危險牌例內的牌，一律不是禁打名單。
+  // tw16_soft_gate_redesign_20260704: 原本「危險牌例內＝絕對禁打」是純硬擋，準確才有資格
+  // 硬擋，不準的時候硬擋只會犧牲向聽卻換不到對應的安全收益。改成信心分數制：
+  // 1) 硬擋改軟性比較——只有在信心分數過關時才會考慮替換，而且替換前會比較向聽代價，
+  //    代價太大就不換。
+  // 2) 信心門檻——候選名單分數分布很平（模型自己也不確定）時，門檔會拉高，不容易被擋。
+  // 3) 依自己向聽數動態調整門檻——越接近聽牌，門檻越高（越不容易被擋，效率優先）。
+  // 4) 依牌局階段動態調整門檔——牌牆剩得越少（殘局），門檻越低（越容易被擋，安全優先）。
+  let tw16GateEntriesQueryCache = new Map();
+  function tw16CachedGateTopDangerEntries(seat, other) {
+    const curActionId = state.lastActionId || 0;
+    const curHandLen = (state.hands[seat] || []).length;
+    // tw16_gate_entries_prewarm_20260704: 優先讀背景已經預熱好的排名清單——只要
+    // actionId 跟手牌張數都跟目前狀態吻合，代表背景已經算過同樣的狀態，直接用現成的，
+    // 不用臨時再排一次。只有背景還沒來得及跟上（例如剛摸牌那一瞬間，手牌張數剛變、
+    // 背景暖機還沒觸發）才會現算，現算完也會存回預熱快取，下次同樣能直接命中。
+    const prewarmed = tw16GatePrewarmedEntries[tw16GatePrewarmedKey(seat, other)];
+    if (prewarmed && prewarmed.actionId === curActionId && prewarmed.handLen === curHandLen) {
+      return prewarmed.entries;
+    }
+    const key = seat + '|' + other + '|' + curActionId + '|' + curHandLen;
+    if (tw16GateEntriesQueryCache.has(key)) return tw16GateEntriesQueryCache.get(key);
+    if (tw16GateEntriesQueryCache.size > 200) tw16GateEntriesQueryCache = new Map();
+    let entries = [];
+    try { entries = tw16GateTopDangerEntries(seat, other, 8); } catch (_) {}
+    tw16GateEntriesQueryCache.set(key, entries);
+    tw16GatePrewarmedEntries[tw16GatePrewarmedKey(seat, other)] = { actionId: curActionId, handLen: curHandLen, entries: entries };
+    return entries;
+  }
+  function tw16DangerConfidenceForCode(seat, code) {
+    if (!code || isFlower(code) || !state.declaredTing) return null;
+    let best = null;
+    SEATS.forEach(function(other) {
+      if (other === seat || !state.declaredTing[other] || !isSeatActiveInTable(other)) return;
+      // tw16_soft_gate_cache_20260704: 同一輪決策裡，同一個對手的危險清單只算一次
+      // （改呼叫上面的快取版本），不會每查一張候選牌就重新跑一次蒙地卡羅排名清單
+      // 建構，這是造成卡頓的另一個主因。
+      const entries = tw16CachedGateTopDangerEntries(seat, other);
+      const idx = entries.findIndex(function(e) { return e && e.code === code; });
+      if (idx < 0) return;
+      const entry = entries[idx];
+      // 信心分數主體：蒙地卡羅出現頻率本身就是「這個牌型有多少比例的合理猜測需要這張牌」，
+      // 是最直接的信心指標。
+      let confidence = Math.max(0, Math.min(1, Number(entry.mcFreq) || 0));
+      // 分數斷層加成：第一名遠超第二名，代表模型雖然頻率不見得很高，但排序上很有把握。
+      if (idx === 0 && entries.length >= 2) {
+        const second = entries[1];
+        const secondScore = Number(second.score) || 0;
+        const thisScore = Number(entry.score) || 0;
+        if (secondScore > 0 && thisScore / secondScore >= 1.8) confidence = Math.max(confidence, 0.55);
+      }
+      // 完全確認：候選清單只有這一張，或蒙地卡羅頻率極高——這種情況幾乎可以肯定放槍。
+      const confirmed = entries.length === 1 || confidence >= 0.85;
+      if (confirmed) confidence = Math.max(confidence, 0.92);
+      if (!best || confidence > best.confidence) best = { confidence, confirmed, seat: other, entry };
+    });
+    return best;
+  }
+
+  // tw16_soft_gate_cache_20260704: 向聽DP運算跟信心分數計算不便宜，而且會被「AI建議」
+  // tw16_confirmed_only_simplify_20260704: 原本依自己向聽數＋牌局階段動態調整信心門檻的
+  // 分級系統已移除——現在守門只在「已確認會放槍」時介入，是非題不需要分級門檻，也省下
+  // 向聽DP運算，減少不必要的效能負擔。
+
   function tw16TingExamplesFirstCodeSet(seat) {
     const forbidden = new Set();
     // tw16_disable_gate_with_panel_20260703: 使用者關閉「已聽牌危險牌例」時，
     // 連同最終守門一起關閉；避免畫面已關閉，但出牌仍被危險牌守門攔掉。
     if (!tingDangerExamplesEnabled()) return forbidden;
     if (!state.declaredTing) return forbidden;
-    const codeRank = {}; // code -> 跨所有對手取得過的最佳（最危險/數字最小）名次
     SEATS.forEach(function(other) {
       if (other === seat) return;
       if (!state.declaredTing[other]) return;
       if (!isSeatActiveInTable(other)) return;
       try {
         const entries = tw16GateTopDangerEntries(seat, other, 5);
-        entries.forEach(function(entry, idx) {
+        entries.forEach(function(entry) {
           const code = entry && entry.code;
-          if (!code || isFlower(code)) return;
-          forbidden.add(code);
-          if (codeRank[code] === undefined || idx < codeRank[code]) codeRank[code] = idx;
+          if (code && !isFlower(code)) forbidden.add(code);
         });
       } catch (_) {}
     });
-    // tw16_gate_min_safe_guard_20260702: 保底機制——確保手上至少留一張不在禁打清單裡的牌。
-    // 候選總數本來就少時（比如手牌只剩5、6種牌型），前5名清單可能直接把全部候選都蓋掉，
-    // 導致完全沒有安全牌可換、守門形同虛設。這裡從「最不危險」（在各對手清單裡排名最後）
-    // 的牌開始依序釋放，直到至少留一張安全牌，盡量保留真正危險的牌繼續被禁打。
-    try {
-      const ownCandidateCodes = new Set((state.hands[seat] || []).map(function(t) { return t && t.code; }).filter(function(c) { return c && !isFlower(c); }));
-      if (ownCandidateCodes.size > 0 && forbidden.size >= ownCandidateCodes.size) {
-        const sortedByLeastDangerous = Array.from(forbidden).sort(function(a, b) {
-          return (codeRank[b] || 0) - (codeRank[a] || 0);
-        });
-        for (let i = 0; i < sortedByLeastDangerous.length; i++) {
-          forbidden.delete(sortedByLeastDangerous[i]);
-          if (forbidden.size < ownCandidateCodes.size) break;
-        }
-      }
-    } catch (_) {}
     return forbidden;
   }
 
@@ -16172,9 +16228,15 @@ function loadUiSettings() {
     const item = cands.find(x => x && x.tile && String(x.tile.id) === String(tileId));
     if (!item || !item.tile || !item.tile.code) return tileId;
     if (!forbidden.has(item.tile.code)) return tileId;
-    // 目前 tileId 是禁打牌，從候選中選出最佳的非禁打替代
+    // tw16_confirmed_only_gate_20260704: MC危險牌例只當參考顯示，不拿來給守門用，
+    // 除非是「已確認會放槍」的牌（候選清單只有這一張，或蒙地卡羅頻率極高）。不是
+    // 已確認的情況，一律不介入，不犧牲向聽效率，也不用再算分級信心門檻／向聽動態
+    // 調整（不需要了，判斷變成單純的是非題，也比較快）。
+    const danger = tw16DangerConfidenceForCode(seat, item.tile.code);
+    if (!danger || !danger.confirmed) return tileId;
+    // 已確認會放槍，才考慮替換。從候選中選出最佳的安全替代。
     const safe = cands.filter(x => x && x.tile && x.tile.code && !isFlower(x.tile.code) && !forbidden.has(x.tile.code));
-    if (!safe.length) return tileId; // 無路可走，只能照打（極端罕見）
+    if (!safe.length) return tileId; // 無路可走，只能照打
     const hand = state.hands[seat] || [];
     let best = null;
     safe.forEach(function(c) {
@@ -16188,7 +16250,11 @@ function loadUiSettings() {
       if (!best || score > best.score) best = { id: c.tile.id, code: c.tile.code, score };
     });
     if (best && best.id) {
-      try { recordNetworkEvent('avoid-ting-examples-first', SEAT_NAME[seat] + '絕對不打危險牌例第一張', { seat, forbidden: Array.from(forbidden), from: item.tile.code, to: best.code }); } catch (_) {}
+      try {
+        recordNetworkEvent('avoid-ting-examples-first', SEAT_NAME[seat] + '確認會放槍，換打安全牌', {
+          seat, from: item.tile.code, to: best.code, confidence: Math.round(danger.confidence * 100) / 100
+        });
+      } catch (_) {}
       return best.id;
     }
     return tileId;
@@ -21359,10 +21425,21 @@ function showIntegrityReport(precomputed) {
         && canLocalHumanOperateSeat(_mySeatForAiSuggestCheck)
         && !(state.seatAutoPlay && state.seatAutoPlay[_mySeatForAiSuggestCheck])
         && canDiscard(_mySeatForAiSuggestCheck);
-      if (_shouldHaveAiSuggestNow && !document.querySelector('.ai-suggest-wrapper .strategy-discard-suggestion')) {
+      // tw16_ai_suggest_self_heal_cap_20260704: 加上重試次數上限（同一個 actionId 最多
+      // 補算3次），避免萬一真的持續偵測到「應該要有卻沒有」（例如某個還沒抓到的邏輯
+      // 一直合法地回傳空值，不是單純的競態），導致每一幀都重試，疊加新的信心分數／
+      // 向聽計算變成持續性效能負擔。3次都補不出來就先放棄，避免無限重試拖垮效能。
+      const _actionKey = String(state.lastActionId || 0);
+      if (renderAll._aiSuggestHealActionKey !== _actionKey) {
+        renderAll._aiSuggestHealActionKey = _actionKey;
+        renderAll._aiSuggestHealAttempts = 0;
+      }
+      if (_shouldHaveAiSuggestNow && !document.querySelector('.ai-suggest-wrapper .strategy-discard-suggestion')
+          && (renderAll._aiSuggestHealAttempts || 0) < 3) {
         if (!renderAll._aiSuggestHealRaf) {
           renderAll._aiSuggestHealRaf = requestAnimationFrame(() => {
             renderAll._aiSuggestHealRaf = 0;
+            renderAll._aiSuggestHealAttempts = (renderAll._aiSuggestHealAttempts || 0) + 1;
             try { renderHands(displayMap()); } catch (_) {}
             try { refreshAiSuggestFloatingLabels(); } catch (_) {}
           });
@@ -24348,10 +24425,18 @@ function showIntegrityReport(precomputed) {
       const row = document.createElement('div');
       row.className = 'tw16-ting-danger-examples-row';
       row.setAttribute('data-seat-label', (SEAT_NAME[seat] || seat).replace('家',''));
+      const _viewSeatForConfirm = tw16PublicDangerViewSeat();
       entries.forEach(entry => {
         const code = entry.code;
         const card = document.createElement('span');
         card.className = 'tw16-ting-danger-card';
+        // tw16_confirmed_danger_red_frame_20260704: 危險牌例內，如果信心分數判定為
+        // 「完全確認會放槍」（候選清單只有這一張，或蒙地卡羅頻率極高），用紅框特別標示，
+        // 跟一般（可能不準）的危險牌例區分開來，一眼就能看出哪些是真正該小心的牌。
+        try {
+          const _confirm = tw16DangerConfidenceForCode(_viewSeatForConfirm, code);
+          if (_confirm && _confirm.confirmed) card.classList.add('tw16-ting-danger-confirmed');
+        } catch (_) {}
         if (Number.isFinite(Number(entry.score))) card.dataset.dangerScore = String(Math.round(Number(entry.score) || 0));
         const bits = ['危險牌：' + tileText(code)];
         if (entry.publicOnly) bits.push('公開資訊推測');
