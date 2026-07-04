@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://cdn.ably.com" crossorigin/>
 <link rel="dns-prefetch" href="https://realtime.ably.io"/>
 <style>
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#06111f;color:#fff;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;touch-action:manipulation;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.app{position:fixed;inset:0;background:linear-gradient(180deg,#1f68aa 0%,#1f3d7b 44%,#10254f 100%);overflow:hidden;contain:strict}.btn{border:0;border-radius:14px;color:white;font-weight:1000;cursor:pointer;background:linear-gradient(180deg,#2563eb,#1d4ed8);box-shadow:0 8px 16px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.18);padding:9px 14px;font-size:16px}.btn.red{background:linear-gradient(180deg,#ef4444,#b91c1c)}.btn.small{padding:7px 10px;font-size:13px}.roundStatusBlock{display:grid;gap:0;align-items:start;justify-items:start;pointer-events:none}.iconBtn{width:58px;height:58px;border-radius:17px;font-size:28px;display:grid;place-items:center}.menu{pointer-events:auto;display:grid;gap:0}.rightBtns{margin-left:auto;display:flex;gap:0;pointer-events:auto}.seatLabel.active .name,.seatLabel.active .score{color:#fff06a;text-shadow:0 0 12px rgba(255,232,90,.65),0 2px 5px rgba(0,0,0,.65)}.seatLabel.ting .name:after{content:' 聽';color:#ff3030;font-size:.9em}.seat-bottom{left:14%;bottom:13%;transform:translateX(-50%)}.seat-top{left:50%;top:12%;transform:translateX(-50%)}.seat-left{left:9%;top:43%;transform:translateY(-50%)}.seat-right{right:9%;top:43%;transform:translateY(-50%)}.tile .small{position:absolute;top:1px;right:2px;font-size:9px;color:#333}.tile.red{color:#c41414}.tile.green{color:#047857}.tile.blue{color:#255fd4}.tile.back{width:27px;height:39px;background:linear-gradient(180deg,#b7f0ff 0%,#7dd3fc 58%,#43a9d8 100%);border-color:rgba(35,84,114,.36);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 4px rgba(0,0,0,.24);color:transparent}.tile.face-image{padding:0;background:transparent!important;border:0!important;box-shadow:0 3px 6px rgba(0,0,0,.25)!important;color:transparent!important}.tile-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none}.tile-face img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;border-radius:0;user-select:none;-webkit-user-drag:none;pointer-events:none}.tile.kind-suit-s .tile-face img,.tile.kind-honor .tile-face img,.tile.kind-flower .tile-face img{transform:scale(1.04);transform-origin:center center}.tile.back.face-image{background:linear-gradient(180deg,#b7f0ff 0%,#7dd3fc 58%,#43a9d8 100%)!important;border:1px solid rgba(35,84,114,.36)!important}.hand-bottom .tile{cursor:pointer}.hand-bottom .tile:hover{transform:translateY(-4px)}.hand-bottom .tile.drawn{margin-left:0}.arrow{display:none!important;position:absolute;z-index:-1;width:0;height:0;pointer-events:none}.arrow-bottom{left:50%;bottom:145px;transform:translateX(-50%);border-left:40px solid transparent;border-right:40px solid transparent;border-top:70px solid rgba(255,0,0,.88)}.log{display:none!important;}.result.dragging{transition:none;user-select:none}.result h2:active{color:#fde68a}.result #resultText{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}@media(max-width:700px){.status{font-size:13px;padding:6px 9px}.iconBtn{width:34px;height:34px}.center{width:68vw;height:48vh}.tile{width:24px;height:35px;font-size:17px}.discardGrid .tile{width:20px;height:29px}.hand-top .tile.back{width:22px;height:32px}.hand-left .tile.back,.hand-right .tile.back{width:22px;height:32px}.seatLabel .name{font-size:18px}.seatLabel .score{font-size:22px}.seat-left{left:10%}.seat-right{right:10%}.wall-left{left:84px}.wall-right{right:84px}}.actionPanel.action-panel-visible,.actionPanel.ting-choice-active{display:flex;width:auto;height:auto;overflow:visible;pointer-events:auto}.actionPanel:empty{display:none}.actionBtn .sub{display:none!important;font-size:11px;font-weight:900;opacity:.9;margin-top:1px}.actionTileStrip .tile{width:calc(var(--tw-tile-w) * 1.22)!important;height:calc(var(--tw-tile-h) * 1.22)!important;min-width:calc(var(--tw-tile-w) * 1.22)!important;min-height:calc(var(--tw-tile-h) * 1.22)!important;font-size:calc(var(--tw-tile-w) * .80)!important;margin:0!important;border:0!important;outline:0!important;border-radius:0!important;background:transparent!important;background-color:transparent!important;box-shadow:none!important}.actionTileStrip .tile.back{background:linear-gradient(180deg,#b7f0ff,#43a9d8)!important;border:1px solid rgba(35,84,114,.36)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 4px rgba(0,0,0,.24)!important}.actionPanel .tile-face img{border-radius:0!important}.actionTargetTile{z-index:2!important}.actionTileStrip .tile.face-image{border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important}.actionTileStrip .tile-face img{border-radius:0!important}.historyWinTileInline{display:inline-flex;align-items:center;vertical-align:middle;margin-left:5px}.historyWinTileInline .tile{width:22px!important;height:32px!important;font-size:15px!important;border-radius:4px!important}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#06111f;color:#fff;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;touch-action:manipulation;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.app{position:fixed;inset:0;background:linear-gradient(180deg,#1f68aa 0%,#1f3d7b 44%,#10254f 100%);overflow:hidden;contain:strict}.btn{border:0;border-radius:14px;color:white;font-weight:1000;cursor:pointer;background:linear-gradient(180deg,#2563eb,#1d4ed8);box-shadow:0 8px 16px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.18);padding:9px 14px;font-size:16px}.btn.red{background:linear-gradient(180deg,#ef4444,#b91c1c)}.btn.small{padding:7px 10px;font-size:13px}.roundStatusBlock{display:grid;gap:0;align-items:start;justify-items:start;pointer-events:none}.iconBtn{width:58px;height:58px;border-radius:17px;font-size:28px;display:grid;place-items:center}.menu{pointer-events:auto;display:grid;gap:0}.rightBtns{margin-left:auto;display:flex;gap:0;pointer-events:auto}.seatLabel.active .name,.seatLabel.active .score{color:#fff06a;text-shadow:0 0 12px rgba(255,232,90,.65),0 2px 5px rgba(0,0,0,.65)}.seatLabel.ting .name:after{content:' 聽';color:#ff3030;font-size:.9em}.seat-bottom{left:14%;bottom:13%;transform:translateX(-50%)}.seat-top{left:50%;top:12%;transform:translateX(-50%)}.seat-left{left:9%;top:43%;transform:translateY(-50%)}.seat-right{right:9%;top:43%;transform:translateY(-50%)}.tile .small{position:absolute;top:1px;right:2px;font-size:9px;color:#333}.tile.red{color:#c41414}.tile.green{color:#047857}.tile.blue{color:#255fd4}.tile.back{width:27px;height:39px;background:linear-gradient(180deg,#b7f0ff 0%,#7dd3fc 58%,#43a9d8 100%);border-color:rgba(35,84,114,.36);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 4px rgba(0,0,0,.24);color:transparent}.tile.face-image{padding:0;background:transparent!important;border:0!important;box-shadow:0 3px 6px rgba(0,0,0,.25)!important;color:transparent!important}.tile-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none}.tile-face img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;border-radius:0;user-select:none;-webkit-user-drag:none;pointer-events:none}.tile.kind-suit-s .tile-face img,.tile.kind-honor .tile-face img,.tile.kind-flower .tile-face img{transform:scale(1.04);transform-origin:center center}.tile.back.face-image{background:linear-gradient(180deg,#b7f0ff 0%,#7dd3fc 58%,#43a9d8 100%)!important;border:1px solid rgba(35,84,114,.36)!important}.hand-bottom .tile{cursor:pointer}.hand-bottom .tile:hover{transform:translateY(-4px)}.hand-bottom .tile.drawn{margin-left:0}.arrow{display:none!important;position:absolute;z-index:-1;width:0;height:0;pointer-events:none}.arrow-bottom{left:50%;bottom:145px;transform:translateX(-50%);border-left:40px solid transparent;border-right:40px solid transparent;border-top:70px solid rgba(255,0,0,.88)}.log{display:none!important;}.result.dragging{transition:none;user-select:none}.result h2:active{color:#fde68a}.result #resultText{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}@media(max-width:700px){.status{font-size:13px;padding:6px 9px}.iconBtn{width:34px;height:34px}.center{width:68vw;height:48vh}.tile{width:24px;height:35px;font-size:17px}.discardGrid .tile{width:20px;height:29px}.hand-top .tile.back{width:22px;height:32px}.hand-left .tile.back,.hand-right .tile.back{width:22px;height:32px}.seatLabel .name{font-size:18px}.seatLabel .score{font-size:22px}.seat-left{left:10%}.seat-right{right:10%}.wall-left{left:84px}.wall-right{right:84px}}.actionPanel.action-panel-visible,.actionPanel.ting-choice-active{display:flex;width:auto;height:auto;overflow:visible;pointer-events:auto}.actionPanel:empty{display:none}.actionBtn .sub{display:none!important;font-size:11px;font-weight:900;opacity:.9;margin-top:1px}.actionTileStrip .tile{width:calc(var(--tw-tile-w) * 1)!important;height:calc(var(--tw-tile-h) * 1)!important;min-width:calc(var(--tw-tile-w) * 1)!important;min-height:calc(var(--tw-tile-h) * 1)!important;font-size:calc(var(--tw-tile-w) * .80)!important;margin:0!important;border:0!important;outline:0!important;border-radius:0!important;background:transparent!important;background-color:transparent!important;box-shadow:none!important}.actionTileStrip .tile.back{background:linear-gradient(180deg,#b7f0ff,#43a9d8)!important;border:1px solid rgba(35,84,114,.36)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 4px rgba(0,0,0,.24)!important}.actionPanel .tile-face img{border-radius:0!important}.actionTargetTile{z-index:2!important}.actionTileStrip .tile.face-image{border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important}.actionTileStrip .tile-face img{border-radius:0!important}.historyWinTileInline{display:inline-flex;align-items:center;vertical-align:middle;margin-left:5px}.historyWinTileInline .tile{width:22px!important;height:32px!important;font-size:15px!important;border-radius:4px!important}
 
 
 .menuGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px;max-height:calc(100dvh - 170px);overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-right:2px}.menuGrid .btn{width:100%;font-size:14px;padding:10px 8px;min-height:38px;white-space:normal;line-height:1.18}.historyList{text-align:left;max-height:none;overflow:visible;line-height:1.55;font-size:14px;width:min(100%,1120px);margin:0 auto;padding:0 0 18px}.historyItem{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.12)}.historyRevealSeat{display:grid;gap:3px}.historyRevealLine{display:grid;grid-template-columns:34px minmax(0,1fr);gap:4px;align-items:start}.historyRevealLine b{color:#cbd5e1;font-size:11px;line-height:28px}.historyMeldList{display:flex;flex-direction:row;flex-wrap:nowrap;gap:4px;align-items:center;max-width:100%;overflow-x:auto;overflow-y:hidden;padding-bottom:1px}.historyMeldList .historyTileStrip{flex:0 0 auto;flex-wrap:nowrap!important;min-height:28px}.historyMeldList .historyTileStrip .tile{flex:0 0 auto}.historyMeldList .historyEmpty{display:inline-block;white-space:nowrap}.historyEmpty{color:#94a3b8;font-size:11px;font-weight:800;line-height:28px}.historyList .tile.win-tile{border:2px solid #ffd700!important;outline:0!important;box-shadow:inset 0 0 0 1px #fff6a3,0 0 8px rgba(255,215,0,.88),0 0 14px rgba(255,246,163,.52)!important}.scoreItems{margin-top:8px;color:#fde68a;line-height:1.55}.result pre{white-space:pre-wrap;text-align:left;max-height:48vh;overflow:auto}.panelTools{display:flex;gap:6px;justify-content:flex-end;align-items:center;margin:-6px 0 8px}.panelToolBtn{border:1px solid rgba(255,255,255,.16);border-radius:9px;background:rgba(255,255,255,.08);color:#fff;font-size:12px;font-weight:900;padding:5px 8px;cursor:pointer}.turnFlowBox{display:grid;gap:8px;text-align:left}.turnFlowCard{border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);padding:9px 10px;font-size:13px;line-height:1.55}.turnFlowCard b{color:#fde68a}.exportTextBox{width:100%;min-height:48vh;border:0;border-radius:12px;background:rgba(2,6,23,.72);color:#f8fafc;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.45}
@@ -1924,7 +1924,7 @@
   gap:0!important;
   pointer-events:none!important;
   max-width:calc(100vw - 8px)!important;
-}.actionBtn{border:0 !important;border-radius:0 !important;color:#e0f2fe !important;font-size:18px!important;font-weight:1000;padding:0 3px !important;min-width:0 !important;background:transparent !important;box-shadow:none !important;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0 !important;margin:0 !important;min-height:0 !important;line-height:1 !important;text-shadow:none!important;height:auto !important;width:max-content !important;transition:none !important;transform:none !important}
+}.actionBtn{border:0 !important;border-radius:0 !important;color:#e0f2fe !important;font-size:15px!important;font-weight:1000;padding:0 3px !important;min-width:0 !important;background:transparent !important;box-shadow:none !important;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0 !important;margin:0 !important;min-height:0 !important;line-height:1 !important;text-shadow:none!important;height:auto !important;width:max-content !important;transition:none !important;transform:none !important}
 .actionBtn.actionBtnWithTiles{
   padding: 0 !important;
 }
@@ -6957,7 +6957,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     lobby.id = 'tw16Lobby';
     lobby.className = 'tw16-lobby';
     lobby.innerHTML = '<div class="tw16-lobby-card">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.7.4 06:38 改版）</span></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.7.4 改版｜2026-07-04 13:54 台灣時間）</span></div>'
       + '<div class="tw16-lobby-title">台灣麻將 Ably 連線 / 單機</div>'
       + '<div class="tw16-lobby-sub">★連線對戰：<br><span style="color:#ef4444">每人都要設同房名</span>，設好房名後<br>1人先按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">建立房間</span><br>其餘人按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">加入房間</span><br>★單人：按<span style="background:#15803d;color:#fff;border-radius:3px;padding:0 3px;">直接離線開始</span></div>'
       + '<div class="tw16-lobby-grid">'
@@ -12198,9 +12198,14 @@ function loadUiSettings() {
     }
     const allowComputerRecovery = !!(options && options.forceComputer && isOnlineHost() && isHostDrivenSeat(seat) && !state.ended && !state.locked && !state.pending && seat === state.turn && state.phase === 'discard' && (state.hands[seat] || []).length);
     if (!canDiscard(seat) && !allowComputerRecovery) return false;
-    // tw16_submit_discard_forbidden_gate_20260624: 最終守門，AI出牌一律過禁打過濾
     let _dangerForcedDiscard = false;
-    if (source !== 'remote' && source !== 'remote-ting' && source !== 'human' && source !== 'human-swipe') {
+    // tw16_gate_seat_based_check_20260704: 原本用「來源字串黑名單」（排除 source==='human'
+    // 等特定字串）判斷要不要套用守門，這種寫法很脆弱——只要任何一個呼叫路徑用了沒被
+    // 列進黑名單的來源標籤（例如 ting-auto-draw、ting-drive-auto 等內部自動流程標籤），
+    // 就會被誤判成「非人類操作」而被攔截，即使實際出牌的是真人手動操作的座位。改成直接
+    // 檢查「這個座位本身現在是不是真的由電腦代打」（isSeatAutoDrivenBySystem），不管
+    // source 標籤寫什麼都不會誤判，才能保證守門功能只套用在AI代打，絕不擋到手動出牌。
+    if (isSeatAutoDrivenBySystem(seat)) {
       try {
         // 暫時清除快取，確保 forbidden set 用 viewSeat 視角計算（不含出牌者自己手牌）
         const _savedVisCache = tw16VisibleCountCache;
@@ -16256,30 +16261,53 @@ function loadUiSettings() {
     if (!SEATS.includes(seat)) return '';
     const candidates = tw16DiscardCandidateList(seat);
     if (!candidates.length) return '';
-    // tw16_absolute_safety_20260623: 最高等級安全原則。
-    // 就算拆了聽牌不胡也絕對不打出其它座位最危險的牌。
-    const mostDangerCode = tw16AutoplayMostDangerDiscardCode(seat, candidates);
-    const tingFirstId = tw16BestImmediateTingDiscardId(seat);
-    if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) {
-      const tingTileCode = (candidates.find(x => String(x.tile.id) === String(tingFirstId)) || {tile:{}}).tile.code;
-      // 只有在聽牌打出的這張牌不是最危險牌時，才優先打出聽牌。
-      if (!mostDangerCode || tingTileCode !== mostDangerCode) return tw16ForceAvoidTingExamplesFirst(seat, tingFirstId, candidates);
-      // 如果聽牌要打的那張是最危險牌，則放棄此優先權，進入後續避險邏輯。
-    }
-    let chosen = '';
+    // tw16_choose_discard_top_level_guard_20260704: 整個函式主體用一個總 try/catch 包住。
+    // 之前只保護了「AI選牌」「守門」「蒙地卡羅精煉」這幾個內部步驟，但函式最前面的
+    // 「立刻聽牌判斷」「危險牌比對」等呼叫完全沒被保護到——吃碰槓形成副露後手牌結構
+    // 剛變化的瞬間，這些呼叫其中之一如果丟出例外，一樣會讓整個函式中斷，導致AI建議
+    // 從此卡死。這次用最外層的總保護取代逐段保護，不管例外發生在函式的哪個角落，
+    // 都保證有一個安全的退回結果，不會再有漏網之魚。
     try {
-      chosen = seatAiMode(seat) === 'greedy' ? chooseGreedyDiscardTile(seat) : chooseExactDiscardTile(seat);
+      // tw16_absolute_safety_20260623: 最高等級安全原則。
+      // 就算拆了聽牌不胡也絕對不打出其它座位最危險的牌。
+      const mostDangerCode = tw16AutoplayMostDangerDiscardCode(seat, candidates);
+      const tingFirstId = tw16BestImmediateTingDiscardId(seat);
+      if (tingFirstId && candidates.some(x => String(x.tile.id) === String(tingFirstId))) {
+        const tingTileCode = (candidates.find(x => String(x.tile.id) === String(tingFirstId)) || {tile:{}}).tile.code;
+        // 只有在聽牌打出的這張牌不是最危險牌時，才優先打出聽牌。
+        if (!mostDangerCode || tingTileCode !== mostDangerCode) return tw16ForceAvoidTingExamplesFirst(seat, tingFirstId, candidates);
+        // 如果聽牌要打的那張是最危險牌，則放棄此優先權，進入後續避險邏輯。
+      }
+      let chosen = '';
+      try {
+        chosen = seatAiMode(seat) === 'greedy' ? chooseGreedyDiscardTile(seat) : chooseExactDiscardTile(seat);
+      } catch (e) {
+        chosen = '';
+        try { recordNetworkEvent('discard-ai-error', 'AI棄牌計算失敗，改用固定規則備援', { seat, message: String(e && e.message || e) }); } catch (_) {}
+      }
+      let gated;
+      try {
+        gated = (chosen && candidates.some(x => String(x.tile.id) === String(chosen)))
+          ? tw16SharedAiDiscardGate(seat, chosen, seatAiMode(seat))
+          : tw16SharedAiDiscardGate(seat, tw16DeterministicDiscardFallback(seat, 'chooseDiscardTile-invalid-or-empty'), seatAiMode(seat));
+      } catch (e) {
+        try { recordNetworkEvent('discard-ai-error', '守門計算失敗，改用固定規則備援', { seat, message: String(e && e.message || e) }); } catch (_) {}
+        gated = (chosen && candidates.some(x => String(x.tile.id) === String(chosen))) ? chosen : tw16DeterministicDiscardFallback(seat, 'gate-error-fallback');
+      }
+      let refined;
+      try {
+        refined = tw16AiMonteCarloRefineDiscard(seat, gated);
+      } catch (e) {
+        try { recordNetworkEvent('discard-ai-error', '蒙地卡羅精煉失敗，改用守門結果', { seat, message: String(e && e.message || e) }); } catch (_) {}
+        refined = gated;
+      }
+      const finalId = (refined && candidates.some(x => String(x.tile.id) === String(refined))) ? refined : gated;
+      const afterMostDanger = tw16AutoplayAvoidMostDangerDiscardId(seat, finalId, 'choose-discard-final');
+      return tw16ForceAvoidTingExamplesFirst(seat, afterMostDanger, candidates);
     } catch (e) {
-      chosen = '';
-      try { recordNetworkEvent('discard-ai-error', 'AI棄牌計算失敗，改用固定規則備援', { seat, message: String(e && e.message || e) }); } catch (_) {}
+      try { recordNetworkEvent('discard-ai-error', 'AI棄牌整體計算失敗，改用最終固定規則備援', { seat, message: String(e && e.message || e) }); } catch (_) {}
+      return tw16DeterministicDiscardFallback(seat, 'choose-discard-top-level-error') || (candidates[0] && candidates[0].tile && candidates[0].tile.id) || '';
     }
-    const gated = (chosen && candidates.some(x => String(x.tile.id) === String(chosen)))
-      ? tw16SharedAiDiscardGate(seat, chosen, seatAiMode(seat))
-      : tw16SharedAiDiscardGate(seat, tw16DeterministicDiscardFallback(seat, 'chooseDiscardTile-invalid-or-empty'), seatAiMode(seat));
-    const refined = tw16AiMonteCarloRefineDiscard(seat, gated);
-    const finalId = (refined && candidates.some(x => String(x.tile.id) === String(refined))) ? refined : gated;
-    const afterMostDanger = tw16AutoplayAvoidMostDangerDiscardId(seat, finalId, 'choose-discard-final');
-    return tw16ForceAvoidTingExamplesFirst(seat, afterMostDanger, candidates);
   }
 
   function chooseGreedyDiscardTile(seat) {
@@ -16487,7 +16515,18 @@ function chooseExactDiscardTile(seat) {
     if (dom.resultPanel && dom.resultPanel.classList && dom.resultPanel.classList.contains('show')) return '';
     if (dom.actionPanel && dom.actionPanel.classList && dom.actionPanel.classList.contains('ting-choice-active')) return '';
     if (!canDiscard(seat)) return '';
-    return chooseDiscardTile(seat) || '';
+    // tw16_ai_suggest_never_throw_20260704: chooseDiscardTile 內部呼叫的
+    // tw16SharedAiDiscardGate／tw16AiMonteCarloRefineDiscard 沒有被 try/catch 包住，
+    // 吃碰槓形成副露後手牌結構剛變化的那個瞬間，這幾個函式其中之一如果丟出例外，會讓
+    // 整個 chooseDiscardTile 中斷丟出去，導致呼叫它的 renderHands 也跟著中斷，AI建議
+    // 從此卡住不會再重新算（就算之後重繪，同樣的例外會一直重複發生）。這裡整個包一層
+    // try/catch，任何內部錯誤都只會讓這次建議顯示為空，不會弄壞其他渲染或卡住後續。
+    try {
+      return chooseDiscardTile(seat) || '';
+    } catch (e) {
+      try { recordNetworkEvent('ai-suggest-error', 'AI建議計算失敗，本次不顯示建議', { seat, message: String(e && e.message || e) }); } catch (_) {}
+      return '';
+    }
   }
 
   function hasNeighbor(hand, code, delta) {
@@ -21302,6 +21341,34 @@ function showIntegrityReport(precomputed) {
     renderTingDangerExamplesPanel();
     updateInterface329Extras(map);
     updateBattleStatsWindow();
+    // tw16_ai_suggest_self_heal_20260704: AI建議框有時會不定時漏掉（不只是縮放手勢結束
+    // 那一種情境），推測是計算當下手牌資料處於某個瞬間不一致的狀態（例如摸花自動補花
+    // 的過渡瞬間）。與其花時間精確追出每一種競態時機，改成自我修復：渲染完成後檢查
+    // 「照理說現在應該要顯示AI建議」卻「畫面上完全找不到建議標記」時，隔一幀後主動
+    // 重新整個補算一次（重跑 renderHands 讓 strategySuggestedTileId 用最新手牌資料
+    // 重新計算，而不是沿用可能過渡期的舊結果）。只會在真的漏掉時才觸發，不影響正常
+    // 情況的效能。
+    try {
+      const _mySeatForAiSuggestCheck = state.viewSeat;
+      const _shouldHaveAiSuggestNow = isAiSuggestionDisplayEnabled()
+        && !state.ended && !state.locked && !state.pending
+        && !(state.openingDeal && state.openingDeal.active)
+        && state.turn === _mySeatForAiSuggestCheck
+        && state.phase === 'discard'
+        && !(state.declaredTing && state.declaredTing[_mySeatForAiSuggestCheck])
+        && canLocalHumanOperateSeat(_mySeatForAiSuggestCheck)
+        && !(state.seatAutoPlay && state.seatAutoPlay[_mySeatForAiSuggestCheck])
+        && canDiscard(_mySeatForAiSuggestCheck);
+      if (_shouldHaveAiSuggestNow && !document.querySelector('.ai-suggest-wrapper .strategy-discard-suggestion')) {
+        if (!renderAll._aiSuggestHealRaf) {
+          renderAll._aiSuggestHealRaf = requestAnimationFrame(() => {
+            renderAll._aiSuggestHealRaf = 0;
+            try { renderHands(displayMap()); } catch (_) {}
+            try { refreshAiSuggestFloatingLabels(); } catch (_) {}
+          });
+        }
+      }
+    } catch (_) {}
     if (isGuestSyncRequired()) updateGuestSyncStatus('render');
     if (serial !== renderSerial) return;
     ensureAutoDrivenTurn('render');
@@ -22355,10 +22422,16 @@ function showIntegrityReport(precomputed) {
       try { if (ev && ev.cancelable && ev.touches && ev.touches.length >= 2) ev.preventDefault(); } catch (e) {}
       refreshBottomHandPanState();
       try { positionTileContainers(displayMap()); } catch (e) {}
+      // tw16_ai_suggest_label_pinch_end_fix_20260704: 縮放手勢進行中，AI建議標籤刷新
+      // 被刻意跳過（省效能，跟著 bottomHandPinchScaleState.active 判斷），但手勢放開
+      // 的這一刻漏了補畫最後一次，導致標籤停在縮放前的舊位置甚至完全消失，要等下一次
+      // 縮放才會意外觸發重繪。這裡補上，手勢結束後一定會重新算一次正確位置。
+      try { if (typeof refreshAiSuggestFloatingLabels === 'function') refreshAiSuggestFloatingLabels(); } catch (e) {}
       requestAnimationFrame(() => {
         refreshBottomHandPanState();
         try { positionTileContainers(displayMap()); } catch (e) {}
         try { positionTingDangerExamplesPanel(); } catch (e) {}
+        try { if (typeof refreshAiSuggestFloatingLabels === 'function') refreshAiSuggestFloatingLabels(); } catch (e) {}
       });
     };
 
@@ -22424,6 +22497,12 @@ function showIntegrityReport(precomputed) {
     if (!seat || !tileId) return false;
     if (state.turn !== seat || state.phase !== 'discard' || state.locked || state.ended) return false;
     if (!canLocalHumanOperateSeat(seat)) return false;
+    // tw16_ting_lock_hand_swipe_20260704: 跟點擊出牌同一套規則——宣告聽牌後不能拆聽，
+    // 滑動出牌只能滑剛摸到的那張牌。
+    if (state.declaredTing && state.declaredTing[seat]) {
+      const drawnId = activeDrawnTileId(seat);
+      if (drawnId && String(tileId) !== drawnId) return false;
+    }
     return !!tileByIdInSeatHand(seat, tileId);
   }
 
@@ -22939,9 +23018,22 @@ function showIntegrityReport(precomputed) {
     dom.actionPanel.style.setProperty('align-items', 'center', 'important');
     dom.actionPanel.style.setProperty('background', 'rgba(20,20,20,.88)', 'important');
     dom.actionPanel.style.setProperty('border-radius', '12px', 'important');
-    dom.actionPanel.style.setProperty('padding', '8px 10px', 'important');
+    dom.actionPanel.style.setProperty('padding', '6px 8px', 'important');
     dom.actionPanel.style.setProperty('width', 'max-content', 'important');
-    dom.actionPanel.style.setProperty('max-width', Math.max(40, box.width - pad * 2) + 'px', 'important');
+    dom.actionPanel.style.setProperty('display', 'inline-flex', 'important');
+    // tw16_claim_panel_frame_size_fix_20260704b: 強制鎖死高度與最小尺寸，不讓任何殘留
+    // 樣式（例如上一次渲染聽牌小幫手面板留下的高度）或其他規則有機會撐大黑框。
+    // height/min-height/min-width 全部歸零重算，確保框剛好貼合目前實際內容。
+    dom.actionPanel.style.setProperty('height', 'auto', 'important');
+    dom.actionPanel.style.setProperty('min-height', '0', 'important');
+    dom.actionPanel.style.setProperty('min-width', '0', 'important');
+    dom.actionPanel.style.setProperty('max-height', 'none', 'important');
+    // tw16_claim_panel_frame_size_fix_20260704: 原本 max-width 設成幾乎整個螢幕寬
+    // （box.width - 20px），沒有真正限制框的大小，只是給 width:max-content 留了很寬
+    // 的容許範圍——但某些瀏覽器/WebView 對 flex-column + width:max-content 的組合
+    // 處理不一致，可能導致黑框視覺上撐得比按鈕本身大很多。改成同時給一個更貼近實際
+    // 內容需要的上限（螢幕寬與 360px 取較小值），框才會確實剛好包住按鈕，不會太大。
+    dom.actionPanel.style.setProperty('max-width', Math.min(Math.max(40, box.width - pad * 2), 360) + 'px', 'important');
 
     dom.actionPanel.style.setProperty('overflow', 'visible', 'important');
     dom.actionPanel.style.setProperty('transform-origin', 'center center', 'important');
@@ -22983,7 +23075,15 @@ function showIntegrityReport(precomputed) {
         dom.actionPanel.style.setProperty('align-items',   'center',                        'important');
         dom.actionPanel.style.setProperty('transform',     'translate(-50%,-50%)',          'important');
         dom.actionPanel.style.setProperty('width',         'max-content',                   'important');
-        dom.actionPanel.style.setProperty('max-width',     Math.max(40, _box2.width - 20) + 'px', 'important');
+        dom.actionPanel.style.setProperty('display',       'inline-flex',                   'important');
+        dom.actionPanel.style.setProperty('height',        'auto',                          'important');
+        dom.actionPanel.style.setProperty('min-height',    '0',                             'important');
+        dom.actionPanel.style.setProperty('min-width',     '0',                             'important');
+        dom.actionPanel.style.setProperty('max-height',    'none',                          'important');
+        // tw16_selfwin_panel_frame_size_fix_20260704: 跟吃碰槓選擇框同一個問題——max-width
+        // 原本設成幾乎整個螢幕寬，沒有真正限制框的大小。同樣改成螢幕寬與360px取較小值，
+        // 並鎖死高度/最小尺寸，確保黑框剛好包住「可自摸/胡/跳過」這幾個按鈕，不會太大。
+        dom.actionPanel.style.setProperty('max-width',     Math.min(Math.max(40, _box2.width - 20), 360) + 'px', 'important');
         dom.actionPanel.style.setProperty('background',    'rgba(30,30,30,.82)',            'important');
         dom.actionPanel.style.setProperty('border-radius', '10px',                         'important');
         dom.actionPanel.style.setProperty('padding',       '6px 8px',                      'important');
@@ -24322,8 +24422,19 @@ function showIntegrityReport(precomputed) {
     } catch (e) {}
     const tingOpts = getTingOptions(seat);
     const tingOpt = tingOpts.find(opt => opt.discardId === tileObj.id);
-    if (tingOpt && !state.declaredTing[seat]) openTingChoicePanel(seat);
-    else submitDiscard(seat, tileObj.id, source || 'human');
+    if (tingOpt && !state.declaredTing[seat]) { openTingChoicePanel(seat); return true; }
+    // tw16_ting_lock_hand_20260704: 宣告聽牌後，不管AI還是真人，一律禁止拆聽——只能打出
+    // 剛摸到的那張牌（除非胡牌）。點擊手牌裡其他張（不是剛摸到的牌）時，直接擋下不出牌，
+    // 不會真的送出 submitDiscard。之前的拆聽限制只擋了AI「智慧調整」那幾個功能點，沒有
+    // 擋到最根本的「人類直接點擊手牌」這條路徑，這裡才是真正需要擋的地方。
+    if (state.declaredTing && state.declaredTing[seat]) {
+      const drawnId = activeDrawnTileId(seat);
+      if (drawnId && String(tileObj.id) !== drawnId) {
+        try { addLog(SEAT_NAME[seat] + '已聽牌，禁止拆聽（只能打出剛摸到的牌）'); } catch (_) {}
+        return false;
+      }
+    }
+    submitDiscard(seat, tileObj.id, source || 'human');
     return true;
   }
 
