@@ -1950,6 +1950,8 @@
   min-height: 0 !important;
   padding: 2px 8px !important;
   margin: 4px 0 !important;
+  border: 1px solid #ef4444 !important;
+  border-radius: 8px !important;
 }.actionBtnLabel{line-height:1 !important}
 .actionBtn.actionBtnWithTiles .actionBtnLabel{
   margin-bottom: 0 !important;
@@ -7008,7 +7010,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     lobby.id = 'tw16Lobby';
     lobby.className = 'tw16-lobby';
     lobby.innerHTML = '<div class="tw16-lobby-card">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.7.5 改版｜2026-07-05 11:28 台灣時間）</span></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.7.5 改版｜2026-07-05 15:22 台灣時間）</span></div>'
       + '<div class="tw16-lobby-title">台灣麻將 Ably 連線 / 單機</div>'
       + '<div class="tw16-lobby-sub">★連線對戰：<br><span style="color:#ef4444">每人都要設同房名</span>，設好房名後<br>1人先按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">建立房間</span><br>其餘人按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">加入房間</span><br>★單人：按<span style="background:#15803d;color:#fff;border-radius:3px;padding:0 3px;">直接離線開始</span></div>'
       + '<div class="tw16-lobby-grid">'
@@ -23746,6 +23748,7 @@ function showIntegrityReport(precomputed) {
     const safeLabel = String(label || '');
     btn.className = 'actionBtn';
     if (safeLabel === '跳過') btn.classList.add('actionSkipBtn');
+    if (safeLabel === '胡') { btn.classList.add('win-btn'); btn.setAttribute('data-action', 'win'); }
     btn.type = 'button';
     const labelNode = document.createElement('span');
     labelNode.className = 'actionBtnLabel';
