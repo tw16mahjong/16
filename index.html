@@ -4045,6 +4045,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
   let renderSerial = 0;
   let _actionPanelContentKey = '';
   let lastUiThemeKey = '';
+  let tw16LastPerspective3dState = null; // 追蹤上次3D狀態，只在真正從開轉關那一刻才需要清除行內定位樣式
   let lastWakeLockEnabled = null;
   let miniDashboardRenderKey = '';
   const rootCssVarCache = Object.create(null);
@@ -7007,7 +7008,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     lobby.id = 'tw16Lobby';
     lobby.className = 'tw16-lobby';
     lobby.innerHTML = '<div class="tw16-lobby-card">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.7.5 改版｜2026-07-05 09:44 台灣時間）</span></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;"><div class="tw16-lobby-chip" style="flex-shrink:0;margin-bottom:0;">Ably 連線 / 單機</div><span style="font-size:clamp(9px,2.5vw,12px);color:#cbd5e1;font-weight:700;white-space:nowrap;">（115.7.5 改版｜2026-07-05 11:28 台灣時間）</span></div>'
       + '<div class="tw16-lobby-title">台灣麻將 Ably 連線 / 單機</div>'
       + '<div class="tw16-lobby-sub">★連線對戰：<br><span style="color:#ef4444">每人都要設同房名</span>，設好房名後<br>1人先按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">建立房間</span><br>其餘人按<span style="background:#1d4ed8;color:#fff;border-radius:3px;padding:0 3px;">加入房間</span><br>★單人：按<span style="background:#15803d;color:#fff;border-radius:3px;padding:0 3px;">直接離線開始</span></div>'
       + '<div class="tw16-lobby-grid">'
@@ -8344,8 +8345,16 @@ function loadUiSettings() {
     }
     applyHandVisualColors();
     app.classList.toggle('perspective3d', !!state.uiSettings.perspective3d);
-    /* 關閉 3D 時還原 hand-bottom 的 CSS 定位（移除 placeByLeftTop 設的 inline style） */
-    if (!state.uiSettings.perspective3d && dom.handBottom) {
+    // tw16_fix_meld_row_flicker_20260705: 原本這段每次 applyUiTheme 執行（也就是每次
+    // renderAll）都會無條件清除 handBottom 的行內定位樣式，不管3D模式有沒有真的變動過。
+    // 這個清除動作是同步的，但花牌副露列的實際定位邏輯多半是透過
+    // requestAnimationFrame 延後到下一影格才執行——中間這一影格「樣式已被清空、還沒
+    // 重新定位」的空窗期，就是造成「先往右偏移、再跳回正確位置」這種閃爍的根本原因。
+    // 改成只在3D狀態「真的從開轉關」那一刻才清除一次，其餘每次renderAll都不動它，
+    // 讓花牌副露的定位邏輯有機會維持自己算好的位置，不會被無謂地重複清空。
+    const _perspective3dNow = !!state.uiSettings.perspective3d;
+    const _perspective3dJustTurnedOff = tw16LastPerspective3dState === true && _perspective3dNow === false;
+    if (_perspective3dJustTurnedOff && dom.handBottom) {
       const hb = dom.handBottom;
       hb.style.removeProperty('position');
       hb.style.removeProperty('left');
@@ -8356,6 +8365,7 @@ function loadUiSettings() {
       hb.style.removeProperty('width');
       hb.style.removeProperty('height');
     }
+    tw16LastPerspective3dState = _perspective3dNow;
     try {
       const hb = dom.handBottom || byId('handBottom');
       if (hb) {
@@ -10051,6 +10061,25 @@ function loadUiSettings() {
         return showBigTileAnimation(animation.tile, { holdMs: 520, fadeMs: 150, className: 'drawing' });
       }
       if (!tileIsLatestDiscard || tileInHand) return false;
+      // tw16_fix_guest_meld_unfreeze_20260705: 這裡原本完全沒有解凍 tw16BottomMeldFrozen
+      // 的程式碼——註解宣稱「guest走snapshotAnimation timeout解凍」，但這個宣稱從未
+      // 被真正實作，導致來賓自己座位的出牌永遠不會解凍花牌副露的凍結定位，一直卡用
+      // 「凍結專用margin-left計算」而不是正常置中，兩者計算基準點的細微落差就是造成
+      // 「先偏移、再跳回」這種閃爍的根本原因。這裡補上跟主機端(playDiscardAnimation)
+      // 對等的解凍邏輯：只在這筆棄牌動畫剛好是「自己座位」的棄牌時才解凍（避免其他
+      // 座位的棄牌動畫誤解凍自己的花牌副露狀態）。
+      if (animation.seat === state.viewSeat) {
+        tw16BottomMeldFrozen = false;
+        const _handBotElGuest = dom.handBottom || byId('handBottom');
+        if (_handBotElGuest) _handBotElGuest.classList.remove('tw16-has-drawn');
+        // tw16_fix_guest_meld_unfreeze_timing_20260705: 這個函式本身是透過
+        // setTimeout(...,0) 延後執行的（見 applySnapshotPayload 呼叫處），代表在這裡
+        // 解凍之前，renderAll 早就已經用「還沒解凍」的舊狀態排版完一次了——單靠解凍
+        // 旗標本身不會讓畫面重新排版，要等到下一次不相關的重繪才會反映出來，中間這段
+        // 空窗期正是「先偏移、之後才跳回正確位置」的視覺閃爍來源。這裡解凍後立刻主動
+        // 觸發一次重新排版，讓修正立即生效，不用等下一次不相關的畫面更新才顯示出來。
+        try { updateAdaptiveLayout(); } catch (_) {}
+      }
       speakGameEvent(tileSpeechText(animation.tile.code), 'net-discard:' + state.handId + ':' + (animation.tile.id || '') + ':' + animation.seat + ':' + (animation.createdAt || ''));
       positionDiscardAnimationAtSeat(animation.seat);
       return showBigTileAnimation(animation.tile, { holdMs: Math.max(360, Math.round(discardAnimationMs() * 1.55)), fadeMs: 120, className: 'discarding' });
@@ -10118,6 +10147,16 @@ function loadUiSettings() {
     const hostChanged = !!(msg.hostClientId && previousHostClientId && msg.hostClientId !== previousHostClientId);
     if (msg.hostClientId) net.hostClientId = msg.hostClientId;
     const snapshotAnimation = isOnlineGuest() ? normalizeNetworkAnimationPayload(msg.animation) : null;
+    // tw16_unfreeze_before_render_20260705: 提前到 renderAll 執行「之前」就先解凍，
+    // 而不是等 renderAll 跑完、動畫callback才在下一輪tick解凍——這樣可以做到單次
+    // 渲染就是正確位置，不會有「先錯誤顯示、再修正回來」這種可察覺的閃爍。這裡不用
+    // tileIsInSeatHand 判斷（這個時間點手牌狀態還沒被這份快照更新，查了也是舊的），
+    // 直接信任快照本身標記的動畫類型（是不是自己座位的discard事件）就足夠準確。
+    if (snapshotAnimation && snapshotAnimation.type === 'discard' && snapshotAnimation.seat === state.viewSeat) {
+      tw16BottomMeldFrozen = false;
+      const _handBotElPre = dom.handBottom || byId('handBottom');
+      if (_handBotElPre) _handBotElPre.classList.remove('tw16-has-drawn');
+    }
     if (seq) {
       net.lastAppliedSeq = seq;
       net.lastAppliedSnapshotSeq = seq;
@@ -12247,9 +12286,14 @@ function loadUiSettings() {
 
   function submitDiscard(seat, tileId, source, options = {}) {
     if (isOnlineGuest() && source !== 'remote' && seat === net.assignedSeat) {
-      tw16BottomMeldFrozen = false;
-      const _hbEl = dom.handBottom || byId('handBottom');
-      if (_hbEl) _hbEl.classList.remove('tw16-has-drawn');
+      // tw16_remove_premature_unfreeze_20260705: 這裡原本會立刻解凍花牌副露定位，
+      // 但這個時間點只是把出牌「意圖」送給房主，實際的手牌內容根本還沒變動（來賓
+      // 不會在本地端直接改手牌，要等房主回傳確認快照才是真正的狀態變化）。立刻解凍
+      // 會讓「花牌副露的定位樣式」（已經切回一般置中）跟「手牌實際內容」（還是舊的，
+      // 摸到的牌還在）兩者不同步——等到確認快照真的抵達、兩者才重新對齊，這個不同步
+      // 的空窗期正是「先偏移、再跳回」這個閃爍現象的真正成因。這裡不再提前解凍，
+      // 完全交給 applySnapshotPayload 收到確認快照、狀態真的更新的那一刻才解凍
+      // （已經確保跟畫面渲染同一輪生效，不會有時間差）。
       return publishNetworkIntent({ action: 'discard', tileId });
     }
     if (tw16HasDiscardedThisTurn(seat)) {
