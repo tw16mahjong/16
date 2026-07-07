@@ -2446,6 +2446,13 @@ html body .hand .hand-row .tile.face-image.settlement-hand-win-tile::before{
 .hand-bottom .hand-tile-row .tile.strategy-discard-suggestion:hover{
   transform:translateY(-6px) scale(1.085)!important;
 }
+@media (hover:none), (pointer:coarse){
+  .hand-bottom .tile:hover,
+  .hand-bottom .hand-tile-row .tile.strategy-discard-suggestion:hover,
+  .tw16-drawn-ext.pos-bottom .tile:hover{
+    transform:none!important;
+  }
+}
 .tw16-tenpai-floating-layer{
   position:fixed!important;
   left:0!important;
@@ -4147,6 +4154,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     guestLiveHandSeen: false,
     guestSuppressedSettlementIds: {},
     guestAutoplayInitializedSeats: {},
+    pendingLocalDiscard: null,
     events: [],
     players: {}
   };
@@ -10175,6 +10183,20 @@ function loadUiSettings() {
       state[key] = incoming[key];
     });
     if (isOnlineGuest()) try { const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || 'null'); if (_gl && state.uiSettings) ['wallVisible','screenWakeLockEnabled','turnHandFrameEnabled','tingAssistEnabled','tingDangerExamplesEnabled','aiSuggestionEnabled','aiMode','tingDeclarationMode','aiMonteCarloLevel2','aiMonteCarloFull','miniDashboardEnabled','avatarEnabled'].forEach(k => { if (_gl[k] !== undefined) state.uiSettings[k] = _gl[k]; }); } catch(e) {}
+    if (isOnlineGuest() && net.pendingLocalDiscard) {
+      const pendingLocalDiscard = net.pendingLocalDiscard;
+      const pendingSeat = pendingLocalDiscard.seat;
+      const handNow = state.hands && Array.isArray(state.hands[pendingSeat]) ? state.hands[pendingSeat] : [];
+      const tileStillInHand = handNow.some(t => t && String(t.id) === String(pendingLocalDiscard.tileId));
+      const handChanged = pendingLocalDiscard.handId && state.handId && Number(pendingLocalDiscard.handId) !== Number(state.handId);
+      if (handChanged || state.ended) {
+        clearGuestLocalDiscardPending(handChanged ? 'snapshot-new-hand' : 'snapshot-ended');
+      } else if (tileStillInHand) {
+        applyGuestLocalDiscardVisual('snapshot-overlay');
+      } else {
+        clearGuestLocalDiscardPending('snapshot-confirmed');
+      }
+    }
     if (isOnlineGuest()) {
       try {
         SEATS.forEach(function(seat, idx) {
@@ -10435,6 +10457,111 @@ function loadUiSettings() {
     return state.pending && state.pending.actionId ? state.pending.actionId : 0;
   }
 
+  function hasPendingGuestLocalDiscard(seat) {
+    const pending = net.pendingLocalDiscard;
+    if (!pending) return false;
+    return !seat || pending.seat === seat;
+  }
+
+  function clearGuestLocalDiscardPending(reason) {
+    if (!net.pendingLocalDiscard) return false;
+    try {
+      recordNetworkEvent('guest-local-discard-clear', '清除來賓本地即時出牌｜' + (reason || ''), {
+        seat: net.pendingLocalDiscard.seat || '',
+        tileId: net.pendingLocalDiscard.tileId || '',
+        reason: reason || ''
+      });
+    } catch (_) {}
+    net.pendingLocalDiscard = null;
+    return true;
+  }
+
+  function applyGuestLocalDiscardVisual(reason) {
+    const pending = net.pendingLocalDiscard;
+    if (!pending || !isOnlineGuest()) return false;
+    const seat = pending.seat;
+    const hand = state.hands && state.hands[seat];
+    if (!Array.isArray(hand) || !hand.length) return false;
+    const index = hand.findIndex(t => t && String(t.id) === String(pending.tileId));
+    if (index < 0) return false;
+    hand.splice(index, 1);
+    if (!state.activeDrawnTileIds || typeof state.activeDrawnTileIds !== 'object') state.activeDrawnTileIds = {};
+    const currentDrawnId = String(state.activeDrawnTileIds[seat] || '');
+    if ((pending.drawnId && currentDrawnId === String(pending.drawnId)) || currentDrawnId === String(pending.tileId)) {
+      delete state.activeDrawnTileIds[seat];
+    }
+    sortHand(seat);
+    tw16BottomMeldFrozen = false;
+    const handBottom = dom.handBottom || byId('handBottom');
+    if (handBottom) handBottom.classList.remove('tw16-has-drawn');
+    try {
+      recordNetworkEvent('guest-local-discard-visual', '套用來賓本地即時出牌畫面｜' + (reason || ''), {
+        seat,
+        tileId: pending.tileId || '',
+        reason: reason || ''
+      });
+    } catch (_) {}
+    return true;
+  }
+
+  function startGuestLocalDiscardPending(seat, tileId, source) {
+    if (!isOnlineGuest() || seat !== net.assignedSeat || source === 'remote') return false;
+    if (hasPendingGuestLocalDiscard(seat)) return false;
+    const hand = state.hands && state.hands[seat];
+    if (!Array.isArray(hand) || !hand.length) return false;
+    const index = hand.findIndex(t => t && String(t.id) === String(tileId));
+    if (index < 0) return false;
+    const handBottom = dom.handBottom || byId('handBottom');
+    net.pendingLocalDiscard = {
+      seat,
+      tileId,
+      tileCode: hand[index] && hand[index].code ? hand[index].code : '',
+      handId: state.handId || 0,
+      drawnId: activeDrawnTileId(seat) || '',
+      handBefore: clonePlain(hand),
+      hadDrawnClass: !!(handBottom && handBottom.classList && handBottom.classList.contains('tw16-has-drawn')),
+      bottomMeldFrozen: !!tw16BottomMeldFrozen,
+      createdAt: Date.now()
+    };
+    applyGuestLocalDiscardVisual('local-click');
+    const handScrollSnap = captureBottomHandScrollBeforeHandRender(displayMap());
+    renderAll();
+    restoreBottomHandScrollAfterDrawRender(handScrollSnap);
+    return true;
+  }
+
+  function rollbackGuestLocalDiscardPending(reason, options = {}) {
+    const pending = net.pendingLocalDiscard;
+    if (!pending) return false;
+    const keepSnapshotState = !!(options && options.keepSnapshotState);
+    if (!keepSnapshotState) {
+      state.hands[pending.seat] = clonePlain(pending.handBefore || []);
+      if (!state.activeDrawnTileIds || typeof state.activeDrawnTileIds !== 'object') state.activeDrawnTileIds = {};
+      if (pending.drawnId) state.activeDrawnTileIds[pending.seat] = pending.drawnId;
+      else delete state.activeDrawnTileIds[pending.seat];
+    }
+    tw16BottomMeldFrozen = !!pending.bottomMeldFrozen;
+    const handBottom = dom.handBottom || byId('handBottom');
+    if (handBottom) {
+      if (pending.hadDrawnClass) handBottom.classList.add('tw16-has-drawn');
+      else handBottom.classList.remove('tw16-has-drawn');
+    }
+    net.pendingLocalDiscard = null;
+    if (!keepSnapshotState) {
+      const handScrollSnap = captureBottomHandScrollBeforeHandRender(displayMap());
+      renderAll();
+      restoreBottomHandScrollAfterDrawRender(handScrollSnap);
+    }
+    try {
+      recordNetworkEvent('guest-local-discard-rollback', '回復來賓本地即時出牌｜' + (reason || ''), {
+        seat: pending.seat || '',
+        tileId: pending.tileId || '',
+        reason: reason || ''
+      });
+    } catch (_) {}
+    return true;
+  }
+
   function publishNetworkIntent(intent) {
     if (!isOnlineGuest() || !net.channel) return false;
     const action = intent && intent.action || 'intent';
@@ -10506,6 +10633,10 @@ function loadUiSettings() {
     if (msg.toClientId && msg.toClientId !== net.clientId) return false;
     if (msg.playerKey && msg.playerKey !== net.playerKey) return false;
     if (msg.intentId && net.pendingIntentAcks[msg.intentId]) delete net.pendingIntentAcks[msg.intentId];
+    if (!msg.accepted && msg.action === 'discard' && hasPendingGuestLocalDiscard(msg.seat || net.assignedSeat || '')) {
+      rollbackGuestLocalDiscardPending('ack-reject:' + (msg.reason || 'rejected'));
+      requestNetworkSync('discard-ack-reject');
+    }
     recordNetworkEvent(msg.accepted ? 'ack-ok' : 'ack-reject', (msg.accepted ? '動作已接受：' : '動作被拒絕：') + (msg.action || ''), { action: msg.action || '', reason: msg.reason || '', intentId: msg.intentId || '' });
     if (msg.accepted && msg.action === 'join') {
       const match = String(msg.reason || '').match(/^join-(south|west|north)$/);
@@ -12266,15 +12397,19 @@ function loadUiSettings() {
 
   function submitDiscard(seat, tileId, source, options = {}) {
     if (isOnlineGuest() && source !== 'remote' && seat === net.assignedSeat) {
-      // tw16_remove_premature_unfreeze_20260705: 這裡原本會立刻解凍花牌副露定位，
-      // 但這個時間點只是把出牌「意圖」送給房主，實際的手牌內容根本還沒變動（來賓
-      // 不會在本地端直接改手牌，要等房主回傳確認快照才是真正的狀態變化）。立刻解凍
-      // 會讓「花牌副露的定位樣式」（已經切回一般置中）跟「手牌實際內容」（還是舊的，
-      // 摸到的牌還在）兩者不同步——等到確認快照真的抵達、兩者才重新對齊，這個不同步
-      // 的空窗期正是「先偏移、再跳回」這個閃爍現象的真正成因。這裡不再提前解凍，
-      // 完全交給 applySnapshotPayload 收到確認快照、狀態真的更新的那一刻才解凍
-      // （已經確保跟畫面渲染同一輪生效，不會有時間差）。
-      return publishNetworkIntent({ action: 'discard', tileId });
+      // tw16_guest_local_optimistic_discard_20260707:
+      // 只改「點擊者自己」的視覺反應：來賓本地先把被點的牌拿掉，讓點擊立即有回饋；
+      // 房主仍保有原本完整的合法性檢查與權威狀態。若房主拒絕，就把來賓畫面回復；
+      // 若房主之後送來的 snapshot 還沒反映這次棄牌，來賓端會把這個 optimistic 狀態
+      // 疊回 snapshot 上，避免被中途 pulse/sync 快照「彈回舊手牌」造成二次閃爍。
+      if (hasPendingGuestLocalDiscard(seat)) return false;
+      const optimisticStarted = startGuestLocalDiscardPending(seat, tileId, source);
+      const sent = publishNetworkIntent({ action: 'discard', tileId });
+      if (!sent) rollbackGuestLocalDiscardPending('intent-send-failed');
+      else if (!optimisticStarted) {
+        try { recordNetworkEvent('guest-local-discard-skip', '來賓即時出牌未能先套用本地畫面，仍送出意圖', { seat, tileId }); } catch (_) {}
+      }
+      return sent;
     }
     if (tw16HasDiscardedThisTurn(seat)) {
       try { recordNetworkEvent('single-discard-guard-block', SEAT_NAME[seat] + '同一回合重複棄牌被阻擋', { seat, source: source || '' }); } catch (_) {}
