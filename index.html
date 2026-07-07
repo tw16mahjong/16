@@ -12010,6 +12010,7 @@ function loadUiSettings() {
     // 的時間上限（15毫秒／批）保護，不會拖垮效能。背景算力全部留給「自己手牌」的向聽
     // 精算，這是完全已知資訊、值得投資的部分。
     tw16PrewarmOwnHandAnalysis();
+    tw16ScheduleDangerPrewarm('opening');
     renderAll();
     if (isOnlineHost()) await publishNetworkSnapshotAndWait('opening-dealer-final-draw', stillCurrent);
     hideDicePanel();
@@ -12103,6 +12104,7 @@ function loadUiSettings() {
     // （handLen不同）自然失效，這裡主動觸發重新暖機，讓選牌判斷能在需要之前就先算好。
     // 對手預測不在這裡背景暖機（見上方說明）。
     tw16PrewarmOwnHandAnalysis();
+    tw16ScheduleDangerPrewarm('draw');
     addLog(SEAT_NAME[seat] + '摸牌');
     setNetworkAnimationHint('draw', seat, drawn, 'draw');
     playDrawAnimation(seat, drawn);
@@ -12411,6 +12413,7 @@ function loadUiSettings() {
     // tw16_focus_own_hand_prewarm_20260704: 每次棄牌後只背景暖機自己手牌的向聽精算，
     // 不再暖機對手手牌預測（準確度有限，不值得持續投入算力，改成真正要用時才臨時算）。
     tw16PrewarmOwnHandAnalysis();
+    tw16ScheduleDangerPrewarm(tingDeclare ? 'ting-discard' : 'discard', tingDeclare ? seat : '');
   }
 
   // tw16_gate_entries_prewarm_20260704: 排名清單（套用行為訊號疊加、排序、算信心分數）
@@ -12419,6 +12422,42 @@ function loadUiSettings() {
   // 存起來，宣告聽牌或出牌判斷時直接讀現成的，不用臨時再排一次。
   let tw16GatePrewarmedEntries = Object.create(null); // key: "seat|other" -> {actionId, handLen, entries}
   function tw16GatePrewarmedKey(seat, other) { return seat + '|' + other; }
+  let tw16DangerPrewarmTimer = 0;
+  let tw16DangerPrewarmRunToken = 0;
+  let tw16DangerPrewarmLastQueuedKey = '';
+  let tw16DangerPrewarmLastDoneKey = '';
+  function tw16DangerPrewarmStateKey(priorityOther) {
+    try {
+      return [
+        String(state.handId || 0),
+        String(state.lastActionId || 0),
+        String((state.discards || []).length),
+        SEATS.map(function(s) { return String(((state.hands && state.hands[s]) || []).length); }).join(','),
+        SEATS.map(function(s) { return String(((state.melds && state.melds[s]) || []).length); }).join(','),
+        SEATS.map(function(s) { return state.declaredTing && state.declaredTing[s] ? '1' : '0'; }).join(','),
+        String(priorityOther || '')
+      ].join('|');
+    } catch (_) {
+      return String(Date.now());
+    }
+  }
+  function tw16ScheduleDangerPrewarm(reason, priorityOther) {
+    try {
+      if (state.ended || (state.openingDeal && state.openingDeal.active)) return;
+      const key = tw16DangerPrewarmStateKey(priorityOther);
+      if (tw16DangerPrewarmLastDoneKey === key || tw16DangerPrewarmLastQueuedKey === key) return;
+      tw16DangerPrewarmLastQueuedKey = key;
+      const runToken = ++tw16DangerPrewarmRunToken;
+      if (tw16DangerPrewarmTimer) clearTimeout(tw16DangerPrewarmTimer);
+      tw16DangerPrewarmTimer = setTimeout(function() {
+        tw16DangerPrewarmTimer = 0;
+        if (runToken !== tw16DangerPrewarmRunToken) return;
+        tw16DangerPrewarmLastQueuedKey = '';
+        tw16DangerPrewarmLastDoneKey = key;
+        try { tw16MonteCarloPrewarmAllPairs(priorityOther, key, runToken); } catch (_) {}
+      }, priorityOther ? 0 : 16);
+    } catch (_) {}
+  }
   // tw16_own_hand_shanten_prewarm_20260704: 策略轉向——猜對手手牌天花板低（資訊本質
   // 不完整，準不準都差不多），改把背景預熱的力氣放在「自己手牌」的向聽/進張精算，
   // 這是完全已知資訊的純數學問題，不是猜測，準確度可以做到接近100%。用
@@ -12530,6 +12569,73 @@ function loadUiSettings() {
     } catch (_) { return []; }
   }
 
+  // tw16_offense_balance_20260706: 進攻平衡版。
+  // 保留既有避險邏輯，但用「自己手牌精確向聽/進張分析」限制防守介入範圍：
+  // 若某張牌其實屬於當前最佳或接近最佳的手牌結構，就降低安全分數對它的拉扯，
+  // 避免 AI 因為過度避險而拆掉自己的好型。
+  function tw16OffenseBalanceDiscardProfile(seat, tileLike) {
+    const tileId = tileLike && tileLike.id !== undefined && tileLike.id !== null ? String(tileLike.id) : '';
+    const code = typeof tileLike === 'string' ? tileLike : (tileLike && tileLike.code) || '';
+    let analysis = [];
+    try { analysis = tw16PeekOwnHandBestDiscardAnalysis(seat); } catch (_) { analysis = []; }
+    if (!analysis || !analysis.length) {
+      try { analysis = tw16CachedOwnHandBestDiscardAnalysis(seat); } catch (_) { analysis = []; }
+    }
+    if (!analysis || !analysis.length) return { code, floating: false, keepPressure: 0, hardKeep: false, nearBest: false, exact: null, best: null };
+    const best = analysis[0] || null;
+    let exact = null;
+    if (tileId) exact = analysis.find(function(a) { return a && String(a.id) === tileId; }) || null;
+    if (!exact && code) {
+      const sameCode = analysis.filter(function(a) { return a && a.code === code; });
+      if (sameCode.length) {
+        sameCode.sort(function(a, b) {
+          return (Number(a && a.shanten) || 9) - (Number(b && b.shanten) || 9)
+            || (Number(b && b.ukeireTileCount) || 0) - (Number(a && a.ukeireTileCount) || 0)
+            || (Number(b && b.shapeQuality) || 0) - (Number(a && a.shapeQuality) || 0);
+        });
+        exact = sameCode[0] || null;
+      }
+    }
+    let floating = false;
+    try { floating = !!(code && tw16OwnHandFloatingCodes(seat).indexOf(code) >= 0); } catch (_) { floating = false; }
+    if (!best || !exact) return { code, floating, keepPressure: 0, hardKeep: false, nearBest: false, exact, best };
+    const bestShanten = Number.isFinite(best.shanten) ? best.shanten : 9;
+    const exactShanten = Number.isFinite(exact.shanten) ? exact.shanten : 9;
+    const shantenGap = Math.max(0, exactShanten - bestShanten);
+    const ukeireGap = Math.max(0, (Number(best.ukeireTileCount) || 0) - (Number(exact.ukeireTileCount) || 0));
+    const shapeGap = Math.max(0, (Number(best.shapeQuality) || 0) - (Number(exact.shapeQuality) || 0));
+    let keepPressure = 0;
+    if (!floating) {
+      keepPressure += shantenGap * 32;
+      keepPressure += Math.min(30, ukeireGap * 3);
+      keepPressure += Math.min(18, shapeGap * 2);
+    }
+    const nearBest = shantenGap === 0 && ukeireGap <= 2 && shapeGap <= 1;
+    const hardKeep = !floating && (shantenGap >= 1 || ukeireGap >= 3 || shapeGap >= 2);
+    return {
+      code,
+      floating,
+      keepPressure,
+      hardKeep,
+      nearBest,
+      exact,
+      best,
+      shantenGap,
+      ukeireGap,
+      shapeGap
+    };
+  }
+
+  function tw16OffenseBalanceSwapCost(seat, fromTileLike, toTileLike) {
+    const from = tw16OffenseBalanceDiscardProfile(seat, fromTileLike);
+    const to = tw16OffenseBalanceDiscardProfile(seat, toTileLike);
+    if (!from || !to || !from.exact || !to.exact) return 0;
+    const shantenCost = Math.max(0, (Number(to.exact.shanten) || 9) - (Number(from.exact.shanten) || 9));
+    const ukeireCost = Math.max(0, (Number(from.exact.ukeireTileCount) || 0) - (Number(to.exact.ukeireTileCount) || 0));
+    const shapeCost = Math.max(0, (Number(from.exact.shapeQuality) || 0) - (Number(to.exact.shapeQuality) || 0));
+    return shantenCost * 28 + ukeireCost * 2 + shapeCost * 1.5;
+  }
+
   function tw16OwnHandShapePreview(seat) {
     const hand = state.hands[seat] || [];
     if (!hand.length) return null;
@@ -12629,7 +12735,7 @@ function loadUiSettings() {
   function tw16PrewarmTargetSampleCount() {
     return 800;
   }
-  function tw16MonteCarloPrewarmAllPairs(priorityOther) {
+  function tw16MonteCarloPrewarmAllPairs(priorityOther, expectedStateKey, runToken) {
     try {
       const pairs = [];
       SEATS.forEach(function(seat) {
@@ -12653,6 +12759,8 @@ function loadUiSettings() {
       const targetSamples = tw16PrewarmTargetSampleCount();
       let i = 0;
       function step() {
+        if (runToken && runToken !== tw16DangerPrewarmRunToken) return;
+        if (expectedStateKey && tw16DangerPrewarmStateKey(priorityOther) !== expectedStateKey) return;
         if (i >= pairs.length) return;
         const pair = pairs[i++];
         // tw16_prewarm_target_alignment_20260703: 背景暖機目標必須跟即時守門實際查詢
@@ -12939,6 +13047,7 @@ function loadUiSettings() {
       state.stats.claims += 1;
       recordHandEvent('claim', candidate.seat, SEAT_NAME[candidate.seat] + candidate.label + ' ' + tileFullText(pending.tile.code), { type: candidate.type, tile: pending.tile.code });
     }
+    tw16ScheduleDangerPrewarm(candidate.type === 'kong' ? 'claim-kong' : 'claim-meld', candidate.seat);
     renderAll();
     publishHostActionState('claim-' + candidate.type + '-' + candidate.seat);
     scheduleDriveSeat('claim-' + candidate.type);
@@ -13712,6 +13821,7 @@ function loadUiSettings() {
     tw16SmartDiscardCache = { key: '', tileId: '', detail: null };
     tw16MonteCarloPoolCache = { key: '', pool: [] };
     tw16TingOptionsCache = null;
+    tw16ScheduleDangerPrewarm(option.type === 'addKong' ? 'add-kong' : 'concealed-kong', option.seat);
     if (openSelfWinWindow(option.seat, supplement, 'kong-supplement')) {
       renderAll();
       schedulePendingResolution('own-kong-selfwin');
@@ -13941,37 +14051,190 @@ function loadUiSettings() {
   }
 
 
+
+  function tw16DangerBufferNeighborTargets(code) {
+    if (!isSuitTile(code)) return [];
+    const suit = code[0];
+    const n = Number(code.slice(1));
+    const map = {
+      1: [2, 3, 4, 5],
+      2: [3, 4, 5, 6],
+      3: [2, 4, 5, 6, 7],
+      4: [3, 5, 6, 7, 8],
+      5: [1, 2, 3, 4, 6, 7, 8, 9],
+      6: [2, 3, 4, 5, 7, 8, 9],
+      7: [3, 4, 5, 6, 8],
+      8: [4, 5, 6, 7],
+      9: [5, 6, 7, 8]
+    };
+    return (map[n] || []).filter(function(x) { return x >= 1 && x <= 9; }).map(function(x) { return suit + x; });
+  }
+
+  function tw16DangerBufferBridgePressure(viewSeat, code, visibleFn) {
+    if (!isSuitTile(code)) return 0;
+    const suit = code[0];
+    const n = Number(code.slice(1));
+    const pairs = [];
+    if (n >= 2 && n <= 3) pairs.push([1, 4]);
+    if (n >= 3 && n <= 4) pairs.push([2, 5]);
+    if (n >= 4 && n <= 5) pairs.push([3, 6]);
+    if (n >= 5 && n <= 6) pairs.push([4, 7]);
+    if (n >= 6 && n <= 7) pairs.push([5, 8]);
+    if (n >= 7 && n <= 8) pairs.push([6, 9]);
+    const ownVisible = visibleFn ? visibleFn(code) : smartAiVisibleCount(code, viewSeat);
+    let score = 0;
+    pairs.forEach(function(pair) {
+      const aCode = suit + pair[0];
+      const bCode = suit + pair[1];
+      const a = visibleFn ? visibleFn(aCode) : smartAiVisibleCount(aCode, viewSeat);
+      const b = visibleFn ? visibleFn(bCode) : smartAiVisibleCount(bCode, viewSeat);
+      const total = a + b;
+      if (total >= 4 && ownVisible <= 1) score += 140;
+      else if (total >= 3 && ownVisible === 0) score += 80;
+    });
+    return score;
+  }
+
+  function tw16DangerBufferStrategicSignal(viewSeat, targetSeat, code, read, visibleFn) {
+    if (!code || !read) return 0;
+    if (read.discardSet && read.discardSet.has(code)) return -999999;
+    const visible = visibleFn ? visibleFn(code) : smartAiVisibleCount(code, viewSeat);
+    let score = 0;
+    if (isSuitTile(code)) {
+      const suit = code[0];
+      const n = Number(code.slice(1));
+      if (read.flushSuit === suit) {
+        score += 220;
+        if (n >= 2 && n <= 8) score += 70;
+        if (Number(read.flushStrength) >= 8) score += 70;
+      } else if (read.flushSuit && read.flushSuit !== suit) {
+        score -= 80;
+      }
+      if (Array.isArray(read.keptSuits) && read.keptSuits.indexOf(suit) >= 0 && visible <= 1) score += 60;
+      if (Array.isArray(read.abandonedSuits) && read.abandonedSuits.indexOf(suit) >= 0) score -= 150;
+      if (Array.isArray(read.releasedSuits) && read.releasedSuits.indexOf(suit) >= 0) score -= 120;
+      if (read.toitoiLike) {
+        if (visible <= 1) {
+          if (n === 2 || n === 5 || n === 8) score += 120;
+          else if (n >= 3 && n <= 7) score += 90;
+          else score += 40;
+        }
+        if (Number(read.tripletMelds) >= 3 && visible === 0) score += 60;
+      }
+      const recent = Array.isArray(read.recentHandDiscards) ? read.recentHandDiscards.slice(-4) : [];
+      for (let i = recent.length - 1, rank = 0; i >= 0 && rank < 4; i -= 1, rank += 1) {
+        const around = tw16DangerBufferNeighborTargets(recent[i]);
+        if (around.indexOf(code) >= 0) {
+          score += rank === 0 ? 170 : (rank === 1 ? 110 : (rank === 2 ? 70 : 40));
+        }
+      }
+      score += tw16DangerBufferBridgePressure(viewSeat, code, visibleFn);
+    } else if (isHonorCode(code)) {
+      if (read.honorRoute) score += visible <= 1 ? 240 : 110;
+      if (read.toitoiLike && visible <= 1) score += 140;
+      if (Number(read.honorMelds) >= 1 && visible <= 1) score += 80;
+    }
+    return score;
+  }
+
   function smartAiBuildOpponentReadTable(viewSeat) {
     const cacheKey = 'readTable:' + String(state.handId || 0) + ':' + String(state.lastActionId || 0) + ':' + String((state.discards || []).length) + ':' + String(viewSeat || '');
     if (tw16OpponentInferenceCache && tw16OpponentInferenceCache[cacheKey]) return tw16OpponentInferenceCache[cacheKey];
     const table = Object.create(null);
     SEATS.forEach(other => {
       if (other === viewSeat) return;
-      const discards = tw16SeatDiscardArrayCache ? (tw16SeatDiscardArrayCache[other] || []) :
-        (state.discards || []).filter(d => d && d.seat === other && d.tile && d.tile.code).map(d => d.tile.code);
+      const discardRecords = (state.discards || []).filter(function(d) {
+        return d && d.seat === other && d.tile && d.tile.code && !isFlower(d.tile.code);
+      });
+      const discards = tw16SeatDiscardArrayCache ? (tw16SeatDiscardArrayCache[other] || []) : discardRecords.map(function(d) { return d.tile.code; });
       const discardSet = tw16SeatDiscardSetCache && tw16SeatDiscardSetCache[other] ? tw16SeatDiscardSetCache[other] : new Set(discards);
       const melds = state.melds && state.melds[other] ? state.melds[other] : [];
       const meldCodes = [];
-      melds.forEach(m => (m || []).forEach(t => { if (t && t.code && !isFlower(t.code)) meldCodes.push(t.code); }));
+      melds.forEach(function(m) { (m || []).forEach(function(t) { if (t && t.code && !isFlower(t.code)) meldCodes.push(t.code); }); });
       const suitDiscardCount = { m:0, p:0, s:0 };
       const suitMeldCount = { m:0, p:0, s:0 };
-      discards.forEach(c => { if (c && isSuitPrefix(c[0])) suitDiscardCount[c[0]] += 1; });
-      meldCodes.forEach(c => { if (c && isSuitPrefix(c[0])) suitMeldCount[c[0]] += 1; });
+      discards.forEach(function(c) { if (c && isSuitPrefix(c[0])) suitDiscardCount[c[0]] += 1; });
+      meldCodes.forEach(function(c) { if (c && isSuitPrefix(c[0])) suitMeldCount[c[0]] += 1; });
+      const tripletMelds = melds.filter(function(m) { return tw16MeldIsTripletType(m); }).length;
+      const sequenceMelds = Math.max(0, melds.length - tripletMelds);
+      const honorMelds = melds.filter(function(m) {
+        return Array.isArray(m) && m.some(function(t) { return t && t.code && isHonorCode(t.code); });
+      }).length;
+      const recentHandDiscards = discardRecords.filter(function(d) { return !d.tsumogiri; }).slice(-4).map(function(d) { return d.tile.code; });
+      const recentDiscardCodes = discardRecords.slice(-6).map(function(d) { return d.tile.code; });
       const dangerSuit = { m:0, p:0, s:0 };
-      Object.keys(dangerSuit).forEach(suit => {
+      const keptSuits = [];
+      const abandonedSuits = [];
+      const releasedSuits = [];
+      let flushSuit = '';
+      let flushStrength = 0;
+      ['m', 'p', 's'].forEach(function(suit) {
         dangerSuit[suit] += suitMeldCount[suit] * 5;
-        const discardedOtherSuits = Object.keys(suitDiscardCount).filter(k => k !== suit).reduce((a,k)=>a+suitDiscardCount[k],0);
+        const discardedOtherSuits = ['m', 'p', 's'].filter(function(k) { return k !== suit; }).reduce(function(a, k) { return a + suitDiscardCount[k]; }, 0);
+        const meldOtherSuits = ['m', 'p', 's'].filter(function(k) { return k !== suit; }).reduce(function(a, k) { return a + suitMeldCount[k]; }, 0);
         if (discardedOtherSuits >= 5 && suitDiscardCount[suit] <= 1) dangerSuit[suit] += 7;
         if (suitMeldCount[suit] >= 3) dangerSuit[suit] += 8;
+        if (discardedOtherSuits >= 4 && suitDiscardCount[suit] <= 1) keptSuits.push(suit);
+        if (suitDiscardCount[suit] >= 4 && suitMeldCount[suit] === 0) abandonedSuits.push(suit);
+        const recentMiddleRelease = discardRecords.slice(-5).filter(function(d) {
+          const c = d && d.tile && d.tile.code;
+          return !!(!d.tsumogiri && c && isSuitTile(c) && c[0] === suit && /[456]/.test(String(c[1] || '')));
+        }).length;
+        if (recentMiddleRelease >= 2) releasedSuits.push(suit);
+        let strength = 0;
+        strength += suitMeldCount[suit] * 2.4;
+        strength += Math.max(0, discardedOtherSuits - suitDiscardCount[suit]) * 1.1;
+        strength += Math.max(0, 2 - meldOtherSuits) * 1.6;
+        if (suitDiscardCount[suit] <= 1) strength += 2.4;
+        if (recentMiddleRelease >= 2) strength -= 2.2;
+        if (strength > flushStrength) {
+          flushStrength = strength;
+          flushSuit = suit;
+        }
       });
+      if (flushStrength < 6) flushSuit = '';
+      const earlyHonors = discardRecords.slice(0, 6).filter(function(d) { return d && d.tile && isHonorCode(d.tile.code); }).length;
+      const toitoiLike = tripletMelds >= 2 && sequenceMelds === 0;
+      const honorRoute = honorMelds >= 2 || (honorMelds >= 1 && earlyHonors <= 1);
+      if (flushSuit) dangerSuit[flushSuit] += 10;
+      keptSuits.forEach(function(suit) { dangerSuit[suit] += 4; });
+      abandonedSuits.forEach(function(suit) { dangerSuit[suit] -= 3; });
+      releasedSuits.forEach(function(suit) { dangerSuit[suit] -= 4; });
+      Object.keys(dangerSuit).forEach(function(suit) { dangerSuit[suit] = Math.max(-6, dangerSuit[suit]); });
       const threat = (state.declaredTing && state.declaredTing[other] ? 16 : 0)
         + Math.min(14, discards.length * 0.9)
-        + Math.min(16, melds.length * 6);
-      table[other] = { discards, discardSet, melds, meldCodes, suitDiscardCount, suitMeldCount, dangerSuit, threat };
+        + Math.min(16, melds.length * 6)
+        + (toitoiLike ? 8 : 0)
+        + (flushSuit ? 10 : 0)
+        + (honorRoute ? 8 : 0);
+      table[other] = {
+        discards,
+        discardSet,
+        discardRecords,
+        recentDiscardCodes,
+        recentHandDiscards,
+        melds,
+        meldCodes,
+        suitDiscardCount,
+        suitMeldCount,
+        dangerSuit,
+        threat,
+        tripletMelds,
+        sequenceMelds,
+        honorMelds,
+        toitoiLike,
+        honorRoute,
+        flushSuit,
+        flushStrength,
+        keptSuits,
+        abandonedSuits,
+        releasedSuits
+      };
     });
     if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[cacheKey] = table;
     return table;
   }
+
 
   function smartAiOpponentWaitRisk(seat, code) {
     if (!code) return 0;
@@ -13990,11 +14253,6 @@ function loadUiSettings() {
       const read = table[other];
       const isTing = !!(state.declaredTing && state.declaredTing[other]);
       const hasSameDiscard = !!(read.discardSet && read.discardSet.has(code));
-      // tw16_genbutsu_absolute_safety_20260701: 對已宣告聽牌的座位而言，振聽是絕對規則——
-      // 對手已經打過的牌，永遠不可能用它胡牌，必須直接跳過（風險視為0），不能只是打折扣
-      // （舊版只扣18分，仍可能讓已經100%安全的牌算出不小的風險分）。未宣告聽牌的座位
-      // 不受此絕對規則約束（此系統下未宣告聽牌者本來就不構成胡牌威脅），維持原本的
-      // 次要傾向折扣即可。
       if (isTing && hasSameDiscard) return;
       let r = 0;
       r += read.threat * (isTing ? 1.32 : 0.62);
@@ -14005,40 +14263,35 @@ function loadUiSettings() {
         const suitDanger = (read.dangerSuit && read.dangerSuit[suit] || 0);
         r += suitDanger * (isTing ? 1.18 : 0.72);
         if (isTing) {
-          // tw16_ai_structural_shape_20260701: 已宣告聽牌的對手改用組合可行性分析取代
-          // 中張固定加分，未見張數分級能分辨「兩面還很寬」跟「只剩一張」，比固定數字
-          // 更貼近實際機率；兩面聽的筋牌排除已內建在 shapeFactor 計算中，不與下方
-          // sujiSafe2（僅用於未宣告聽牌分支）重複扣分。
           r += smartAiStructuralWaitShapeCount(seat, other, code) * 3.4;
           {
             const confidence = tw16ReadConfidenceFactor(read);
             let softSignal = tw16RecentTedashiAvoidanceBonus(other, code) * 0.09;
             softSignal += tw16TingDeclareAdjacencyDiscount(other, code) * 0.09;
+            softSignal += tw16DangerBufferStrategicSignal(seat, other, code, read, function(c) { return smartAiVisibleCount(c, seat); }) * 0.018;
             r += softSignal * confidence;
           }
         } else {
           if (n >= 4 && n <= 6) r += 8;
           else if (n >= 3 && n <= 7) r += 5;
           else if (n === 2 || n === 8) r += 2;
-          // suji（筋牌）：振聽規則下，對手棄過 N±3 代表「N 兩面聽」整組振聽，N 應較安全
           const sujiSafe2 = (n >= 4 && read.discardSet && read.discardSet.has(suit + (n - 3))) || (n <= 6 && read.discardSet && read.discardSet.has(suit + (n + 3)));
           if (sujiSafe2) r -= 10;
+          r += tw16DangerBufferStrategicSignal(seat, other, code, read, function(c) { return smartAiVisibleCount(c, seat); }) * 0.010;
         }
-        const nearDiscard2 = [-2,-1,1,2].some(d => read.discardSet && read.discardSet.has(suit + (n + d)));
+        const nearDiscard2 = [-2,-1,1,2].some(function(d) { return read.discardSet && read.discardSet.has(suit + (n + d)); });
         if (nearDiscard2) r -= isTing ? 18 : 9;
         else if ((read.discards || []).length >= 8) r += isTing ? 8 : 4;
-        const earlySameSuit = (read.discards || []).slice(0, 6).filter(c => c && c[0] === suit).length;
+        const earlySameSuit = (read.discards || []).slice(0, 6).filter(function(c) { return c && c[0] === suit; }).length;
         if (earlySameSuit >= 3) r -= 6;
         if (suitDanger >= 12 && earlySameSuit <= 1) r += isTing ? 10 : 5;
       } else if (isHonorCode(code)) {
-        // tw16_honor_baseline_boost_20260702: 字牌沒有型態加分（不像同分支中張聽牌時
-        // 會加 shapeFactor*3.4，最低也有 tankiWeight*3.4≈3.4），這裡補上對應量級的
-        // 結構性基礎分，避免字牌系統性輸給中張。
         r += 4;
         if (visible >= 3) r -= 30;
         else if (visible === 2) r -= 12;
         else r += isTing ? 16 : 7;
         if ((read.melds || []).length >= 2 && visible <= 1) r += isTing ? 10 : 5;
+        r += tw16DangerBufferStrategicSignal(seat, other, code, read, function(c) { return smartAiVisibleCount(c, seat); }) * (isTing ? 0.018 : 0.010);
       }
       if (visible >= 3) r *= 0.20;
       else if (visible === 2) r *= 0.48;
@@ -14052,6 +14305,7 @@ function loadUiSettings() {
   }
 
 
+
   function tw16PublicTingTaiCostEstimate(viewSeat, targetSeat, code) {
     let est = 1;
     try {
@@ -14062,18 +14316,23 @@ function loadUiSettings() {
       if (read) {
         const melds = read.melds || [];
         est += Math.min(2.5, melds.length * 0.45);
+        if (read.toitoiLike) est += 0.8;
+        if (read.honorRoute && isHonorCode(code) && visible <= 1) est += 1.1;
         if (isSuitTile(code)) {
           const suit = code[0];
           const suitDanger = (read.dangerSuit && read.dangerSuit[suit]) || 0;
           est += Math.min(2, suitDanger / 14);
-          const exposedSuits = new Set((read.meldCodes || []).filter(c => c && isSuitPrefix(c[0])).map(c => c[0]));
+          const exposedSuits = new Set((read.meldCodes || []).filter(function(c) { return c && isSuitPrefix(c[0]); }).map(function(c) { return c[0]; }));
           if (exposedSuits.size === 1 && exposedSuits.has(suit) && (read.meldCodes || []).length >= 3) est += 1;
+          if (read.flushSuit === suit) est += 1.2;
+          if (Array.isArray(read.abandonedSuits) && read.abandonedSuits.indexOf(suit) >= 0) est -= 0.4;
         }
         if (isHonorCode(code) && visible <= 1) est += 0.5;
       }
     } catch (_) {}
     return Math.max(1, Math.round(est * 10) / 10);
   }
+
 
   function smartAiSafetyDiscardScore(seat, code) {
     if (!code) return 0;
@@ -14504,7 +14763,7 @@ function loadUiSettings() {
       });
       const potential = smartAiWaitingPotential(seat, after, concealedSetsNeeded);
       // ① 加入安全牌意識：模擬中的最佳棄牌也要考慮對手聽牌危險
-      const safetyAdj = smartAiSafetyDiscardScore(seat, code) * 0.5;
+      const safetyAdj = smartAiSafetyDiscardScore(seat, code) * 0.08;
       const score = potential.value + smartAiTileRoughDiscardValue(code, counts[code] || 1, counts) + safetyAdj;
       if (!best || score > best.score) best = { code, score, potential };
     });
@@ -14577,6 +14836,7 @@ function loadUiSettings() {
     const afterCodes = (hand || []).filter(t => t && String(t.id) !== String(tileObj && tileObj.id)).map(t => t.code).filter(code => code && !isFlower(code));
     const potential = smartAiWaitingPotential(seat, afterCodes, needed);
     const code = tileObj && tileObj.code;
+    const offenseProfile = tw16OffenseBalanceDiscardProfile(seat, tileObj);
     let score = potential.value;
     if (potential && potential.shanten === 0) score += 100000 + Math.max(0, potential.waitRemaining || 0) * 1000 + Math.max(0, potential.liveRemaining || 0) * 120;
     else if (potential && potential.shanten < 0) score += 1000000;
@@ -14590,15 +14850,19 @@ function loadUiSettings() {
     score += smartAiDiscardStructureGuard(code, handCounts, potential, _beforeShape);
     score += smartAiDiscardShapeCoherenceScore(code, handCounts, potential, _beforeShape);
     if ((handCounts[code] || 0) >= 2 && potential && potential.shanten > 0) score -= 24;
+    if (offenseProfile.floating) score += 14;
+    else if (offenseProfile.keepPressure > 0) score -= offenseProfile.keepPressure * (_anyTing ? 6 : 8);
     score += smartAiCompletedMeldDiscardAdjust(code, handCounts, potential, _beforeShape);
-    score += smartAiSafetyDiscardScore(seat, code);
+    const safetyWeight = offenseProfile.floating ? 0.16 : (offenseProfile.hardKeep ? 0.04 : 0.10);
+    score += smartAiSafetyDiscardScore(seat, code) * safetyWeight;
     score += strategyLibraryDiscardBonus(seat, hand, tileObj);
     score += 0;
     if (index === (hand || []).length - 1) score += (_anyTing ? 1.5 : 2.5);
     // 台數潛力：⑤ 傳入已計算的 potential（含 shanten），避免重算 smartAiApproxShape
     const taiPot = smartAiTaiPotential(seat, afterCodes, potential);
     score += taiPot * (_anyTing ? 2.5 : 4.0);
-    score -= smartAiThreatAwareDiscardRisk(seat, code) * (_anyTing ? 1.5 : 0.6);
+    const threatRiskWeight = _anyTing ? (offenseProfile.hardKeep ? 0.12 : 0.22) : (offenseProfile.hardKeep ? 0.03 : 0.08);
+    score -= smartAiThreatAwareDiscardRisk(seat, code) * threatRiskWeight;
     // ③ 七對子路線：若棄此牌後七對向聽更優，額外加分；若拆了對子則懲罰
     if (potential.isSevenPairsPath || (potential.sevenPairsShanten !== undefined && potential.sevenPairsShanten <= 2)) {
       const handCodes2 = (hand || []).map(t => t && t.code).filter(c => c && !isFlower(c));
@@ -14621,7 +14885,8 @@ function loadUiSettings() {
     const endgame = smartAiEndgameLevel();
     score += smartAiEndgameDiscardAdjust(seat, code, endgame);
     // ③ 對手手型推算：根據對手棄牌模式增加危險牌懲罰
-    score -= smartAiOpponentHandInference(seat, code) * (_anyTing ? 1.4 : 0.5);
+    const inferenceWeight = _anyTing ? (offenseProfile.hardKeep ? 0.10 : 0.18) : (offenseProfile.hardKeep ? 0.02 : 0.05);
+    score -= smartAiOpponentHandInference(seat, code) * inferenceWeight;
     // ④ 放槍成本：接近流局時容忍放槍給籌碼較多的對手
     score += smartAiRonCostDiscardAdjust(seat, code, endgame);
     // ⑥ 輸分壓力：領先時更保守（中張懲罰），落後時可以冒險
@@ -15540,7 +15805,7 @@ function loadUiSettings() {
     // 排名運算才第一次認真執行，這就是卡頓真正發生的時間點。這裡不等下一輪自然
     // 排程（下次摸牌/出牌才會觸發），宣告的當下就立刻補一次，讓其他座位馬上能拿到
     // 現成的排名結果。
-    tw16MonteCarloPrewarmAllPairs(seat);
+    tw16ScheduleDangerPrewarm('ting-declare', seat);
     try {
       if (!state.tingWaitsSnapshot) state.tingWaitsSnapshot = {};
       const _snapOpt = options.find(opt => String(opt.discardId) === String(selectedId)) || options[0];
@@ -16119,8 +16384,9 @@ function loadUiSettings() {
   // 可胡/可聽牌優先、向聽數不可退步、不得在有孤張時拆對子/刻子/完成順子、不得走亂數。
   function tw16IsOpponentTopDangerCode(seat, code) {
     if (!code || isFlower(code)) return false;
-    // 統一使用 tw16TingExamplesFirstCodeSet，確保與禁打規則完全一致
-    return tw16TingExamplesFirstCodeSet(seat).has(code);
+    if (!tingDangerExamplesEnabled()) return false;
+    const danger = tw16DangerConfidenceForCode(seat, code);
+    return !!(danger && danger.confirmed);
   }
 
   function tw16SharedAiDiscardGate(seat, preferredId, mode) {
@@ -16190,6 +16456,7 @@ function loadUiSettings() {
       try { guard = smartAiDiscardStructureGuard(code, counts, after, before); } catch (e) { guard = 0; }
       let rough = 0;
       try { rough = smartAiTileRoughDiscardValue(code, counts[code] || 1, counts); } catch (e) { rough = 0; }
+      const offenseProfile = tw16OffenseBalanceDiscardProfile(seat, tile);
       let safety = 0;
       try { safety = smartAiSafetyDiscardScore(seat, code); } catch (e) { safety = 0; }
       let coherence = 0;
@@ -16213,8 +16480,10 @@ function loadUiSettings() {
         rough * 320 +
         coherence * 1180 +
         lonely * 760 +
-        safety * 12 -
-        risk * 1120 -
+        (offenseProfile.floating ? 32000 : 0) -
+        offenseProfile.keepPressure * 7800 +
+        safety * (offenseProfile.floating ? 2.0 : (offenseProfile.hardKeep ? 0.5 : 1.0)) -
+        risk * (offenseProfile.hardKeep ? 760 : 1120) -
         item.idx * .001;
       return { id: String(tile.id), code, idx: item.idx, score, after, guard, rough, coherence, lonely, risk };
     }
@@ -16355,7 +16624,7 @@ function loadUiSettings() {
     try { local += smartAiDiscardStructureGuard(tile.code, counts, after, before) * 800; } catch (_) {}
     try { local += smartAiTileRoughDiscardValue(tile.code, counts[tile.code] || 1, counts) * 260; } catch (_) {}
     try { local += smartAiDiscardShapeCoherenceScore(tile.code, counts, after, before) * 1100; } catch (_) {}
-    try { local += smartAiSafetyDiscardScore(seat, tile.code) * 10; } catch (_) {}
+    try { local += smartAiSafetyDiscardScore(seat, tile.code) * 1.5; } catch (_) {}
     const baseScore = ((before && before.shanten || 9) - (after.shanten || 9)) * 900000
       + (after.shanten === 0 ? 3500000 : 0)
       + (after.waitRemaining || 0) * 6500
@@ -16604,22 +16873,27 @@ function loadUiSettings() {
     if (!SEATS.includes(seat) || !aiDangerDiscardSeatHasTingThreat(seat)) return '';
     const candidateList = Array.isArray(candidates) ? candidates : tw16DiscardCandidateList(seat);
     let bestCode = '';
-    let bestRisk = 0;
+    let bestRisk = -1;
+    let bestConfidence = -1;
     const seen = new Set();
     candidateList.forEach(item => {
       const tile = item && item.tile;
       const code = tile && tile.code;
       if (!code || isFlower(code) || seen.has(code)) return;
       seen.add(code);
+      const danger = tw16DangerConfidenceForCode(seat, code);
+      if (!danger || !danger.confirmed) return;
       let risk = 0;
       try { risk = aiDangerDiscardScore(seat, code); } catch (e) { risk = 0; }
       if (!Number.isFinite(risk)) risk = 0;
-      if (risk > bestRisk || (risk === bestRisk && risk > 0 && bestCode && tileOrder(code) < tileOrder(bestCode))) {
+      const confidence = Number(danger && danger.confidence) || 0;
+      if (confidence > bestConfidence || (confidence === bestConfidence && (risk > bestRisk || (risk === bestRisk && bestCode && tileOrder(code) < tileOrder(bestCode))))) {
+        bestConfidence = confidence;
         bestRisk = risk;
         bestCode = code;
       }
     });
-    return bestRisk >= 18 ? bestCode : '';
+    return bestCode || '';
   }
 
   function tw16AutoplayAvoidMostDangerDiscardId(seat, preferredId, reason) {
@@ -16654,9 +16928,23 @@ function loadUiSettings() {
       try { risk = aiDangerDiscardScore(seat, tile.code); } catch (e) { risk = 0; }
       if (Number.isFinite(risk)) score -= risk * 2.5;
       score += (item.idx || 0) * 0.001;
-      if (!best || score > best.score) best = { id: tile.id, code: tile.code, score };
+      if (!best || score > best.score) best = { id: tile.id, code: tile.code, score, risk };
     });
     if (best && best.id) {
+      const preferredProfile = tw16OffenseBalanceDiscardProfile(seat, preferredItem.tile);
+      const safeProfile = tw16OffenseBalanceDiscardProfile(seat, { id: best.id, code: best.code });
+      const confirmedDanger = tw16DangerConfidenceForCode(seat, preferredItem.tile.code);
+      let preferredRisk = 0;
+      try { preferredRisk = aiDangerDiscardScore(seat, preferredItem.tile.code) || 0; } catch (e) { preferredRisk = 0; }
+      const safeGain = Math.max(0, preferredRisk - (Number(best.risk) || 0));
+      const shapeCost = tw16OffenseBalanceSwapCost(seat, preferredItem.tile, { id: best.id, code: best.code });
+      const preservePreferred = !(confirmedDanger && confirmedDanger.confirmed) && !preferredProfile.floating && (
+        (preferredProfile.hardKeep && preferredRisk < 70 && shapeCost >= 6)
+        || (preferredProfile.keepPressure >= 18 && preferredRisk < 54 && shapeCost > safeGain * 0.55)
+        || (shapeCost >= 12 && safeGain < 16)
+        || (preferredProfile.nearBest && safeProfile && !safeProfile.floating && shapeCost >= 8 && preferredRisk < 60)
+      );
+      if (preservePreferred) return preferredId || '';
       try { recordNetworkEvent('autoplay-avoid-most-danger', SEAT_NAME[seat] + '托管避開最危險牌', { seat, reason: reason || '', avoidedCode: mostDangerCode, from: preferredItem.tile.code, to: best.code }); } catch (e) {}
       return best.id;
     }
@@ -16827,7 +17115,7 @@ function loadUiSettings() {
       try { score += smartAiCompletedMeldDiscardAdjust(tile.code, countInHand, potential, before); } catch (_) {}
       try { score += smartAiTileRoughDiscardValue(tile.code, countInHand[tile.code] || 1, countInHand); } catch (_) {}
       try { score += smartAiDiscardShapeCoherenceScore(tile.code, countInHand, potential, before); } catch (_) {}
-      try { score += smartAiSafetyDiscardScore(seat, tile.code) * 0.55; } catch (_) {}
+      try { score += smartAiSafetyDiscardScore(seat, tile.code) * 0.08; } catch (_) {}
 
       // 固定 tie-break，不用亂數。
       score += idx * 0.001;
@@ -17237,7 +17525,7 @@ function chooseExactDiscardTile(seat) {
             // 實際判斷過的內容不一致（不是守門沒攔到，是這裡的記錄本身算錯）。
             const _savedVisCacheA = tw16VisibleCountCache;
             tw16VisibleCountCache = null;
-            const codes = tw16GateTopDangerCodes(fromSeat, winner, 5);
+            const codes = tw16GateTopDangerCodes(fromSeat, winner, 5, [winTile && winTile.code || '']);
             tw16VisibleCountCache = _savedVisCacheA;
             codes.forEach(function(code) {
               if (code) snap.push({ seat: winner, code: code, publicOnly: true });
@@ -17263,7 +17551,7 @@ function chooseExactDiscardTile(seat) {
           if (kind === 'ron' && fromSeat && typeof tw16GateTopDangerCodes === 'function') {
             const _savedVisCacheB = tw16VisibleCountCache;
             tw16VisibleCountCache = null;
-            const full = tw16GateTopDangerCodes(fromSeat, winner, 999);
+            const full = tw16GateTopDangerCodes(fromSeat, winner, 999, [winTile && winTile.code || '']);
             tw16VisibleCountCache = _savedVisCacheB;
             const idx = full.findIndex(function(code) { return code === winTile.code; });
             return { rank: idx >= 0 ? idx + 1 : null, total: full.length, publicOnly: true };
@@ -17836,10 +18124,20 @@ function chooseExactDiscardTile(seat) {
     const snap = Array.isArray(payload.tingDangerSnapshot)
       ? payload.tingDangerSnapshot.filter(s => s && s.code && s.seat === payload.winner)
       : [];
-    if (!snap.length) return '';
+    const actualWinCode = payload.kind === 'ron' && payload.tile && payload.tile.code ? payload.tile.code : '';
+    if (!snap.length && !actualWinCode) return '';
     const tilesHtml = snap.map(s => '<span class="settlement-ting-danger-item">' + tileMiniHtml(s.code, false) + '</span>').join('');
-    return '<div class="settlement-ting-danger-title">危險牌例</div>'
-      + '<div class="settlement-ting-danger-row"><span class="settlement-ting-danger-seat">' + escapeHtml(SEAT_NAME[payload.winner] || '') + '</span>' + tilesHtml + '</div>';
+    const rank = payload && payload.tingDangerRank ? payload.tingDangerRank : null;
+    const actualLabel = actualWinCode
+      ? ('實際放槍' + (rank ? (rank.rank ? '（預測第' + rank.rank + '/' + rank.total + '）' : '（未進預測清單）') : ''))
+      : '';
+    const actualHtml = actualWinCode
+      ? ('<div class="settlement-ting-danger-row"><span class="settlement-ting-danger-seat">' + escapeHtml(actualLabel) + '</span><span class="settlement-ting-danger-item">' + tileMiniHtml(actualWinCode, false) + '</span></div>')
+      : '';
+    const predictedHtml = snap.length
+      ? ('<div class="settlement-ting-danger-row"><span class="settlement-ting-danger-seat">' + escapeHtml(SEAT_NAME[payload.winner] || '') + '</span>' + tilesHtml + '</div>')
+      : '';
+    return '<div class="settlement-ting-danger-title">危險牌例</div>' + actualHtml + predictedHtml;
   }
 
   function ensureSettlementTingDangerExamplesBox() {
@@ -19001,6 +19299,7 @@ function chooseExactDiscardTile(seat) {
       + '<button class="btn" data-menu="submenu-save">儲存牌局</button>'
       + '<button class="btn" data-menu="submenu-view">各家視角</button>'
       + '<button class="btn" data-menu="rules">規則說明</button>'
+      + '<button class="btn" data-menu="danger-buffer">危險牌緩衝</button>'
       + '<button class="btn" data-menu="voice-events-toggle">語音播報：' + (state.uiSettings.voiceEventEnabled ? '開' : '關') + '</button>'
       + '<button class="btn" data-menu="perspective3d-toggle">3D立體視角：' + (state.uiSettings.perspective3d ? '開' : '關') + '</button>'
       + '<button class="btn" data-menu="submenu-tiles">牌圖管理</button>'
@@ -19142,6 +19441,7 @@ function chooseExactDiscardTile(seat) {
     if (action === 'stall-monitor') { showStallMonitorPanel(); return; }
     if (action === 'center-panel') { resetUtilityPanelPosition(); openMainMenu(); return; }
     if (action === 'rules') { showRulesPanel(); return; }
+    if (action === 'danger-buffer') { showDangerBufferGuide(); return; }
     if (action === 'integrity') { showIntegrityReport(); return; }
     if (action === 'export-json') { showExportJsonPanel(); return; }
     if (action === 'import-json') { showImportJsonPanel(); return; }
@@ -19781,6 +20081,97 @@ function showWinHistory() {
     const text = buildTurnFlowReportText();
     openUtilityPanel('流程巡檢', '<div class="turnFlowBox"><div class="turnFlowCard"><b>目前牌局流程判定</b><br>' + escapeHtml(text).replace(/\n/g, '<br>') + '</div><div class="turnFlowCard">用途：檢查目前到底是應摸牌、應出牌、等待 pending，或是否有牌數異常。這是 clean 版單一流程檢查，不會改動牌局。</div></div>');
   }
+
+  function showDangerBufferGuide() {
+    const html = `
+      <div class="rulesList">
+        <h3>危險牌緩衝的核心思路</h3>
+        <ul>
+          <li>以台灣十六張來看，核心就是從「役種、台數需求、吃碰 pattern、出牌門數」來縮小對手可能的聽牌範圍，再用數牌規律和後段捨牌去推具體哪幾張。</li>
+          <li>重點不是百分之百猜中，而是把最危險的幾張先排除，讓你每一巡都盡量往相對安全的門去丟。</li>
+          <li>可把這套心法想成：先分類，再對每張候選牌打危險分數。</li>
+        </ul>
+
+        <h3>一、先鎖定他在走哪一種牌型／役種</h3>
+        <ul>
+          <li>副露很多刻子、幾乎不吃順，通常偏向對對胡或刻子台路線；這種牌型常在補最後一刻或找將眼。</li>
+          <li>副露集中在某一花色，另外兩門幾乎不碰，通常要優先提防清一色／混一色；該門中後段的中張尤其危險。</li>
+          <li>若一開始就積極碰風牌、箭牌，常是字牌台數路線；此時未出的字牌比一般數牌更值得提防。</li>
+          <li>先分清他大概是在追高台一色、對對胡，還是平胡混搭，後面的危險牌判讀會差很多。</li>
+        </ul>
+
+        <h3>二、利用門數與捨牌模式，標記危險門與安門</h3>
+        <ul>
+          <li>整局幾乎不打某一門，尤其到中後盤還不打，那一門就先當主攻門，提高警戒。</li>
+          <li>若他自己已大量打出某一門、又沒有對應副露，代表那門大多已經放棄，可視為相對安門。</li>
+          <li>中後盤突然連續吐出某門的中心張，例如 5、6 筒，常代表那門牌型已經固定完成；被吐出的門安全度上升，尚未吐出的門更值得防。</li>
+          <li>場上某門大量可見、甚至形成壁牌時，該門相關等待會被封死一部分，危險度可以下修。</li>
+        </ul>
+
+        <h3>三、平胡五搭一對：從最後幾張捨牌倒推</h3>
+        <ul>
+          <li>很多人從正常拆搭子，突然轉成摸什麼打什麼的那一刻，就是牌已經接近完成，只差最後等待張。</li>
+          <li>因此「摸切前的最後幾張手出牌」很有情報價值：那幾張通常就是被拆掉的多餘搭子附近。</li>
+          <li>可用簡化鄰張心法：打 1，提防 2/3/4/5；打 2，提防 3/4/5/6；打 3，提防 2/4/5/6/7；打 4，提防 3/5/6/7/8；打 5，提防 1/2/3/4/6/7/8/9。</li>
+          <li>這不是死公式，但在中後盤拿來當危險鄰居集合，實戰命中率通常遠高於隨機猜。</li>
+        </ul>
+
+        <h3>四、留意 147／258／369 連動風險</h3>
+        <ul>
+          <li>若同門的 1、4 或 4、7 已經出很多，中間的 2、3 或 5、6 卻遲遲不見，常要小心嵌張、兩面或多面聽仍然成立。</li>
+          <li>也就是說，看到外圍數字出現，不代表中間牌安全；反而可能是在提示某些中張等待還活著。</li>
+          <li>這類規律特別適合在你沒有現物、必須在幾張中張之間做選擇時使用。</li>
+        </ul>
+
+        <h3>五、對對胡、一色牌、字牌路線的特殊判法</h3>
+        <ul>
+          <li><b>對對胡：</b>早中盤就大量碰刻子、很少吃順子。這時未成刻的中張、對牌、將眼候選通常更危險。</li>
+          <li><b>清一色／混一色：</b>副露集中單一門、該門幾乎不打。該門 2~8 的未出牌要顯著提高危險分數。</li>
+          <li><b>字牌路線：</b>風牌、三元牌碰得積極時，未出的字牌不能當作普通孤張看，危險度要額外上修。</li>
+          <li>這些牌型的共通點是：危險主要集中在少數門；避開主攻門，生存率通常會明顯上升。</li>
+        </ul>
+
+        <h3>六、把台數需求一起納入判斷</h3>
+        <ul>
+          <li>如果對手看起來台數已經夠，常會選較穩的平胡路線；這時可多參考鄰張與後段捨牌。</li>
+          <li>如果對手明顯還缺台，卻硬留風牌、三元牌或死守單一花色，通常表示他在追高台，這時高台牌型相關的候選牌要上修風險。</li>
+          <li>換句話說，危險牌判斷不只看「像不像在聽」，還要看「他現在有沒有理由硬追高台」。</li>
+        </ul>
+
+        <h3>七、實戰上的緩衝順序</h3>
+        <ul>
+          <li>先丟現物與絕對安牌。</li>
+          <li>沒有現物時，優先丟對手自己大量打過的門、外面已見多張的牌、或壁牌附近相對安全的牌。</li>
+          <li>若一定要進危險門，先避開主攻門中張、最近手出牌的危險鄰張、以及危險牌例最前排的牌。</li>
+          <li>在兩張都不漂亮時，優先丟外面已經見得比較多的那一張，至少把可胡張數壓低。</li>
+        </ul>
+
+        <h3>簡易演算法</h3>
+        <div class="turnFlowBox">
+          <div class="turnFlowCard"><b>Step 1</b><br>判斷對手是否已接近聽牌：摸切節奏、副露數量、出牌保守度。</div>
+          <div class="turnFlowCard"><b>Step 2</b><br>按門數分類：主攻門加分、棄門減分。</div>
+          <div class="turnFlowCard"><b>Step 3</b><br>判斷役種傾向：對對胡、一色、字牌、平胡。</div>
+          <div class="turnFlowCard"><b>Step 4</b><br>套用鄰張規律、147/258/369 連動、後段捨牌與壁牌。</div>
+          <div class="turnFlowCard"><b>Step 5</b><br>優先丟危險分數最低的牌；沒有完全安牌時，找相對最不痛的那張。</div>
+        </div>
+
+        <h3>速記口訣</h3>
+        <div class="turnFlowBox">
+          <div class="turnFlowCard"><b>看花色</b><br>哪一門幾乎不打，那一門先當主攻門。</div>
+          <div class="turnFlowCard"><b>看副露</b><br>碰多想對對，單門副露想一色，字牌碰多防字路。</div>
+          <div class="turnFlowCard"><b>看節奏</b><br>正常拆牌 → 突然摸切，摸切前幾張最有情報。</div>
+          <div class="turnFlowCard"><b>先安後攻</b><br>現物、壁牌、已見多張優先；不得已再踩危險門。</div>
+        </div>
+
+        <h3>補充提醒</h3>
+        <ul>
+          <li>以上都是提高命中率的公開資訊推理，不是絕對規則；重點在於降低最壞情況，不是追求神準讀牌。</li>
+          <li>如果你常和固定牌友對局，記住每個人偏好的役種與副露習慣，危險牌緩衝會比通用心法更準。</li>
+        </ul>
+      </div>`;
+    openUtilityPanel('危險牌緩衝', html);
+  }
+
 
   function showRulesPanel() {
     const tm = Number(state.tableMode) || 4;
@@ -23750,11 +24141,16 @@ function showIntegrityReport(precomputed) {
         w += dangerSuit * 0.6;
         w -= thisSuitDiscard * 0.12;
         w += thisSuitMeld * 0.35;
+        if (read.flushSuit === suit) w += 2.2 + Math.min(2.2, Math.max(0, Number(read.flushStrength || 0) - 5) * 0.18);
+        if (Array.isArray(read.keptSuits) && read.keptSuits.indexOf(suit) >= 0) w += 0.55;
+        if (Array.isArray(read.abandonedSuits) && read.abandonedSuits.indexOf(suit) >= 0) w *= 0.48;
+        if (Array.isArray(read.releasedSuits) && read.releasedSuits.indexOf(suit) >= 0) w *= 0.62;
         weights[suit] = Math.max(0.15, w);
       });
     } catch (_) {}
     return weights;
   }
+
   function tw16MonteCarloWeightedPick(codes, weightFn) {
     const weights = codes.map(weightFn);
     const total = weights.reduce(function(a, b) { return a + b; }, 0);
@@ -23922,6 +24318,7 @@ function showIntegrityReport(precomputed) {
       }
       softSignal += tw16RecentTedashiAvoidanceBonus(targetSeat, code);
       softSignal += tw16TingDeclareAdjacencyDiscount(targetSeat, code);
+      softSignal += tw16DangerBufferStrategicSignal(seat, targetSeat, code, read, function(c) { return smartAiVisibleCount(c, seat); });
       return softSignal * confidence;
     }
     if (isHonorCode(code)) {
@@ -23932,10 +24329,12 @@ function showIntegrityReport(precomputed) {
       if (honorMelds >= 3 && visible === 0) softSignal += 280;
       else if (honorMelds >= 2) softSignal += 150;
       else if (honorMelds >= 1) softSignal += 60;
+      softSignal += tw16DangerBufferStrategicSignal(seat, targetSeat, code, read, function(c) { return smartAiVisibleCount(c, seat); });
       return softSignal * confidence;
     }
     return 0;
   }
+
   function tw16MonteCarloDangerEntries(seat, targetSeat, sampleCount, limit, candidateCodes) {
     if (!SEATS.includes(seat) || !SEATS.includes(targetSeat) || seat === targetSeat) return [];
     // tw16_prewarm_from_hand_start_20260704: 移除「還沒宣告聽牌就直接回傳空清單」的門檻。
@@ -23981,7 +24380,9 @@ function showIntegrityReport(precomputed) {
       if (publicLeft <= 0) return;
       const mcFreq = (waitFreq[code] || 0) / validSamples;
       const behavior = tw16MonteCarloBehaviorOverlay(seat, targetSeat, code, read, visible);
+      const structure = smartAiStructuralWaitShapeCount(seat, targetSeat, code);
       let score = mcFreq * 10000;
+      score += structure * 260;
       score += publicLeft * 18;
       if (read) score += (Number(read.threat) || 0) * 8;
       score += behavior;
@@ -24014,11 +24415,18 @@ function showIntegrityReport(precomputed) {
   function tw16MonteCarloDangerCodes(seat, targetSeat, sampleCount, limit) {
     return tw16MonteCarloDangerEntries(seat, targetSeat, sampleCount, limit).map(function(x) { return x.code; });
   }
-  function tw16GateTopDangerEntries(seat, targetSeat, limit) {
-    const topN = Math.max(1, Number(limit) || 5);
-    const ownCandidateCodes = Array.from(new Set((state.hands[seat] || []).map(function(t) { return t && t.code; }).filter(function(c) {
+  function tw16GateCandidateCodesFromSeatHand(seat, extraCandidateCodes) {
+    const list = (state.hands[seat] || []).map(function(t) { return t && t.code; });
+    if (Array.isArray(extraCandidateCodes) && extraCandidateCodes.length) {
+      extraCandidateCodes.forEach(function(code) { list.push(code); });
+    }
+    return Array.from(new Set(list.filter(function(c) {
       return c && !isFlower(c);
     })));
+  }
+  function tw16GateTopDangerEntries(seat, targetSeat, limit, extraCandidateCodes) {
+    const topN = Math.max(1, Number(limit) || 5);
+    const ownCandidateCodes = tw16GateCandidateCodesFromSeatHand(seat, extraCandidateCodes);
     let entries = [];
     try {
       entries = tw16MonteCarloDangerEntries(seat, targetSeat, tw16PrewarmTargetSampleCount(), topN, ownCandidateCodes);
@@ -24031,8 +24439,8 @@ function showIntegrityReport(precomputed) {
       return entry;
     });
   }
-  function tw16GateTopDangerCodes(seat, targetSeat, limit) {
-    return tw16GateTopDangerEntries(seat, targetSeat, limit).map(function(entry) { return entry.code; });
+  function tw16GateTopDangerCodes(seat, targetSeat, limit, extraCandidateCodes) {
+    return tw16GateTopDangerEntries(seat, targetSeat, limit, extraCandidateCodes).map(function(entry) { return entry.code; });
   }
 
   // tw16_remove_legacy_formula_20260703: smartAiSeatTopDangerCodes（舊版手調公式AI視角
