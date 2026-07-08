@@ -175,6 +175,9 @@
 /* Clean Core 013: settings panel, themes and diagnostics. */
 .settingsGrid{display:grid;gap:10px;text-align:left;margin-top:8px}
 .settingsRow{display:grid;grid-template-columns:118px minmax(0,1fr) 54px;gap:8px;align-items:center;font-size:13px;font-weight:900;color:#e5e7eb}
+.settingsRowInlineExtra{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.settingsRowInlineExtra>label{display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;font-size:12px;color:#cbd5e1;font-weight:800}
+.settingsRowInlineExtra input[type="checkbox"]{flex:none;margin:0}
 .settingsRow input[type="range"]{width:100%}.settingsRow select,.settingsRow input[type="number"]{width:100%;border:0;border-radius:10px;padding:8px;background:rgba(2,6,23,.72);color:#f8fafc;font-weight:900}
 .diagnosticBox{text-align:left;display:grid;gap:8px;font-size:13px;line-height:1.5}.diagnosticBox code{color:#fde68a}.diagnosticGood{color:#86efac;font-weight:1000}.diagnosticWarn{color:#fca5a5;font-weight:1000}
 .app.theme-blue{background:linear-gradient(180deg,#1f68aa 0%,#1f3d7b 44%,#10254f 100%)}
@@ -2991,6 +2994,9 @@ html body .app.perspective3d .discardSeat .tile::before {
 #tw16HistClose{border:0;border-radius:8px;background:rgba(255,255,255,.08);color:#94a3b8;font-size:16px;width:28px;height:28px;cursor:pointer;display:grid;place-items:center;flex-shrink:0;}
 #tw16HistBody{flex:1 1 auto;overflow-y:auto;padding:6px 10px 16px;}
 #tw16HistBody .historyList{max-height:none;}
+#tw16HistStats{margin:2px 2px 10px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);font-size:11.5px;color:#cbd5e1;line-height:1.6;}
+#tw16HistStats b{color:#fde68a;font-size:13px;}
+#tw16HistStats .tw16HistStatsMuted{color:#64748b;}
 #tw16HistTools{display:flex;gap:4px;align-items:center;flex:0 0 auto;}
 #tw16HistTools button{border:1px solid rgba(255,255,255,.18);border-radius:7px;background:rgba(255,255,255,.08);color:#e2e8f0;font-size:11px;font-weight:1000;line-height:1;padding:6px 7px;cursor:pointer;white-space:nowrap;}
 #tw16HistTools button.red{border-color:rgba(239,68,68,.55);color:#fecaca;background:rgba(127,29,29,.36);}
@@ -4068,7 +4074,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     lastSettlement: null,
     continuousRun: { enabled: false, remaining: 0, delayMs: 700 },
     battle: { enabled: false, startedAt: 0, handsAtStart: 0, redWins: 0, greenWins: 0, drawHands: 0, lastHandId: 0, seats: { east: { team: 'red', aiMode: 'exact' }, south: { team: 'green', aiMode: 'greedy' }, west: { team: 'red', aiMode: 'exact' }, north: { team: 'green', aiMode: 'greedy' } } },
-    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: false, tingAssistEnabled: true, tingDangerExamplesEnabled: false, aiSuggestionEnabled: true, handShapePreviewEnabled: false, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: 100, scoreTaiChip: 10, aiMode: 'exact', tingDeclarationMode: 'delay', aiMonteCarloLevel2: true, aiMonteCarloFull: false },
+    uiSettings: { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: false, tingAssistEnabled: true, tingDangerExamplesEnabled: false, tingDangerGateEnabled: false, aiSuggestionEnabled: true, handShapePreviewEnabled: false, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: 100, scoreTaiChip: 10, aiMode: 'exact', tingDeclarationMode: 'delay', aiMonteCarloLevel2: true, aiMonteCarloFull: false },
     handVisualColors: null,
     locked: false,
     lockedAt: 0,
@@ -7253,6 +7259,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
             _gl.turnHandFrameEnabled = state.uiSettings.turnHandFrameEnabled;
             _gl.tingAssistEnabled = state.uiSettings.tingAssistEnabled;
             _gl.tingDangerExamplesEnabled = state.uiSettings.tingDangerExamplesEnabled;
+            _gl.tingDangerGateEnabled = state.uiSettings.tingDangerGateEnabled;
             _gl.aiMode = state.uiSettings.aiMode;
             _gl.aiMonteCarloLevel2 = state.uiSettings.aiMonteCarloLevel2;
             _gl.aiMonteCarloFull = state.uiSettings.aiMonteCarloFull;
@@ -7834,6 +7841,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     state.uiSettings.turnHandFrameEnabled = state.uiSettings.turnHandFrameEnabled === true;
     state.uiSettings.tingAssistEnabled = state.uiSettings.tingAssistEnabled !== false;
     state.uiSettings.tingDangerExamplesEnabled = state.uiSettings.tingDangerExamplesEnabled === true;
+    state.uiSettings.tingDangerGateEnabled = state.uiSettings.tingDangerGateEnabled === true;
     state.uiSettings.aiSuggestionEnabled = state.uiSettings.aiSuggestionEnabled !== false;
     state.uiSettings.handShapePreviewEnabled = state.uiSettings.handShapePreviewEnabled === true;
     state.uiSettings.miniDashboardEnabled = state.uiSettings.miniDashboardEnabled !== false;
@@ -7853,7 +7861,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
 
 
   function defaultUiSettingsObject() {
-    return { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: false, tingAssistEnabled: true, tingDangerExamplesEnabled: false, aiSuggestionEnabled: true, handShapePreviewEnabled: false, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: GAME_RULES.scoreBaseChip, scoreTaiChip: GAME_RULES.scoreTaiChip, aiMode: 'exact', tingDeclarationMode: 'delay', aiMonteCarloLevel2: true, aiMonteCarloFull: false };
+    return { tileScalePct: 110, tableScalePct: 100, animSpeedPct: 400, tileRadiusPct: 18, theme: 'blue', layoutMode: 'clean', wallVisible: true, screenWakeLockEnabled: false, turnHandFrameEnabled: false, tingAssistEnabled: true, tingDangerExamplesEnabled: false, tingDangerGateEnabled: false, aiSuggestionEnabled: true, handShapePreviewEnabled: false, miniDashboardEnabled: true, avatarEnabled: false, voiceEventEnabled: false, perspective3d: false, scoreBaseChip: GAME_RULES.scoreBaseChip, scoreTaiChip: GAME_RULES.scoreTaiChip, aiMode: 'exact', tingDeclarationMode: 'delay', aiMonteCarloLevel2: true, aiMonteCarloFull: false };
   }
 
   function applyGuestJoinDefaultSettings(reason) {
@@ -7863,13 +7871,13 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     try {
       const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || 'null');
       const _guestDefaults = defaultUiSettingsObject();
-      ['wallVisible', 'screenWakeLockEnabled', 'turnHandFrameEnabled', 'tingAssistEnabled', 'tingDangerExamplesEnabled', 'aiSuggestionEnabled', 'aiMode', 'tingDeclarationMode', 'aiMonteCarloLevel2', 'aiMonteCarloFull', 'miniDashboardEnabled', 'avatarEnabled'].forEach(function(_k) {
+      ['wallVisible', 'screenWakeLockEnabled', 'turnHandFrameEnabled', 'tingAssistEnabled', 'tingDangerExamplesEnabled', 'tingDangerGateEnabled', 'aiSuggestionEnabled', 'aiMode', 'tingDeclarationMode', 'aiMonteCarloLevel2', 'aiMonteCarloFull', 'miniDashboardEnabled', 'avatarEnabled'].forEach(function(_k) {
         const _next = (_gl && _gl[_k] !== undefined) ? _gl[_k] : _guestDefaults[_k];
         if (state.uiSettings[_k] !== _next) { state.uiSettings[_k] = _next; changed = true; }
       });
     } catch(e) {
       const _guestDefaults = defaultUiSettingsObject();
-      ['wallVisible', 'screenWakeLockEnabled', 'turnHandFrameEnabled', 'tingAssistEnabled', 'tingDangerExamplesEnabled', 'aiSuggestionEnabled', 'aiMode', 'tingDeclarationMode', 'aiMonteCarloLevel2', 'aiMonteCarloFull', 'miniDashboardEnabled', 'avatarEnabled'].forEach(function(_k) {
+      ['wallVisible', 'screenWakeLockEnabled', 'turnHandFrameEnabled', 'tingAssistEnabled', 'tingDangerExamplesEnabled', 'tingDangerGateEnabled', 'aiSuggestionEnabled', 'aiMode', 'tingDeclarationMode', 'aiMonteCarloLevel2', 'aiMonteCarloFull', 'miniDashboardEnabled', 'avatarEnabled'].forEach(function(_k) {
         if (state.uiSettings[_k] !== _guestDefaults[_k]) { state.uiSettings[_k] = _guestDefaults[_k]; changed = true; }
       });
     }
@@ -10182,7 +10190,7 @@ function loadUiSettings() {
     Object.keys(incoming).forEach(key => {
       state[key] = incoming[key];
     });
-    if (isOnlineGuest()) try { const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || 'null'); if (_gl && state.uiSettings) ['wallVisible','screenWakeLockEnabled','turnHandFrameEnabled','tingAssistEnabled','tingDangerExamplesEnabled','aiSuggestionEnabled','aiMode','tingDeclarationMode','aiMonteCarloLevel2','aiMonteCarloFull','miniDashboardEnabled','avatarEnabled'].forEach(k => { if (_gl[k] !== undefined) state.uiSettings[k] = _gl[k]; }); } catch(e) {}
+    if (isOnlineGuest()) try { const _gl = JSON.parse(localStorage.getItem('tw16GuestUiLocal') || 'null'); if (_gl && state.uiSettings) ['wallVisible','screenWakeLockEnabled','turnHandFrameEnabled','tingAssistEnabled','tingDangerExamplesEnabled','tingDangerGateEnabled','aiSuggestionEnabled','aiMode','tingDeclarationMode','aiMonteCarloLevel2','aiMonteCarloFull','miniDashboardEnabled','avatarEnabled'].forEach(k => { if (_gl[k] !== undefined) state.uiSettings[k] = _gl[k]; }); } catch(e) {}
     if (isOnlineGuest() && net.pendingLocalDiscard) {
       const pendingLocalDiscard = net.pendingLocalDiscard;
       const pendingSeat = pendingLocalDiscard.seat;
@@ -12396,12 +12404,17 @@ function loadUiSettings() {
   }
 
   function submitDiscard(seat, tileId, source, options = {}) {
-    if (isOnlineGuest() && source !== 'remote' && seat === net.assignedSeat) {
+    if (isOnlineGuest() && source !== 'remote' && seat === net.assignedSeat && !state.seatAutoPlay[seat]) {
       // tw16_guest_local_optimistic_discard_20260707:
       // 只改「點擊者自己」的視覺反應：來賓本地先把被點的牌拿掉，讓點擊立即有回饋；
       // 房主仍保有原本完整的合法性檢查與權威狀態。若房主拒絕，就把來賓畫面回復；
       // 若房主之後送來的 snapshot 還沒反映這次棄牌，來賓端會把這個 optimistic 狀態
       // 疊回 snapshot 上，避免被中途 pulse/sync 快照「彈回舊手牌」造成二次閃爍。
+      // tw16_guest_local_discard_manual_only_20260708: 這個「先本地出牌再等房主確認」
+      // 的樂觀更新只能用在來賓「手動」點擊出牌。若該來賓座位目前正被電腦托管
+      // （state.seatAutoPlay[seat] 為 true，不論是來賓自己開的托管，還是房主在來賓
+      // 逾時後代管），一律回到原本「完全依房主快照出牌」的舊行為，否則托管觸發的
+      // 出牌一旦被本地樂觀狀態卡住（例如送出失敗或房主拒絕未正確回滾），就會永遠卡死。
       if (hasPendingGuestLocalDiscard(seat)) return false;
       const optimisticStarted = startGuestLocalDiscardPending(seat, tileId, source);
       const sent = publishNetworkIntent({ action: 'discard', tileId });
@@ -14331,6 +14344,28 @@ function loadUiSettings() {
       const earlyHonors = discardRecords.slice(0, 6).filter(function(d) { return d && d.tile && isHonorCode(d.tile.code); }).length;
       const toitoiLike = tripletMelds >= 2 && sequenceMelds === 0;
       const honorRoute = honorMelds >= 2 || (honorMelds >= 1 && earlyHonors <= 1);
+      // tw16_tanyao_route_prior_20260709: 補上役種先驗裡缺的一塊——斷么九。判斷原則跟
+      // toitoiLike／flushSuit／honorRoute 同一套邏輯：全部只看公開資訊（副露內容、棄牌
+      // 花色與大小分布），不猜隱藏手牌內容。
+      // 副露只要有任何一組含么九字牌，斷么九直接不成立（規則上斷了就不能碰／吃么九字牌）。
+      const meldHasTerminalOrHonor = melds.some(function(m) {
+        return Array.isArray(m) && m.some(function(t) {
+          const c = t && t.code;
+          return !!(c && (isHonorCode(c) || /^[mps][19]$/.test(c)));
+        });
+      });
+      const terminalHonorDiscardCount = discardRecords.filter(function(d) {
+        const c = d && d.tile && d.tile.code;
+        return !!(c && (isHonorCode(c) || /^[mps][19]$/.test(c)));
+      }).length;
+      // 早期（前6巡內）就手切么九字牌，是斷么九路線最典型的公開訊號——早早清空用不到
+      // 的么九字牌，代表牌型往「全是2~8」的方向收。棄牌數太少時樣本不足，先不下判斷。
+      const earlyTerminalHonorTedashi = discardRecords.slice(0, 6).filter(function(d) {
+        const c = d && d.tile && d.tile.code;
+        return !!(!d.tsumogiri && c && (isHonorCode(c) || /^[mps][19]$/.test(c)));
+      }).length;
+      const tanyaoLike = !meldHasTerminalOrHonor && discards.length >= 4 &&
+        (terminalHonorDiscardCount >= Math.max(3, Math.ceil(discards.length * 0.4)) || earlyTerminalHonorTedashi >= 2);
       if (flushSuit) dangerSuit[flushSuit] += 10;
       keptSuits.forEach(function(suit) { dangerSuit[suit] += 4; });
       abandonedSuits.forEach(function(suit) { dangerSuit[suit] -= 3; });
@@ -14359,6 +14394,7 @@ function loadUiSettings() {
         honorMelds,
         toitoiLike,
         honorRoute,
+        tanyaoLike,
         flushSuit,
         flushStrength,
         keptSuits,
@@ -16914,17 +16950,27 @@ function loadUiSettings() {
       const idx = entries.findIndex(function(e) { return e && e.code === code; });
       if (idx < 0) return;
       const entry = entries[idx];
-      // 信心分數主體：蒙地卡羅出現頻率本身就是「這個牌型有多少比例的合理猜測需要這張牌」，
-      // 是最直接的信心指標。
-      let confidence = Math.max(0, Math.min(1, Number(entry.mcFreq) || 0));
-      // 分數斷層加成：第一名遠超第二名，代表模型雖然頻率不見得很高，但排序上很有把握。
-      if (idx === 0 && entries.length >= 2) {
+      // tw16_exact_confidence_20260708: 信心分數改成以「精確分數（結構可行性＋公開行為
+      // 訊號，兩者都不需要抽樣）的領先幅度」為主體依據——這張牌的分數比第二名領先越多，
+      // 代表根據可見資訊就能明確分辨「這張特別危險」，不需要等蒙地卡羅樣本池湊夠。
+      // 蒙地卡羅頻率（entry.mcFreq）只在樣本池已經湊夠（entry.validSamples >= 24）且
+      // 頻率本身夠高時，才拿來墊高信心分數，是次要佐證，不是唯一依據——這樣即使
+      // 樣本池還沒暖機完成（例如牌局剛開始），精確分數本身照樣能給出有意義的信心。
+      let confidence = 0;
+      if (entries.length === 1) {
+        confidence = 0.9; // 候選只剩這一張，公開資訊已經排除其他所有可能
+      } else if (idx === 0) {
         const second = entries[1];
-        const secondScore = Number(second.score) || 0;
+        const secondScore = Number(second && second.score) || 0;
         const thisScore = Number(entry.score) || 0;
-        if (secondScore > 0 && thisScore / secondScore >= 1.8) confidence = Math.max(confidence, 0.55);
+        if (secondScore <= 0) confidence = 0.85;
+        else {
+          const ratio = thisScore / secondScore;
+          confidence = Math.max(0, Math.min(0.9, (ratio - 1) * 0.6));
+        }
       }
-      // 完全確認：候選清單只有這一張，或蒙地卡羅頻率極高——這種情況幾乎可以肯定放槍。
+      if (entry.validSamples >= 24 && entry.mcFreq >= 0.5) confidence = Math.max(confidence, 0.55);
+      // 完全確認：候選清單只有這一張，或信心分數本身已經很高——這種情況幾乎可以肯定放槍。
       const confirmed = entries.length === 1 || confidence >= 0.85;
       if (confirmed) confidence = Math.max(confidence, 0.92);
       if (!best || confidence > best.confidence) best = { confidence, confirmed, seat: other, entry };
@@ -16970,9 +17016,15 @@ function loadUiSettings() {
     // 除非是「已確認會放槍」的牌（候選清單只有這一張，或蒙地卡羅頻率極高）。不是
     // 已確認的情況，一律不介入，不犧牲向聽效率，也不用再算分級信心門檻／向聽動態
     // 調整（不需要了，判斷變成單純的是非題，也比較快）。
-    const danger = tw16DangerConfidenceForCode(seat, item.tile.code);
-    if (!danger || !danger.confirmed) return tileId;
-    // 已確認會放槍，才考慮替換。從候選中選出最佳的安全替代。
+    // tw16_ting_danger_gate_toggle_20260708: 使用者勾選「開啟守門功能」時，改回硬性
+    // 禁打——只要牌在危險牌例清單內就一律換掉，不再判斷信心分數／是否已確認放槍。
+    const hardGate = tingDangerGateEnabled();
+    let danger = null;
+    if (!hardGate) {
+      danger = tw16DangerConfidenceForCode(seat, item.tile.code);
+      if (!danger || !danger.confirmed) return tileId;
+    }
+    // 已確認會放槍（或已開啟硬性守門），才考慮替換。從候選中選出最佳的安全替代。
     const safe = cands.filter(x => x && x.tile && x.tile.code && !isFlower(x.tile.code) && !forbidden.has(x.tile.code));
     if (!safe.length) return tileId; // 無路可走，只能照打
     const hand = state.hands[seat] || [];
@@ -16995,8 +17047,8 @@ function loadUiSettings() {
     });
     if (best && best.id) {
       try {
-        recordNetworkEvent('avoid-ting-examples-first', SEAT_NAME[seat] + '確認會放槍，換打安全牌', {
-          seat, from: item.tile.code, to: best.code, confidence: Math.round(danger.confidence * 100) / 100
+        recordNetworkEvent('avoid-ting-examples-first', SEAT_NAME[seat] + (hardGate ? '守門功能開啟，強制換打安全牌' : '確認會放槍，換打安全牌'), {
+          seat, from: item.tile.code, to: best.code, confidence: danger ? Math.round(danger.confidence * 100) / 100 : null
         });
       } catch (_) {}
       return best.id;
@@ -17709,7 +17761,7 @@ function chooseExactDiscardTile(seat) {
           if (kind === 'ron' && fromSeat && typeof tw16MonteCarloDangerCodes === 'function') {
             const _savedVisCacheC = tw16VisibleCountCache;
             tw16VisibleCountCache = null;
-            const full = tw16MonteCarloDangerCodes(fromSeat, winner, 1000, 999);
+            const full = tw16MonteCarloDangerCodes(fromSeat, winner, 1000, 999, true);
             tw16VisibleCountCache = _savedVisCacheC;
             const idx = full.findIndex(function(code) { return code === winTile.code; });
             return { rank: idx >= 0 ? idx + 1 : null, total: full.length };
@@ -18747,7 +18799,7 @@ function chooseExactDiscardTile(seat) {
       + '<label class="settingsRow"><span>輪到出牌時顯示手牌金框</span><input id="setTurnHandFrameEnabled" type="checkbox" ' + (state.uiSettings.turnHandFrameEnabled ? 'checked' : '') + '><b></b></label>'
       + '<label class="settingsRow"><span>聽牌輔助</span><input id="setTingAssistEnabled" type="checkbox" ' + (state.uiSettings.tingAssistEnabled ? 'checked' : '') + '><b></b></label>'
       + '<label class="settingsRow"><span>聽牌策略</span><select id="setTingDeclarationMode"><option value="immediate"' + (state.uiSettings.tingDeclarationMode === 'immediate' ? ' selected' : '') + '>立即聽牌</option><option value="delay"' + (state.uiSettings.tingDeclarationMode !== 'immediate' ? ' selected' : '') + '>策略延遲聽牌</option></select><b></b></label>'
-      + '<label class="settingsRow"><span>已聽牌危險牌例</span><input id="setTingDangerExamplesEnabled" type="checkbox" ' + (state.uiSettings.tingDangerExamplesEnabled !== false ? 'checked' : '') + '><b></b></label>'
+      + '<div class="settingsRow"><span>已聽牌危險牌例</span><span class="settingsRowInlineExtra"><input id="setTingDangerExamplesEnabled" type="checkbox" ' + (state.uiSettings.tingDangerExamplesEnabled !== false ? 'checked' : '') + '><label>開啟守門功能<input id="setTingDangerGateEnabled" type="checkbox" ' + (state.uiSettings.tingDangerGateEnabled === true ? 'checked' : '') + '></label></span><b></b></div>'
       + '<label class="settingsRow"><span>手牌型態預覽（等待進牌／多出的牌）</span><input id="setHandShapePreviewEnabled" type="checkbox" ' + (state.uiSettings.handShapePreviewEnabled === true ? 'checked' : '') + '><b></b></label>'
       + '<label class="settingsRow"><span>AI方式</span><select id="setAiMode"><option value="exact"' + (state.uiSettings.aiMode === 'exact' ? ' selected' : '') + '>精確</option><option value="greedy"' + (state.uiSettings.aiMode === 'greedy' ? ' selected' : '') + '>貪心</option></select><b></b></label>'
       + '<label class="settingsRow"><span>蒙地卡羅Top3</span><input id="setAiMonteCarloLevel2" type="checkbox" ' + (state.uiSettings.aiMonteCarloLevel2 ? 'checked' : '') + '><b></b></label>'
@@ -18805,6 +18857,7 @@ function chooseExactDiscardTile(seat) {
       state.uiSettings.turnHandFrameEnabled = !!(byId('setTurnHandFrameEnabled') && byId('setTurnHandFrameEnabled').checked);
       state.uiSettings.tingAssistEnabled = !!(byId('setTingAssistEnabled') && byId('setTingAssistEnabled').checked);
       if (byId('setTingDangerExamplesEnabled')) state.uiSettings.tingDangerExamplesEnabled = !!byId('setTingDangerExamplesEnabled').checked;
+      if (byId('setTingDangerGateEnabled')) state.uiSettings.tingDangerGateEnabled = !!byId('setTingDangerGateEnabled').checked;
       if (byId('setHandShapePreviewEnabled')) state.uiSettings.handShapePreviewEnabled = !!byId('setHandShapePreviewEnabled').checked;
       if (byId('setAiMode')) state.uiSettings.aiMode = byId('setAiMode').value === 'greedy' ? 'greedy' : 'exact';
       if (byId('setTingDeclarationMode')) state.uiSettings.tingDeclarationMode = normalizeTingDeclarationMode(byId('setTingDeclarationMode').value);
@@ -18821,6 +18874,7 @@ function chooseExactDiscardTile(seat) {
             turnHandFrameEnabled: state.uiSettings.turnHandFrameEnabled,
             tingAssistEnabled: state.uiSettings.tingAssistEnabled,
             tingDangerExamplesEnabled: state.uiSettings.tingDangerExamplesEnabled,
+            tingDangerGateEnabled: state.uiSettings.tingDangerGateEnabled,
             aiSuggestionEnabled: state.uiSettings.aiSuggestionEnabled,
             aiMode: state.uiSettings.aiMode,
             tingDeclarationMode: state.uiSettings.tingDeclarationMode,
@@ -18849,7 +18903,7 @@ function chooseExactDiscardTile(seat) {
       });
     };
     ['setPlayerName','setAnimSpeed','setTileRadius','setScoreBaseChip','setScoreTaiChip'].forEach(id => bindImmediateSetting(id, ['input', 'change']));
-    ['setWallVisible','setScreenWakeLockEnabled','setTurnHandFrameEnabled','setTingAssistEnabled','setTingDangerExamplesEnabled','setHandShapePreviewEnabled','setAiMode','setAiMonteCarloLevel2','setAiMonteCarloFull','setMiniDashboardEnabled','setAvatarEnabled'].forEach(id => bindImmediateSetting(id, ['change']));
+    ['setWallVisible','setScreenWakeLockEnabled','setTurnHandFrameEnabled','setTingAssistEnabled','setTingDangerExamplesEnabled','setTingDangerGateEnabled','setHandShapePreviewEnabled','setAiMode','setAiMonteCarloLevel2','setAiMonteCarloFull','setMiniDashboardEnabled','setAvatarEnabled'].forEach(id => bindImmediateSetting(id, ['change']));
     const settingsDefaultBtn = createSettingsDefaultFloatingButton();
     if (settingsDefaultBtn) settingsDefaultBtn.addEventListener('click', () => {
       state.uiSettings = defaultUiSettingsObject();
@@ -20146,6 +20200,33 @@ function showWinHistory() {
     window.addEventListener('touchmove',e=>{if(!drag)return;onMove(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
     window.addEventListener('touchend',()=>{drag=null;});
   }
+  // tw16_danger_hit_rate_stats_20260709: 統計「放槍胡的實際胡牌張，有沒有出現在當時
+  // 放槍座位自己算出來的危險牌例清單裡」——直接讀 winHistoryEntryFromSettlementPayload
+  // 存下來的 tingDangerSnapshot（放槍當下、放槍座位視角、tw16GateTopDangerCodes 真正
+  // 算出來的清單，不是事後重算），不是重新跑一次危險牌演算法，也不會讀任何隱藏牌。
+  // 自摸胡沒有「放槍座位的危險牌例」這個概念，不計入分母。
+  function tw16DangerHitRateStats(items) {
+    let ronCount = 0, hitCount = 0, forcedCount = 0;
+    (Array.isArray(items) ? items : []).forEach(function(h) {
+      if (!h || h.kind !== 'ron') return;
+      ronCount++;
+      const snap = Array.isArray(h.tingDangerSnapshot) ? h.tingDangerSnapshot : [];
+      const tile = h.tile || (h.winTile && h.winTile.code) || '';
+      if (tile && snap.some(function(s) { return s && s.code === tile; })) hitCount++;
+      if (h.dangerForced) forcedCount++;
+    });
+    return { ronCount: ronCount, hitCount: hitCount, forcedCount: forcedCount };
+  }
+  function tw16DangerHitRateStatsHtml(items) {
+    const s = tw16DangerHitRateStats(items);
+    if (!s.ronCount) {
+      return '<div id="tw16HistStats">危險牌例命中率：<span class="tw16HistStatsMuted">目前篩選範圍內沒有放槍胡的樣本（自摸不計入）</span></div>';
+    }
+    const rate = Math.round((s.hitCount / s.ronCount) * 1000) / 10;
+    const forcedNote = s.forcedCount ? '，其中 ' + s.forcedCount + ' 次是判斷到危險但沒有安全牌可換、被迫放槍' : '';
+    return '<div id="tw16HistStats">危險牌例命中率：<b>' + rate + '%</b>　（' + s.hitCount + ' / ' + s.ronCount + ' 次放槍胡，胡牌張當時就在放槍座位自己算出的危險牌例清單內）'
+      + '<span class="tw16HistStatsMuted">' + escapeHtml(forcedNote) + '　自摸胡不計入分母。</span></div>';
+  }
   function tw16RenderHistPanel(){
     const panel=document.getElementById('tw16HistPanel'),body=document.getElementById('tw16HistBody'),badge=document.getElementById('tw16HistBadge');
     if(!body)return;
@@ -20156,7 +20237,7 @@ function showWinHistory() {
     if(!items.length){body.innerHTML='<p style="text-align:center;color:#475569;padding:40px 0">'+(tw16HistFilterText?'查無符合歷程':'尚無胡牌記錄')+'</p>';return;}
     setTimeout(()=>{
       if(!panel||!panel.classList.contains('show'))return;
-      body.innerHTML='<div class="historyList">'+items.slice().reverse().map((h,i)=>{
+      body.innerHTML=tw16DangerHitRateStatsHtml(items)+'<div class="historyList">'+items.slice().reverse().map((h,i)=>{
         const key = winHistoryEntryKey(h);
         const time = formatTaipeiDateTime(h.createdAt || Date.now());
         const line=(h.round||'')+'　'+(SEAT_NAME[h.winner]||'')+(h.kind==='self'?'自摸':'胡 '+(SEAT_NAME[h.fromSeat]||''))+'　'+h.tai+'台';
@@ -24216,8 +24297,14 @@ function showIntegrityReport(precomputed) {
     const tripletMelds = meldGroups.filter(g => tw16MeldIsTripletType(g));
     const sequenceMelds = meldGroups.filter(g => Array.isArray(g) && g.length >= 3 && !tw16MeldIsTripletType(g));
     const toitoiSignal = meldGroups.length >= 2 && sequenceMelds.length === 0 && tripletMelds.length >= 2;
-    const tankiWeight = toitoiSignal ? 2.4 : 1;
-    const runWeight = toitoiSignal ? 0.15 : 1;
+    // tw16_chi_route_prior_20260709: 吃牌路線先驗——連續吃好幾組順子、完全沒碰／槓的人，
+    // 走的是效率優先路線（一般型／平胡），跟對對胡走刻子路線恰好相反：對對胡的人最終
+    // 聽牌型態偏向單騎／對碰（前面 toitoiSignal 那支已經做了），吃順子路線的人則偏向
+    // 兩面聽——因為吃順子本身就是「用兩面的概念換牌」，牌型會自然往兩面聽收斂。純看
+    // 副露型態組成（幾組吃、幾組碰槓），不涉及任何隱藏牌資訊。
+    const chiRouteSignal = meldGroups.length >= 2 && tripletMelds.length === 0 && sequenceMelds.length >= 2;
+    const tankiWeight = toitoiSignal ? 2.4 : (chiRouteSignal ? 0.75 : 1);
+    const runWeight = toitoiSignal ? 0.15 : (chiRouteSignal ? 1.25 : 1);
     if (!isSuitTile(code)) return tankiWeight;
     const suit = code[0], n = Number(code.slice(1));
     const oppDiscardSet = (tw16SeatDiscardSetCache && tw16SeatDiscardSetCache[targetSeat])
@@ -24426,11 +24513,26 @@ function showIntegrityReport(precomputed) {
     }
     return cache.samples;
   }
+  // tw16_exact_first_peek_20260708: 只讀現有樣本池、絕不觸發同步建池運算（那段建池運算
+  // 內建15毫秒時間上限，扣在即時守門這種每次出牌都要查的關鍵路徑上，累積起來還是會有感）。
+  // 樣本池的建立與延伸，完全交給背景暖機（tw16ScheduleDangerPrewarm／
+  // tw16MonteCarloPrewarmAllPairs）去做，即時查詢這裡只「順手撿現成的」，池子還沒養夠
+  // 就直接視為「這次沒有蒙地卡羅佐證」，改用下面的精確推估分數頂上，不會卡住、也不會
+  // 等。這樣「要不要等宣告聽牌才開始認真算」這個問題從結構上就不存在——精確推估本來
+  // 就不需要樣本池，牌局第一輪出牌後就能立刻用。
+  function tw16MonteCarloPeekSampleHands(seat, targetSeat) {
+    if (!SEATS.includes(seat) || !SEATS.includes(targetSeat) || seat === targetSeat) return [];
+    const cacheKey = tw16MonteCarloCacheKey(seat, targetSeat);
+    const cache = tw16McSampleCache[cacheKey];
+    if (!cache || !cache.samples || !cache.samples.length) return [];
+    return cache.samples.filter(function(s) { return tw16MonteCarloSampleStillValid(s, seat); });
+  }
   function tw16MonteCarloBehaviorOverlay(seat, targetSeat, code, read, visible) {
     if (!code) return 0;
     if (read && read.discardSet && read.discardSet.has(code)) return -999999;
     if (isSuitTile(code)) {
       const suit = code[0];
+      const n = Number(code.slice(1));
       const confidence = tw16ReadConfidenceFactor(read);
       let softSignal = 0;
       if (read) {
@@ -24450,6 +24552,13 @@ function showIntegrityReport(precomputed) {
         if (thisSuitMeld >= 6) softSignal += 320;
         else if (thisSuitMeld >= 4) softSignal += 200;
         else if (thisSuitMeld >= 2) softSignal += 90;
+        // tw16_tanyao_route_prior_20260709: 斷么九路線訊號——公開資訊已經明顯顯示對手
+        // 走斷么九（副露無么九字牌、又手切掉不少么九字牌）時，2~8 中張留在手上的機率
+        // 明顯提高，1／9 邊張則因為斷么九規則直接排除，機率大幅下降。
+        if (read.tanyaoLike) {
+          if (n === 1 || n === 9) softSignal -= 260;
+          else softSignal += 70;
+        }
       }
       softSignal += tw16RecentTedashiAvoidanceBonus(targetSeat, code);
       softSignal += tw16TingDeclareAdjacencyDiscount(targetSeat, code);
@@ -24464,23 +24573,29 @@ function showIntegrityReport(precomputed) {
       if (honorMelds >= 3 && visible === 0) softSignal += 280;
       else if (honorMelds >= 2) softSignal += 150;
       else if (honorMelds >= 1) softSignal += 60;
+      // 斷么九路線下，字牌根本不會被用來組面子／將眼（規則排除），危險度大幅下修，
+      // 這張多半只是對手手上暫留、還沒排到的孤張，遲早會被打出。
+      if (read && read.tanyaoLike) softSignal -= 320;
       softSignal += tw16DangerBufferStrategicSignal(seat, targetSeat, code, read, function(c) { return smartAiVisibleCount(c, seat); });
       return softSignal * confidence;
     }
     return 0;
   }
 
-  function tw16MonteCarloDangerEntries(seat, targetSeat, sampleCount, limit, candidateCodes) {
+  function tw16MonteCarloDangerEntries(seat, targetSeat, sampleCount, limit, candidateCodes, forceBuild) {
     if (!SEATS.includes(seat) || !SEATS.includes(targetSeat) || seat === targetSeat) return [];
-    // tw16_prewarm_from_hand_start_20260704: 移除「還沒宣告聽牌就直接回傳空清單」的門檻。
-    // 排名運算（樣本池抽樣＋行為訊號疊加＋排序）現在從牌局一開始（第一輪出牌後）就會
-    // 持續在背景運算，不用等宣告聽牌才第一次認真跑——這樣宣告聽牌那一刻，排名結果早就
-    // 是熱的，不會臨時卡一下。「要不要真的拿這個結果去用」（守門攔截、危險牌例顯示）
-    // 這個判斷，留在呼叫端（tw16TingExamplesFirstCodeSet／tingSeatTopDangerEntries）
-    // 去檢查宣告聽牌狀態，這裡只負責把排名算出來，不負責決定能不能用。
+    // tw16_exact_first_20260708: 精確推估優先——結構可行性（smartAiStructuralWaitShapeCount，
+    // 依可見張數做的組合數學）與公開行為訊號（tw16MonteCarloBehaviorOverlay，依棄牌／副露
+    // 花色模式）兩者都是「純公開資訊的確定性計算」，不用抽樣、不用猜對手手牌內容，牌局
+    // 第一輪出牌後就能立刻算，準確度不受樣本數量影響。這是主要分數來源。
+    // 蒙地卡羅約束抽樣（MC）退居「次要佐證」：樣本池湊夠時才疊加一點加分做微調，樣本池
+    // 還沒湊夠（例如牌局剛開始，背景暖機還沒跟上）時，直接視為沒有這筆佐證，不強迫在這裡
+    // 臨時同步抽樣（那樣才是真正會卡頓的「亂槍打鳥」用法）——樣本池的建立完全交給背景
+    // 暖機非同步進行，這裡只用 tw16MonteCarloPeekSampleHands 撿現成的，絕不等待。
     const concealedSetsNeeded = requiredConcealedSets(targetSeat);
-    const samples = tw16MonteCarloSampleHands(seat, targetSeat, sampleCount);
-    if (!samples.length) return [];
+    if (!isSeatActiveInTable(targetSeat)) return [];
+    const concealedCount = (state.hands[targetSeat] || []).length;
+    if (concealedCount !== concealedSetsNeeded * 3 + 1) return [];
 
     const table = smartAiBuildOpponentReadTable(seat);
     const read = table && table[targetSeat];
@@ -24493,48 +24608,60 @@ function showIntegrityReport(precomputed) {
     })));
     if (!candidateList.length) return [];
 
+    // forceBuild：只給非即時的離線診斷／統計用途（例如放槍後的排名診斷）使用，會強迫
+    // 同步湊滿樣本池；即時守門／危險牌例面板一律不傳這個參數，只用現成的樣本池，
+    // 不會因為等樣本而卡住畫面回應。
+    if (forceBuild) { try { tw16MonteCarloSampleHands(seat, targetSeat, sampleCount); } catch (_) {} }
+    const peekSamples = tw16MonteCarloPeekSampleHands(seat, targetSeat);
     const waitFreq = Object.create(null);
     let validSamples = 0;
-    samples.forEach(function(sample) {
-      let hitAny = false;
-      candidateList.forEach(function(code) {
-        const trial = sample.hand.concat([code]);
-        if (isWinningCodeListCached(trial, concealedSetsNeeded)) {
-          waitFreq[code] = (waitFreq[code] || 0) + 1;
-          hitAny = true;
-        }
+    if (peekSamples.length >= 24) {
+      peekSamples.forEach(function(sample) {
+        let hitAny = false;
+        candidateList.forEach(function(code) {
+          const trial = sample.hand.concat([code]);
+          if (isWinningCodeListCached(trial, concealedSetsNeeded)) {
+            waitFreq[code] = (waitFreq[code] || 0) + 1;
+            hitAny = true;
+          }
+        });
+        if (hitAny) validSamples++;
       });
-      if (hitAny) validSamples++;
-    });
-    if (validSamples < 24) return [];
+    }
 
     const scored = [];
     candidateList.forEach(function(code) {
       const visible = smartAiVisibleCount(code, seat);
       const publicLeft = Math.max(0, 4 - visible);
       if (publicLeft <= 0) return;
-      const mcFreq = (waitFreq[code] || 0) / validSamples;
+      const mcFreq = validSamples > 0 ? ((waitFreq[code] || 0) / validSamples) : 0;
       const behavior = tw16MonteCarloBehaviorOverlay(seat, targetSeat, code, read, visible);
       const structure = smartAiStructuralWaitShapeCount(seat, targetSeat, code);
-      let score = mcFreq * 10000;
-      score += structure * 260;
+      // 精確分數為主體：結構可行性權重明顯拉高，公開行為訊號原樣疊加，兩者都不需要
+      // 抽樣就能算，是排序的主要依據。
+      let score = structure * 320;
+      score += behavior;
       score += publicLeft * 18;
       if (read) score += (Number(read.threat) || 0) * 8;
-      score += behavior;
+      // 蒙地卡羅頻率只在樣本池已經湊夠時才加分，且權重刻意壓低（1500，遠低於舊版的
+      // 10000），避免抽樣雜訊蓋過根據可見資訊算出來的精確排序，只當「錦上添花」的
+      // 佐證，不是「亂槍打鳥」式的主要依據。
+      if (validSamples > 0) score += mcFreq * 1500;
       if (visible === 3) score *= 0.35;
       else if (visible === 2) score *= 0.68;
       else if (visible === 1) score *= 0.88;
       score = Math.max(0, score);
       if (score <= 0) return;
-      if (mcFreq <= 0 && behavior < 280) return;
       scored.push({
         code: code,
         score: score,
         mcFreq: mcFreq,
+        structure: structure,
         behaviorScore: behavior,
         publicLeft: publicLeft,
         validSamples: validSamples,
-        totalSamples: samples.length,
+        totalSamples: peekSamples.length,
+        exact: validSamples <= 0,
         fallback: false
       });
     });
@@ -24547,8 +24674,8 @@ function showIntegrityReport(precomputed) {
     });
     return scored.slice(0, limit || 5);
   }
-  function tw16MonteCarloDangerCodes(seat, targetSeat, sampleCount, limit) {
-    return tw16MonteCarloDangerEntries(seat, targetSeat, sampleCount, limit).map(function(x) { return x.code; });
+  function tw16MonteCarloDangerCodes(seat, targetSeat, sampleCount, limit, forceBuild) {
+    return tw16MonteCarloDangerEntries(seat, targetSeat, sampleCount, limit, null, forceBuild).map(function(x) { return x.code; });
   }
   function tw16GateCandidateCodesFromSeatHand(seat, extraCandidateCodes) {
     const list = (state.hands[seat] || []).map(function(t) { return t && t.code; });
@@ -24688,6 +24815,15 @@ function showIntegrityReport(precomputed) {
   function tingDangerExamplesEnabled() {
     ensureUiSettings();
     return !!(!state.ended && state.uiSettings.tingDangerExamplesEnabled !== false);
+  }
+
+  // tw16_ting_danger_gate_toggle_20260708: 「開啟守門功能」勾選項——勾選後，危險牌例
+  // 清單內的牌一律不打（硬性禁打），不再受信心分數／已確認放槍門檻限制；沒勾選則維持
+  // 原本的信心分數軟性守門（tw16_soft_gate_redesign_20260704）。此開關依附於「已聽牌
+  // 危險牌例」，該面板關閉時守門也一併關閉（見 tingDangerExamplesEnabled）。
+  function tingDangerGateEnabled() {
+    ensureUiSettings();
+    return !!(tingDangerExamplesEnabled() && state.uiSettings.tingDangerGateEnabled === true);
   }
 
   function handShapePreviewEnabled() {
