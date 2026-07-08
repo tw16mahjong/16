@@ -3988,6 +3988,12 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
   let autoplayTimer = null;
   // tw16_single_discard_guard_20260703: 同一個出牌回合只允許成功送出一次棄牌，
   // 防止 AI/托管/遠端重複觸發 submitDiscard 把整手牌連續打光。
+  // tw16_single_discard_guard_claim_fix_20260708:
+  // 舊版把「棄牌池張數」塞進 guard key；但吃/碰/槓會把被副露的那張棄牌從池中移除，
+  // 讓 discards.length 回捲。若同一座位稍早也曾在相同棄牌池長度下出過牌，之後一吃碰槓
+  // 輪到他再次出牌時，guard key 會剛好撞到舊值，submitDiscard 被誤判成「本回合已出過」
+  // 而直接擋掉，表面就會變成：對手吃/碰/槓後不自動出牌、也沒有倒數，整局卡住。
+  // 改用「成功送出棄牌後遞增的 lastActionId」當回合錨點，避免 claim 移除棄牌造成回捲碰撞。
   let tw16DiscardTurnGuardKey = '';
   function tw16BuildDiscardTurnGuardKey(seat) {
     const seatKey = SEATS.includes(seat) ? seat : (SEATS.includes(state.turn) ? state.turn : '');
@@ -3997,7 +4003,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
       String(state.turn || ''),
       String(state.phase || ''),
       String(state.pending ? 1 : 0),
-      String((state.discards || []).length)
+      String(state.lastActionId || 0)
     ].join('|');
   }
   function tw16ClearDiscardTurnGuard() {
@@ -12503,7 +12509,6 @@ function loadUiSettings() {
     const hand = state.hands[seat];
     const index = hand.findIndex(t => t.id === tileId);
     if (index < 0) return false;
-    tw16MarkDiscardTurnGuard(seat);
     const strategyHandBeforeDiscard = hand.map(t => t && t.code).filter(Boolean);
     const [discarded] = hand.splice(index, 1);
     recordStrategyLibraryDiscardDecision(seat, strategyHandBeforeDiscard, discarded, source, options);
@@ -12520,6 +12525,7 @@ function loadUiSettings() {
     state.lockedAt = Date.now();
     state.lastActionId += 1;
     const actionId = state.lastActionId;
+    tw16MarkDiscardTurnGuard(seat);
     if (allowComputerRecovery) addLog(SEAT_NAME[seat] + '電腦代管修正卡局後出牌 ' + tileText(discarded.code));
     else addLog(SEAT_NAME[seat] + '打出 ' + tileText(discarded.code));
     speakGameEvent(tileSpeechText(discarded.code), 'discard:' + state.handId + ':' + actionId + ':' + seat + ':' + discarded.id);
@@ -13180,6 +13186,9 @@ function loadUiSettings() {
     tw16MonteCarloPoolCache = { key: '', pool: [] };
     tw16TingOptionsCache = null;
     if (candidate.type === 'kong') {
+      ensureStatsObject();
+      state.stats.claims += 1;
+      state.stats.kongs += 1;
       state.kongsThisHand = (Number(state.kongsThisHand) || 0) + 1;
       const supplement = drawSupplementTile(candidate.seat);
       sortHand(candidate.seat, supplement && supplement.id);
@@ -13191,6 +13200,8 @@ function loadUiSettings() {
       emitGameVoiceEvent(gameVoiceClaimText(candidate.seat, candidate.type, candidate.label), 'claim:' + state.handId + ':' + pending.actionId + ':' + candidate.seat + ':' + candidate.type, { kind: 'claim', seat: candidate.seat });
       _tw16ClaimFlash = { seat: candidate.seat, type: 'kong', until: Date.now() + 1000 };
       setTimeout(function() { try { tw16ClaimFloat(); } catch(e) {} }, 1050);
+      recordHandEvent('claim', candidate.seat, SEAT_NAME[candidate.seat] + candidate.label + ' ' + tileFullText(pending.tile.code), { type: candidate.type, tile: pending.tile.code, supplement: supplement && supplement.code || '' });
+      recordHandEvent('kong', candidate.seat, SEAT_NAME[candidate.seat] + '明槓 ' + tileFullText(pending.tile.code), { type: 'claim-kong', tile: pending.tile.code, supplement: supplement && supplement.code || '' });
       if (openSelfWinWindow(candidate.seat, supplement, 'kong-supplement')) {
         renderAll();
         schedulePendingResolution('claim-kong-selfwin');
@@ -16441,7 +16452,14 @@ function loadUiSettings() {
 
     await yieldForUiPriorityFrame();
     if (isUiPriorityModeActive()) return;
-    const tileId = chooseDiscardTile(seat);
+    let tileId = chooseDiscardTile(seat);
+    if (!tileId && canAutoDiscard) {
+      // tw16_claim_discard_fallback_20260708:
+      // 吃/碰/槓後若某條 AI 評分/守門路徑臨時沒有吐出候選牌，舊版只會一直重試，
+      // 對外看起來像是「電腦停住不出牌」。這裡直接落到固定規則備援，確保 auto seat
+      // 在合法可出牌時一定能往前走，不會因單次 AI 空結果卡局。
+      tileId = tw16DeterministicDiscardFallback(seat, 'auto-drive-empty-choice');
+    }
     if (tileId && canDiscard(seat)) {
       const submitted = submitDiscard(seat, tileId, 'auto:' + reason);
       if (submitted) return;
