@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="mobile-web-app-capable" content="yes"/>
-<title>台灣麻將｜縮放後立即左右拖動</title>
+<title>台灣麻將｜超硬鎖定版（橫拖優先、需明確上滑才出牌）</title>
 <link rel="preconnect" href="https://cdn.ably.com" crossorigin/>
 <link rel="dns-prefetch" href="https://realtime.ably.io"/>
 <style>
@@ -12366,8 +12366,16 @@ function loadUiSettings() {
         if (!state.ended) scheduleDriveSeat('ting-auto-discard-state-changed');
         return;
       }
-      if (!state.declaredTing[seat] || state.ended || state.pending || state.locked || state.turn !== seat || state.phase !== 'discard') return;
-      submitDiscard(seat, discardId, reason || 'ting-auto');
+      if (state.ended || state.pending || state.locked || state.turn !== seat || state.phase !== 'discard') return;
+      if (!state.declaredTing[seat]) {
+        scheduleDriveSeat('ting-auto-discard-ting-cleared');
+        return;
+      }
+      if (!submitDiscard(seat, discardId, reason || 'ting-auto')) {
+        if (!state.ended && !state.pending && !state.locked && state.turn === seat && state.phase === 'discard') {
+          scheduleDriveSeat('ting-auto-discard-submit-failed');
+        }
+      }
     }, 30);
     return true;
   }
@@ -13175,6 +13183,10 @@ function loadUiSettings() {
       state.kongsThisHand = (Number(state.kongsThisHand) || 0) + 1;
       const supplement = drawSupplementTile(candidate.seat);
       sortHand(candidate.seat, supplement && supplement.id);
+      if (state.ended) {
+        renderAll();
+        return true;
+      }
       addLog(SEAT_NAME[candidate.seat] + candidate.label + ' ' + tileText(pending.tile.code));
       emitGameVoiceEvent(gameVoiceClaimText(candidate.seat, candidate.type, candidate.label), 'claim:' + state.handId + ':' + pending.actionId + ':' + candidate.seat + ':' + candidate.type, { kind: 'claim', seat: candidate.seat });
       _tw16ClaimFlash = { seat: candidate.seat, type: 'kong', until: Date.now() + 1000 };
@@ -13270,8 +13282,11 @@ function loadUiSettings() {
     addLog(SEAT_NAME[seat] + '跳過自摸');
     renderAll();
     publishHostActionState('skip-selfwin-' + seat);
-    if (state.declaredTing[seat]) autoDiscardDrawnForTing(seat, activeDrawnTileId(seat), 'ting-selfwin-skip');
-    else if (state.seatAutoPlay[seat]) scheduleDriveSeat('selfwin-skip');
+    if (state.declaredTing[seat]) {
+      const continued = autoDiscardDrawnForTing(seat, activeDrawnTileId(seat), 'ting-selfwin-skip');
+      if (!continued && (isSeatAutoDrivenBySystem(seat) || state.seatAutoPlay[seat])) scheduleDriveSeat('selfwin-skip-ting-fallback');
+    }
+    else if (isSeatAutoDrivenBySystem(seat) || state.seatAutoPlay[seat]) scheduleDriveSeat('selfwin-skip');
     return true;
   }
 
@@ -13962,6 +13977,10 @@ function loadUiSettings() {
     }
     const supplement = drawSupplementTile(option.seat);
     sortHand(option.seat, supplement && supplement.id);
+    if (state.ended) {
+      renderAll();
+      return true;
+    }
     state.phase = 'discard';
     // ⑥ 槓後清空向聽計算快取
     tw16SmartShapeCache = new Map();
@@ -16364,8 +16383,8 @@ function loadUiSettings() {
     }
 
     if (state.phase === 'discard' && state.declaredTing[seat]) {
-      autoDiscardDrawnForTing(seat, '', 'ting-drive-auto');
-      return;
+      const tingAutoStarted = autoDiscardDrawnForTing(seat, '', 'ting-drive-auto');
+      if (tingAutoStarted) return;
     }
 
     if (state.phase === 'discard' && seatNeedsManualDecision(seat)) {
@@ -16395,8 +16414,8 @@ function loadUiSettings() {
 
     const kong = chooseOwnKongOption(seat);
     if (kong) {
-      executeOwnKong(kong, 'auto:' + reason);
-      return;
+      const kongStarted = executeOwnKong(kong, 'auto:' + reason);
+      if (kongStarted) return;
     }
 
     if (canAutoDiscard && !state.declaredTing[seat]) {
@@ -16414,8 +16433,8 @@ function loadUiSettings() {
               if (safeOpt) safeTingDiscardId = safeOpt.discardId;
             }
           } catch (_) {}
-          declareTing(seat, 'auto:' + reason, safeTingDiscardId);
-          return;
+          const tingDeclared = declareTing(seat, 'auto:' + reason, safeTingDiscardId);
+          if (tingDeclared) return;
         }
       }
     }
@@ -16424,12 +16443,12 @@ function loadUiSettings() {
     if (isUiPriorityModeActive()) return;
     const tileId = chooseDiscardTile(seat);
     if (tileId && canDiscard(seat)) {
-      submitDiscard(seat, tileId, 'auto:' + reason);
-      return;
+      const submitted = submitDiscard(seat, tileId, 'auto:' + reason);
+      if (submitted) return;
     }
     if (tileId && canAutoDiscard) {
-      submitDiscard(seat, tileId, 'auto:' + reason, { forceComputer: true });
-      return;
+      const forcedSubmitted = submitDiscard(seat, tileId, 'auto:' + reason, { forceComputer: true });
+      if (forcedSubmitted) return;
     }
 
     if (canAutoDiscard && !state.ended && !state.pending && !state.locked) {
@@ -23328,10 +23347,13 @@ function showIntegrityReport(precomputed) {
       const absY = Math.abs(dy);
       if (absX > 4 || absY > 4) bottomSwipeDiscardState.moved = true;
       const discardAllowed = !!bottomSwipeDiscardState.discardAllowed;
-      const upwardIntent = discardAllowed && dy < (is3D ? -4 : -6) && absY >= Math.max(is3D ? 5 : 8, absX * 0.52);
-      /* 3D 模式：要求近乎純水平（absX > absY * 3.0）才捲整排，避免垂直分量拉動整排 */
-      const horizontalIntent = !upwardIntent && absX > 9 && absX > absY * (is3D ? 3.0 : 1.20);
+      /* 超硬鎖定版 (ultra-hard horizontal-lock)：極度偏向橫拖，非常明確的上滑才算出牌意圖。 */
+      /* 1) upwardIntent 大幅收緊：需要 dy <= -14 (3D: -12) 且垂直分量必須是水平分量的 2 倍以上 */
+      const upwardIntent = discardAllowed && dy < (is3D ? -12 : -14) && absY >= Math.max(is3D ? 14 : 16, absX * 2.0);
+      /* 2) horizontalIntent 大幅放寬：只要輕微橫向位移就進入橫拖，且對垂直分量非常寬容 */
+      const horizontalIntent = !upwardIntent && absX > 4 && absX >= absY * (is3D ? 0.85 : 0.55);
       if (bottomSwipeDiscardState.scrollEl && (bottomSwipeDiscardState.scrolling || horizontalIntent)) {
+        /* 3) sticky-scroll：一旦進入橫拖，就永不反悔切回上抬（本來就這樣，這裡強化註記） */
         bottomSwipeDiscardState.scrolling = true;
         resetBottomSwipeDiscardVisual(node);
         applyBottomHandHorizontalDrag(bottomSwipeDiscardState.scrollEl, bottomSwipeDiscardState.scrollStartLeft, dx, is3D);
@@ -23339,7 +23361,8 @@ function showIntegrityReport(precomputed) {
         if (ev.cancelable) ev.preventDefault();
         return;
       }
-      if (discardAllowed && (upwardIntent || dy < -3)) {
+      /* 4) 抬牌預覽也收緊：只有明確上抬 (upwardIntent) 才顯示抬牌動畫，避免橫拖過程手指抖動誤抬 */
+      if (discardAllowed && upwardIntent) {
         const lift = Math.max(-64, Math.min(0, dy));
         const drift = Math.max(-16, Math.min(16, dx * .16));
         node.style.transform = 'translate(' + drift.toFixed(1) + 'px,' + lift.toFixed(1) + 'px)';
@@ -23360,7 +23383,14 @@ function showIntegrityReport(precomputed) {
       const discardAllowed = !!bottomSwipeDiscardState.discardAllowed;
       const pressMs = (((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - (Number(bottomSwipeDiscardState.startTime) || 0));
       const tapLike = !canceled && !wasScrolling && pressMs <= 420 && absX <= (is3D ? 14 : 12) && absY <= (is3D ? 14 : 12);
-      const shouldDiscard = discardAllowed && !wasScrolling && !canceled && dy <= (is3D ? -12 : -22) && absY >= Math.max(is3D ? 10 : 18, absX * 0.72);
+      /* 超硬鎖定版：出牌判定極嚴，必須近乎純垂直上滑且距離夠長。
+         - dy 上滑距離：2D 需 <= -42，3D 需 <= -34 (原本 -22 / -12)
+         - 垂直/水平比：absY 至少要是 absX 的 2.2 倍
+         - 硬性差值：absY 還必須大於 absX + 30，避免斜向手勢誤判為出牌 */
+      const shouldDiscard = discardAllowed && !wasScrolling && !canceled
+        && dy <= (is3D ? -34 : -42)
+        && absY >= Math.max(is3D ? 34 : 42, absX * 2.2)
+        && (absY - absX) >= 30;
       const tileId = String(tileObj.id);
       bottomSwipeDiscardState.active = false;
       bottomSwipeDiscardState.pointerId = 0;
@@ -36703,6 +36733,249 @@ function concealedKongOwnerOfMeld(meld) {
 
 
 </script>
+
+<script id="tw16_aggressive_idiot_proof_patch_20260708">
+(function(){
+  if (window.__tw16AggressiveIdiotProofPatch20260708) return;
+  window.__tw16AggressiveIdiotProofPatch20260708 = true;
+
+  try {
+    var style = document.createElement('style');
+    style.id = 'tw16AggressiveIdiotProofStyle20260708';
+    style.textContent = [
+      'html,body{overscroll-behavior:none!important;overscroll-behavior-y:none!important;}',
+      'html.tw16-agg-pan-root,html.tw16-agg-pan-root body{overscroll-behavior:none!important;}',
+      '.hand-bottom.shared-hand-container,#handBottom.hand-bottom,#handBottom{overscroll-behavior-x:contain!important;overscroll-behavior-y:none!important;-webkit-overflow-scrolling:auto!important;scroll-behavior:auto!important;}',
+      '.hand-bottom.shared-hand-container .tile,#handBottom .tile{-webkit-touch-callout:none!important;user-select:none!important;-webkit-user-select:none!important;}',
+      '.hand-bottom.shared-hand-container.tw16-agg-panning,#handBottom.tw16-agg-panning,.hand-bottom.shared-hand-container.tw16-agg-pinch-lock,#handBottom.tw16-agg-pinch-lock{touch-action:none!important;overscroll-behavior:none!important;overscroll-behavior-x:none!important;overscroll-behavior-y:none!important;-webkit-overflow-scrolling:auto!important;}',
+      '.hand-bottom.shared-hand-container.tw16-agg-panning .tile,#handBottom.tw16-agg-panning .tile,.hand-bottom.shared-hand-container.tw16-agg-pinch-lock .tile,#handBottom.tw16-agg-pinch-lock .tile{touch-action:none!important;}',
+      '.hand-bottom.shared-hand-container.tw16-agg-panning>.hand-row,#handBottom.tw16-agg-panning>.hand-row{will-change:transform!important;}'
+    ].join('');
+    (document.head || document.documentElement).appendChild(style);
+  } catch (e) {}
+
+  var state = {
+    pointerId: 0,
+    active: false,
+    dragging: false,
+    startX: 0,
+    startY: 0,
+    startLeft: 0,
+    scrollEl: null,
+    pinchActive: false,
+    pinchReleasedAt: 0,
+    suppressClickUntil: 0,
+    lastX: 0,
+    lastY: 0
+  };
+
+  function now(){ return Date.now ? Date.now() : +new Date(); }
+  function clamp(min, value, max){ return Math.max(min, Math.min(max, value)); }
+  function getHand(){
+    return document.querySelector('#handBottom.hand-bottom') || document.querySelector('.hand-bottom.shared-hand-container') || document.getElementById('handBottom');
+  }
+  function getRect(el){
+    if (!el || !el.getBoundingClientRect) return null;
+    var r = el.getBoundingClientRect();
+    if (!r || (!r.width && !r.height)) return null;
+    return r;
+  }
+  function pointNearHand(x, y, pad){
+    var hand = getHand();
+    var r = getRect(hand);
+    if (!r) return false;
+    var p = Math.max(20, Number(pad) || 0);
+    return x >= r.left - p && x <= r.right + p && y >= r.top - p && y <= r.bottom + p;
+  }
+  function touchListNearHand(touches, pad){
+    if (!touches || !touches.length) return false;
+    for (var i = 0; i < touches.length; i++) {
+      var t = touches[i];
+      if (pointNearHand(Number(t.clientX) || 0, Number(t.clientY) || 0, pad)) return true;
+    }
+    return false;
+  }
+  function setEdgeOffset(hand, value, dragging){
+    if (!hand || !hand.style) return;
+    var v = Number(value) || 0;
+    hand.style.setProperty('--tw16-hand-edge-offset', v.toFixed(2) + 'px');
+    if (hand.classList) {
+      hand.classList.toggle('tw16-hand-drag-active', !!dragging);
+      hand.classList.toggle('tw16-hand-edge-active', Math.abs(v) > 0.35);
+    }
+  }
+  function clearEdgeOffset(hand){
+    if (!hand || !hand.style) return;
+    if (hand.classList) {
+      hand.classList.remove('tw16-hand-drag-active');
+      hand.classList.remove('tw16-hand-edge-active');
+    }
+    hand.style.setProperty('--tw16-hand-edge-offset', '0px');
+  }
+  function beginPanLock(hand){
+    if (!hand) return;
+    document.documentElement.classList.add('tw16-agg-pan-root');
+    hand.classList.add('tw16-agg-panning');
+  }
+  function endPanLock(hand){
+    document.documentElement.classList.remove('tw16-agg-pan-root');
+    if (!hand || !hand.classList) return;
+    hand.classList.remove('tw16-agg-panning');
+  }
+  function hardReset(){
+    var hand = state.scrollEl || getHand();
+    endPanLock(hand);
+    clearEdgeOffset(hand);
+    state.pointerId = 0;
+    state.active = false;
+    state.dragging = false;
+    state.startX = 0;
+    state.startY = 0;
+    state.startLeft = 0;
+    state.scrollEl = null;
+  }
+  function shouldYieldToDiscard(dx, dy){
+    var absX = Math.abs(dx);
+    var absY = Math.abs(dy);
+    return dy <= -18 && absY >= Math.max(18, absX * 1.45);
+  }
+  function aggressivePanWindowOpen(){
+    return (now() - Number(state.pinchReleasedAt) <= 1100);
+  }
+
+  document.addEventListener('touchstart', function(ev){
+    if (!ev || !ev.touches) return;
+    if (ev.touches.length >= 2 && touchListNearHand(ev.touches, 56)) {
+      state.pinchActive = true;
+      state.pinchReleasedAt = 0;
+      var hand = getHand();
+      if (hand && hand.classList) hand.classList.add('tw16-agg-pinch-lock');
+      try { if (ev.cancelable) ev.preventDefault(); } catch (e) {}
+    }
+  }, { passive: false, capture: true });
+
+  document.addEventListener('touchmove', function(ev){
+    if (!state.pinchActive) return;
+    if (!ev || !ev.touches || ev.touches.length < 2) return;
+    var hand = getHand();
+    if (hand && hand.classList) hand.classList.add('tw16-agg-pinch-lock');
+    try { if (ev.cancelable) ev.preventDefault(); } catch (e) {}
+  }, { passive: false, capture: true });
+
+  function finishPinch(){
+    if (!state.pinchActive) return;
+    state.pinchActive = false;
+    state.pinchReleasedAt = now();
+    var hand = getHand();
+    if (hand && hand.classList) {
+      hand.classList.remove('tw16-agg-pinch-lock');
+      clearEdgeOffset(hand);
+    }
+  }
+
+  document.addEventListener('touchend', finishPinch, { passive: false, capture: true });
+  document.addEventListener('touchcancel', finishPinch, { passive: false, capture: true });
+
+  document.addEventListener('pointerdown', function(ev){
+    if (!ev) return;
+    if (ev.pointerType === 'mouse') return;
+    if (!pointNearHand(Number(ev.clientX) || 0, Number(ev.clientY) || 0, 44)) return;
+    var hand = getHand();
+    if (!hand) return;
+    state.pointerId = ev.pointerId;
+    state.active = true;
+    state.dragging = false;
+    state.startX = Number(ev.clientX) || 0;
+    state.startY = Number(ev.clientY) || 0;
+    state.lastX = state.startX;
+    state.lastY = state.startY;
+    state.scrollEl = hand;
+    state.startLeft = Number(hand.scrollLeft) || 0;
+    try { if (hand.setPointerCapture) hand.setPointerCapture(ev.pointerId); } catch (e) {}
+  }, true);
+
+  document.addEventListener('pointermove', function(ev){
+    if (!state.active || !ev || state.pointerId !== ev.pointerId) return;
+    var hand = state.scrollEl || getHand();
+    if (!hand) { hardReset(); return; }
+    var dx = (Number(ev.clientX) || 0) - state.startX;
+    var dy = (Number(ev.clientY) || 0) - state.startY;
+    var absX = Math.abs(dx);
+    var absY = Math.abs(dy);
+    state.lastX = Number(ev.clientX) || 0;
+    state.lastY = Number(ev.clientY) || 0;
+
+    if (!state.dragging) {
+      if (shouldYieldToDiscard(dx, dy)) {
+        hardReset();
+        return;
+      }
+      var afterPinch = aggressivePanWindowOpen();
+      var horizontalIntent = absX >= (afterPinch ? 4 : 8) && absX >= absY * (afterPinch ? 0.80 : 1.10);
+      if (!horizontalIntent) return;
+      state.dragging = true;
+      state.suppressClickUntil = now() + 900;
+      beginPanLock(hand);
+    }
+
+    var maxLeft = Math.max(0, (Number(hand.scrollWidth) || 0) - (Number(hand.clientWidth) || 0));
+    var desired = state.startLeft - dx * 1.02;
+    var left = desired;
+    var edge = 0;
+    if (desired < 0) {
+      left = 0;
+      edge = Math.min(36, (-desired) * 0.46);
+    } else if (desired > maxLeft) {
+      left = maxLeft;
+      edge = -Math.min(36, (desired - maxLeft) * 0.46);
+    }
+    try { hand.scrollLeft = clamp(0, left, maxLeft); } catch (e) {}
+    setEdgeOffset(hand, edge, true);
+    try { if (ev.cancelable) ev.preventDefault(); } catch (e) {}
+    try { ev.stopImmediatePropagation(); } catch (e) {}
+    try { ev.stopPropagation(); } catch (e) {}
+  }, true);
+
+  function finishPointer(ev){
+    if (!state.active || !ev || state.pointerId !== ev.pointerId) return;
+    var hand = state.scrollEl || getHand();
+    if (state.dragging) {
+      try { if (ev.cancelable) ev.preventDefault(); } catch (e) {}
+      try { ev.stopImmediatePropagation(); } catch (e) {}
+      try { ev.stopPropagation(); } catch (e) {}
+    }
+    if (hand && hand.releasePointerCapture) {
+      try { hand.releasePointerCapture(ev.pointerId); } catch (e) {}
+    }
+    endPanLock(hand);
+    clearEdgeOffset(hand);
+    state.pointerId = 0;
+    state.active = false;
+    state.dragging = false;
+    state.startLeft = 0;
+    state.scrollEl = null;
+  }
+
+  ['pointerup','pointercancel','lostpointercapture'].forEach(function(type){
+    document.addEventListener(type, finishPointer, true);
+  });
+
+  document.addEventListener('click', function(ev){
+    if (now() > state.suppressClickUntil) return;
+    var target = ev && ev.target;
+    if (!target || !(target.closest && target.closest('.hand-bottom'))) return;
+    try { ev.preventDefault(); } catch (e) {}
+    try { ev.stopImmediatePropagation(); } catch (e) {}
+    try { ev.stopPropagation(); } catch (e) {}
+  }, true);
+
+  window.addEventListener('blur', function(){ finishPinch(); hardReset(); }, true);
+  window.addEventListener('resize', function(){ window.setTimeout(function(){ clearEdgeOffset(getHand()); }, 120); }, true);
+  window.addEventListener('orientationchange', function(){ finishPinch(); hardReset(); }, true);
+  document.addEventListener('visibilitychange', function(){ if (document.hidden) { finishPinch(); hardReset(); } }, true);
+})();
+</script>
+
 </body>
 </html>
 
