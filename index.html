@@ -11634,6 +11634,11 @@ function loadUiSettings() {
     setOpeningPrompt('');
     stallMonitorState.lastSignature = gameProgressSignature();
     stallMonitorState.lastChangedAt = Date.now();
+    // tw16_always_on_stall_watchdog_20260709: 卡局監控原本只在「連跑」測試模式或手動開啟時才會
+    // 真正每秒巡檢；一般玩家單機/托管對局並不會啟動，一旦流程中某個環節意外卡住（例如加槓後
+    // 例外中斷），既不出牌也不會有任何倒數，只能重新整理頁面。這裡讓每一局開局時都確保監控在跑，
+    // 當作對局中的自動安全網，不影響手動開關（若已啟動則不重複記錄日誌）。
+    if (!stallMonitorState.enabled) startStallMonitor('對局自動安全網');
     const openingToken = ++openingRunToken;
     addLog('① 實體牌牆排定：144張依東→北→西→南成四面一體');
     recordHandEvent('start', state.dealer, WIND_NAME[state.windRound] + state.handNo + '局開局流程開始，莊：' + SEAT_NAME[state.dealer]);
@@ -13179,6 +13184,10 @@ function loadUiSettings() {
     clearTimeout(claimTimer);
     state.turn = candidate.seat;
     state.phase = 'discard';
+    // tw16_claim_turn_guard_clear_20260709: 吃/碰/明槓會把回合直接交給 candidate.seat，
+    // 不會經過 normalDraw()／advanceTurn()，之前這兩處才會清空同回合出牌鎖。若不在這裡
+    // 也清空，lastActionId 又剛好沒變化（見下方槓的處理），舊的鎖鍵可能誤判成「這回合已出過牌」。
+    tw16ClearDiscardTurnGuard();
     // ⑥ 副露後清空向聽計算快取（shape cache 和 win check cache 可能因副露改變而失效）
     tw16SmartShapeCache = new Map();
     tw16WinCheckCache = new Map();
@@ -13950,6 +13959,11 @@ function loadUiSettings() {
   function completeOwnKong(option, source) {
     if (!option || option.seat !== state.turn || state.phase !== 'discard' || state.locked) return false;
     clearTurnDeadline();
+    // tw16_own_kong_guard_anchor_20260709: 暗槓／沒人搶槓的加槓不會經過
+    // openRobKongWindow()（那裡才會遞增 lastActionId），這裡統一補上，讓
+    // 「同回合出牌鎖」用的錨點在所有槓的路徑下都保持一致、不會跟槓之前的舊值撞在一起。
+    state.lastActionId += 1;
+    tw16ClearDiscardTurnGuard();
     const hand = state.hands[option.seat] || [];
     if (option.type === 'concealedKong') {
       const taken = [];
@@ -16423,36 +16437,62 @@ function loadUiSettings() {
     const canAutoDiscard = isSeatAutoDrivenBySystem(seat) || !!state.seatAutoPlay[seat];
     if (state.phase !== 'discard' || !canAutoDiscard) return;
 
-    const kong = chooseOwnKongOption(seat);
+    // tw16_kong_stall_guard_20260709: 加槓/暗槓判斷與執行任何一步若拋例外，
+    // 舊版會讓整個 driveSeat 直接中止在這裡，之後既不出牌也沒有倒數，永久卡住。
+    // 這裡包一層 try/catch，任何內部錯誤都只當作「這次沒有槓」處理，
+    // 讓流程可以繼續往下走到聽牌判斷／出牌，不會卡死整局。
+    let kong = null;
+    try {
+      kong = chooseOwnKongOption(seat);
+    } catch (e) {
+      kong = null;
+      try { recordNetworkEvent('auto-drive-kong-choose-error', SEAT_NAME[seat] + '判斷加槓/暗槓時發生例外，改回一般出牌', { seat, reason: reason || '', error: String((e && e.message) || e) }); } catch (_) {}
+    }
     if (kong) {
-      const kongStarted = executeOwnKong(kong, 'auto:' + reason);
+      let kongStarted = false;
+      try {
+        kongStarted = executeOwnKong(kong, 'auto:' + reason);
+      } catch (e) {
+        kongStarted = false;
+        try { recordNetworkEvent('auto-drive-kong-exec-error', SEAT_NAME[seat] + '執行加槓/暗槓時發生例外，改回一般出牌', { seat, reason: reason || '', error: String((e && e.message) || e) }); } catch (_) {}
+      }
       if (kongStarted) return;
     }
 
     if (canAutoDiscard && !state.declaredTing[seat]) {
-      const tingOptions = getTingOptions(seat);
-      const best = bestTingOption(seat, tingOptions);
-      if (best) {
-        const shouldHold = tw16ShouldDelayTingDeclaration(seat, best, tingOptions);
-        if (!shouldHold) {
-          // tw16_auto_ting_forbidden_20260623: 宣告聽牌前過濾禁打牌，改選安全聽牌選項
-          let safeTingDiscardId = best.discardId;
-          try {
-            const forbidden = tw16TingExamplesFirstCodeSet(seat);
-            if (forbidden.size && best.discardCode && forbidden.has(best.discardCode)) {
-              const safeOpt = tingOptions.find(o => o.discardCode && !forbidden.has(o.discardCode) && String(o.discardId) !== String(best.discardId));
-              if (safeOpt) safeTingDiscardId = safeOpt.discardId;
-            }
-          } catch (_) {}
-          const tingDeclared = declareTing(seat, 'auto:' + reason, safeTingDiscardId);
-          if (tingDeclared) return;
+      try {
+        const tingOptions = getTingOptions(seat);
+        const best = bestTingOption(seat, tingOptions);
+        if (best) {
+          const shouldHold = tw16ShouldDelayTingDeclaration(seat, best, tingOptions);
+          if (!shouldHold) {
+            // tw16_auto_ting_forbidden_20260623: 宣告聽牌前過濾禁打牌，改選安全聽牌選項
+            let safeTingDiscardId = best.discardId;
+            try {
+              const forbidden = tw16TingExamplesFirstCodeSet(seat);
+              if (forbidden.size && best.discardCode && forbidden.has(best.discardCode)) {
+                const safeOpt = tingOptions.find(o => o.discardCode && !forbidden.has(o.discardCode) && String(o.discardId) !== String(best.discardId));
+                if (safeOpt) safeTingDiscardId = safeOpt.discardId;
+              }
+            } catch (_) {}
+            const tingDeclared = declareTing(seat, 'auto:' + reason, safeTingDiscardId);
+            if (tingDeclared) return;
+          }
         }
+      } catch (e) {
+        try { recordNetworkEvent('auto-drive-ting-error', SEAT_NAME[seat] + '判斷聽牌時發生例外，改回一般出牌', { seat, reason: reason || '', error: String((e && e.message) || e) }); } catch (_) {}
       }
     }
 
     await yieldForUiPriorityFrame();
     if (isUiPriorityModeActive()) return;
-    let tileId = chooseDiscardTile(seat);
+    let tileId = null;
+    try {
+      tileId = chooseDiscardTile(seat);
+    } catch (e) {
+      tileId = null;
+      try { recordNetworkEvent('auto-drive-choose-discard-error', SEAT_NAME[seat] + '選牌時發生例外，改用備援出牌', { seat, reason: reason || '', error: String((e && e.message) || e) }); } catch (_) {}
+    }
     if (!tileId && canAutoDiscard) {
       // tw16_claim_discard_fallback_20260708:
       // 吃/碰/槓後若某條 AI 評分/守門路徑臨時沒有吐出候選牌，舊版只會一直重試，
@@ -16474,6 +16514,16 @@ function loadUiSettings() {
       clearTimeout(autoplayTimer);
       autoplayTimer = setTimeout(() => scheduleDriveSeat('auto-driven-retry'), 200);
     }
+    } catch (e) {
+      // tw16_drive_seat_hard_guard_20260709: 任何未被上面各段 try/catch 攔到的例外
+      // （例如摸牌、代管逾時判斷等段落），舊版會讓這次 driveSeat 直接中止，
+      // 且沒有任何後續排程 → 整局卡住、不出牌也不倒數。這裡兜底：記錄一筆事件，
+      // 並保證一定會再排一次 driveSeat，讓自動流程可以自我修復，不會永久卡死。
+      try { recordNetworkEvent('auto-drive-fatal-error', '自動流程發生未預期例外，已排程重試', { reason: reason || '', error: String((e && e.message) || e) }); } catch (_) {}
+      if (!state.ended) {
+        clearTimeout(autoplayTimer);
+        autoplayTimer = setTimeout(() => scheduleDriveSeat('auto-drive-error-recover'), 200);
+      }
     } finally {
       tw16AiDriveRunning = false;
       tw16AiDriveStartedAt = 0;
