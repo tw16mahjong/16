@@ -365,10 +365,26 @@
 }
 
 .discardGrid.guard-watermark-active::after{
-  content:'守門員開啟中';
+  content:'危險牌例開啟';
   position:absolute;
   left:6px;
   bottom:4px;
+  color:#000;
+  font-size:12px;
+  font-weight:1000;
+  letter-spacing:.08em;
+  line-height:1;
+  opacity:.62;
+  pointer-events:none;
+  z-index:9;
+  text-shadow:0 1px 0 rgba(255,255,255,.18);
+}
+
+.discardGrid.guard-watermark-gate-active::before{
+  content:'守門員開啟中';
+  position:absolute;
+  left:6px;
+  bottom:20px;
   color:#000;
   font-size:12px;
   font-weight:1000;
@@ -26130,7 +26146,9 @@ function concealedKongOwnerOfMeld(meld) {
     const dealerReadyToDiscardFirstTile = !openingActive && state.phase === 'discard';
     const shouldShowPool = !openingActive && (dealerReadyToDiscardFirstTile || discardCount > 0);
     const guardWatermarkActive = !!(shouldShowPool && tingDangerExamplesEnabled());
+    const guardWatermarkGateActive = !!(guardWatermarkActive && tingDangerGateEnabled());
     dom.discardGrid.classList.toggle('guard-watermark-active', guardWatermarkActive);
+    dom.discardGrid.classList.toggle('guard-watermark-gate-active', guardWatermarkGateActive);
     if (!shouldShowPool) {
       dom.discardGrid.style.setProperty('display', 'none', 'important');
       dom.discardGrid.setAttribute('aria-hidden', 'true');
