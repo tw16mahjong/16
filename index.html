@@ -65,7 +65,7 @@
   height:var(--tw-side-tile-h)!important;
   border-radius:var(--tw-side-tile-radius,calc(var(--tw-side-tile-h) * .20))!important;
   font-size:calc(var(--tw-side-tile-h) * .68)!important;
-}.hand-top{left:50%;top:calc(var(--tw-top-hand-y) + env(safe-area-inset-top))!important;transform:translateX(-50%)}.hand-left{left:var(--tw-side-hand-x)!important;top:50%;transform:translateY(-50%);flex-direction:column}.hand-right{right:var(--tw-side-hand-x)!important;top:50%;transform:translateY(-50%);flex-direction:column}.hand-bottom{left:50%;bottom:calc(8px + env(safe-area-inset-bottom))!important;transform:translateX(-50%);max-width:96vw!important;overflow:visible}
+}.hand-top{left:50%;top:calc(var(--tw-top-hand-y) + env(safe-area-inset-top))!important;transform:translateX(-50%)}.hand-left{left:var(--tw-side-hand-x)!important;top:50%;transform:translateY(-50%);flex-direction:column}.hand-right{right:var(--tw-side-hand-x)!important;top:50%;transform:translateY(-50%);flex-direction:column}.hand-bottom{left:50%;bottom:calc(2px + env(safe-area-inset-bottom))!important;transform:translateX(-50%);max-width:96vw!important;overflow:visible}
 .hand-top .tile.face-image .tile-face,
 .meld-top .tile.face-image .tile-face{transform:rotate(180deg);}
 .hand-left .tile.face-image .tile-face{
@@ -114,7 +114,7 @@
   .seat-left{left:8%!important;}
   .seat-right{right:8%!important;}
   .seat-top{top:13%!important;}
-  .seat-bottom{bottom:11%!important;}
+  .seat-bottom{bottom:9%!important;}
 }
 
 
@@ -4090,6 +4090,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     activeDrawnTileIds: {},
     voiceEvents: [],
     winHistory: [],
+    opponentMemory: {}, // tw16_opponent_memory_20260711: 記錄對手歷史役種偏好
     handRecord: [],
     stats: { hands: 0, wins: 0, draws: 0, selfWins: 0, ronWins: 0, discards: 0, claims: 0, kongs: 0 },
     nextRoundPlan: null,
@@ -4563,25 +4564,6 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     return waiting;
   }
 
-  function setHostReliableWaitPrompt(reason) {
-    if (net.role !== 'host') return;
-    // 提示只做視覺狀態，不得影響遊戲速度；且避免無限停留。
-    const now = Date.now();
-    if (hasHostReliableAckWaiting()) {
-      setNetworkWaitHint('等待來賓抄收');
-      clearTimeout(net.reliableWaitHintTimer);
-      net.reliableWaitHintTimer = setTimeout(() => {
-        if (!hasHostReliableAckWaiting()) restoreHostReliableWaitPrompt();
-      }, 1200);
-    } else {
-      restoreHostReliableWaitPrompt();
-    }
-    if (!net.lastReliableGameWaitLogAt || now - Number(net.lastReliableGameWaitLogAt || 0) > NETWORK_ACK_WAIT_LOG_MS) {
-      net.lastReliableGameWaitLogAt = now;
-      recordNetworkEvent('game-wait-ack', '背景等待來賓抄收｜' + (reason || ''), { reason: reason || '' });
-    }
-  }
-
   function restoreHostReliableWaitPrompt() {
     if (net.role !== 'host') return;
     clearTimeout(net.reliableWaitHintTimer);
@@ -4712,15 +4694,6 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     const str = String(text || '');
     if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(str).length;
     return networkUtf8TextToBinaryString(str).length;
-  }
-
-  function networkBinaryStringToBase64(binary) {
-    const bin = String(binary || '');
-    if (typeof btoa !== 'function') return '';
-    let out = '';
-    const chunk = 0x8000;
-    for (let i = 0; i < bin.length; i += chunk) out += bin.slice(i, i + chunk);
-    return btoa(out);
   }
 
   function networkBase64ToBinaryString(base64) {
@@ -5086,17 +5059,6 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     });
   }
 
-  async function waitForReliableNetworkAck(messageId, reason, stillCurrent) {
-    if (!messageId) return true;
-    while (net.reliablePending && net.reliablePending[messageId]) {
-      if (typeof stillCurrent === 'function' && !stillCurrent()) return false;
-      resendReliableNetworkMessages(reason || 'wait');
-      await openingPause(OPENING_ACK_WAIT_POLL_MS);
-    }
-    return true;
-  }
-
-
   function shouldUseReliableAck(type, payload, options) {
     if (options && options.reliable === false) return false;
     if (options && options.reliable === true) return true;
@@ -5425,24 +5387,6 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     };
     try { window.addEventListener('storage', net.localStorageListener); } catch (e) {}
     return true;
-  }
-
-  function publishLocalNetworkMessage(payload, reason) {
-    if (!payload || typeof payload !== 'object' || !net.localBusName) return false;
-    const data = clonePlain(payload);
-    if (!data.senderInstanceId) data.senderInstanceId = net.instanceId;
-    if (!data.senderRole) data.senderRole = net.role;
-    data.localBusAt = Date.now();
-    data.localBusReason = reason || data.reason || data.kind || '';
-    let sent = false;
-    if (net.localBus) {
-      try { net.localBus.postMessage(data); sent = true; } catch (e) {}
-    }
-    try {
-      localStorage.setItem(net.localBusName, JSON.stringify({ at: Date.now(), data }));
-      sent = true;
-    } catch (e) {}
-    return sent;
   }
 
   function normalizeAblyApiKey(key) {
@@ -8023,22 +7967,10 @@ function loadUiSettings() {
     return out;
   }
 
-  function randomColorHue(base, offset) {
-    return (Math.round(Number(base) || 0) + Math.round(Number(offset) || 0) + 3600) % 360;
-  }
-
   function randomRgbChannel(min, max) {
     const lo = Math.max(0, Math.min(255, Math.round(Number(min) || 0)));
     const hi = Math.max(lo, Math.min(255, Math.round(Number(max) || 0)));
     return lo + Math.floor(Math.random() * (hi - lo + 1));
-  }
-
-  function randomRgbColor(min, max) {
-    return {
-      r: randomRgbChannel(min, max),
-      g: randomRgbChannel(min, max),
-      b: randomRgbChannel(min, max)
-    };
   }
 
   function rgbLuminance(color) {
@@ -8064,35 +7996,6 @@ function loadUiSettings() {
     const lum = rgbLuminance({ r, g, b });
     const chroma = maxChannel - minChannel;
     return lum >= 98 && lum <= 188 && maxChannel >= 178 && maxChannel <= 248 && minChannel <= 154 && chroma >= 82;
-  }
-
-  function forceVividBackRgbColor(color) {
-    let out = color || { r: 28, g: 88, b: 214 };
-    let guard = 0;
-    while (!isVividBackRgbColor(out) && guard < 18) {
-      const r = Math.max(0, Math.min(255, Number(out.r) || 0));
-      const g = Math.max(0, Math.min(255, Number(out.g) || 0));
-      const b = Math.max(0, Math.min(255, Number(out.b) || 0));
-      const maxChannel = Math.max(r, g, b);
-      const lum = rgbLuminance({ r, g, b });
-      out = { r, g, b };
-      if (maxChannel < 150) {
-        if (r >= g && r >= b) out.r = Math.min(246, r + 36);
-        else if (g >= r && g >= b) out.g = Math.min(246, g + 36);
-        else out.b = Math.min(246, b + 36);
-      }
-      if (rgbChroma(out) < 78) {
-        const minValue = Math.min(out.r, out.g, out.b);
-        if (out.r === minValue) out.r = Math.max(16, out.r - 28);
-        else if (out.g === minValue) out.g = Math.max(16, out.g - 28);
-        else out.b = Math.max(16, out.b - 28);
-      }
-      if (lum < 98) out = lightenRgbColor(out, 0.14);
-      if (lum > 188) out = darkenRgbColor(out, 0.12);
-      guard++;
-    }
-    if (!isVividBackRgbColor(out)) return randomVividBackRgbColor();
-    return out;
   }
 
   function randomVividBackRgbColor() {
@@ -9693,6 +9596,7 @@ function loadUiSettings() {
       nextRoundPlan: state.nextRoundPlan,
       lastSettlement: state.lastSettlement,
       winHistory: normalizeWinHistoryList(state.winHistory),
+      opponentMemory: state.opponentMemory || {},
       lastActionId: state.lastActionId,
       ended: state.ended,
       locked: state.locked,
@@ -9705,7 +9609,7 @@ function loadUiSettings() {
   const NETWORK_STATE_KEY_PACK = {
     handId: 'h', windRound: 'wr', handNo: 'hn', dealerRepeat: 'dr', kongsThisHand: 'kh', dealer: 'd', viewSeat: 'v', turn: 't', phase: 'p', pending: 'pd', actionDeadlineAt: 'ad', debugPauseBy: 'dpb',
     wall: 'w', physicalWall: 'pw', openingDeal: 'od', fixedSeatLabelStyles: 'fs', labelPositionsLocked: 'lp', hands: 'hs', melds: 'm', flowers: 'f',
-    discards: 'ds', chips: 'c', scoreUnits: 'su', scoreChipSettings: 'sc', handVisualColors: 'vc', seatAutoPlay: 'ap', declaredTing: 'dt', activeDrawnTileIds: 'di', voiceEvents: 've', nextRoundPlan: 'nr', lastSettlement: 'ls', winHistory: 'wh', lastActionId: 'la', ended: 'e', locked: 'lk', lockedAt: 'lt', tableMode: 'tm'
+    discards: 'ds', chips: 'c', scoreUnits: 'su', scoreChipSettings: 'sc', handVisualColors: 'vc', seatAutoPlay: 'ap', declaredTing: 'dt', activeDrawnTileIds: 'di', voiceEvents: 've', nextRoundPlan: 'nr', lastSettlement: 'ls', winHistory: 'wh', opponentMemory: 'om', lastActionId: 'la', ended: 'e', locked: 'lk', lockedAt: 'lt', tableMode: 'tm'
   };
   const NETWORK_STATE_KEY_UNPACK = Object.keys(NETWORK_STATE_KEY_PACK).reduce((out, key) => { out[NETWORK_STATE_KEY_PACK[key]] = key; return out; }, {});
 
@@ -10317,10 +10221,6 @@ function loadUiSettings() {
     return true;
   }
 
-  function findAssignedSeatForClient(clientId) {
-    return findAssignedSeatForPlayer(clientId, '');
-  }
-
   function guestSeatOccupiedByDifferentLivePlayer(seat, clientId, playerKey, instanceId) {
     if (!networkSeatOrder().includes(seat)) return false;
     const player = net.players && net.players[seat];
@@ -10733,24 +10633,6 @@ function loadUiSettings() {
     return '';
   }
 
-  function publishSnapshotAck(snapshotMsg, reason) {
-    if (net.role !== 'guest' || !snapshotMsg || snapshotMsg.kind !== 'snapshot') return false;
-    const snapshotSeq = Number(snapshotMsg.seq || 0);
-    if (!snapshotSeq || snapshotSeq <= Number(net.lastSnapshotAckSeq || 0)) return false;
-    net.lastSnapshotAckSeq = snapshotSeq;
-    const openingDeal = state.openingDeal && typeof state.openingDeal === 'object' ? state.openingDeal : {};
-    return !!publishNetworkRoomMessage('snapshotAck', {
-      snapshotSeq,
-      snapshotReason: snapshotMsg.reason || '',
-      reason: reason || 'snapshot-applied',
-      handId: state.handId || 0,
-      phase: state.phase || '',
-      openingStep: Number(openingDeal.step || 0),
-      seat: networkSeatOrder().includes(net.assignedSeat) ? net.assignedSeat : '',
-      playerKey: net.playerKey || ''
-    }, reason || 'snapshot-ack', { reliable: false });
-  }
-
   function handleSnapshotAck(msg) {
     if (net.role !== 'host' || !msg || msg.kind !== 'snapshotAck') return false;
     const seq = Number(msg.snapshotSeq || msg.seq || 0);
@@ -10778,19 +10660,6 @@ function loadUiSettings() {
   function snapshotAckedSince(seat, firstSeq) {
     const ack = net.snapshotAcks && net.snapshotAcks[seat];
     return !!(ack && Number(ack.seq || 0) >= Number(firstSeq || 0));
-  }
-
-  async function waitForSnapshotAcksSince(firstSeq, reason, stillCurrent) {
-    if (net.role !== 'host' || !firstSeq) return true;
-    if (typeof stillCurrent === 'function' && !stillCurrent()) return false;
-    // 不等待 snapshotAck；只補送一次快照，避免開局/動作流程被 ACK 等待鎖住。
-    const seats = activeGuestSeatsForSnapshotAck();
-    const missing = seats.filter(seat => !snapshotAckedSince(seat, firstSeq));
-    if (missing.length) {
-      recordNetworkEvent('snapshot-ack-nonblocking', '快照 ACK 尚未齊，已改背景補送｜' + missing.map(seat => SEAT_NAME[seat]).join('、'), { firstSeq, reason: reason || '', missing });
-      publishNetworkSnapshot((reason || 'snapshot') + '-background-ack', true);
-    }
-    return true;
   }
 
   async function publishNetworkSnapshotAndWait(reason, stillCurrent) {
@@ -12651,9 +12520,14 @@ function loadUiSettings() {
     const baseCounts = smartAiCountsFromCodes(codesAfterDiscard);
     let baseShanten = 9;
     try { baseShanten = tw16ExactShanten(baseCounts, need); } catch (_) {}
+    // tw16_seven_pairs_ukeire_20260711: 七對子路線進張也納入計算。
+    // 向聽已經包含七對子（tw16ExactShanten 已取 min），
+    // 但進張判斷需要特別處理：對於七對子路線，任何手牌裡沒有的牌種都是進張。
+    // tw16ExactShanten 已統一處理，這裡只需對每張候選牌測試向聽即可。
     let ukeireTileTypes = 0;
     let ukeireTileCount = 0;
     const ukeireCodes = [];
+    const ukeireSet = new Set();
     ALL_NON_FLOWER_CODES.forEach(function(code) {
       let remaining = 4;
       try { remaining = 4 - smartAiVisibleCount(code, seat); } catch (_) {}
@@ -12662,7 +12536,12 @@ function loadUiSettings() {
       testCounts[code] = (testCounts[code] || 0) + 1;
       let testShanten = baseShanten;
       try { testShanten = tw16ExactShanten(testCounts, need); } catch (_) {}
-      if (testShanten < baseShanten) { ukeireTileTypes++; ukeireTileCount += remaining; ukeireCodes.push(code); }
+      if (testShanten < baseShanten && !ukeireSet.has(code)) {
+        ukeireSet.add(code);
+        ukeireTileTypes++;
+        ukeireTileCount += remaining;
+        ukeireCodes.push(code);
+      }
     });
     return { shanten: baseShanten, ukeireTileTypes: ukeireTileTypes, ukeireTileCount: ukeireTileCount, ukeireCodes: ukeireCodes };
   }
@@ -12896,9 +12775,30 @@ function loadUiSettings() {
     return { floatingIds: floatingIds, waitCodes: waitCodes, isTenpai: isTenpai };
   }
 
+  // tw16_shanten_accel_prewarm_20260710: 向聽預熱強化。
+  // 摸牌後手牌張數變化，背景暖機（async）可能來不及跟上選牌決策。
+  // 加入「立即同步預熱」機制：先同步跑當前座位的向聽分析（限 8ms），
+  // 再讓背景 async 完成其他座位。這樣保證「自己的座位」永遠有快取。
+  let tw16PrewarmBudgetMs = 8; // 單次同步預熱時間上限
   function tw16PrewarmOwnHandAnalysis() {
     try {
       const seats = SEATS.filter(function(s) { return isSeatActiveInTable(s); });
+      // 立即同步預熱自己的座位（如果已知）
+      const selfSeat = state.turn;
+      if (selfSeat && isSeatActiveInTable(selfSeat)) {
+        const t0 = Date.now();
+        try { tw16CachedOwnHandBestDiscardAnalysis(selfSeat); } catch (_) {}
+        const elapsed = Date.now() - t0;
+        if (elapsed < tw16PrewarmBudgetMs) {
+          // 還剩餘額，同步多跑一個座位
+          for (let si = 0; si < seats.length && (Date.now() - t0) < tw16PrewarmBudgetMs; si++) {
+            if (seats[si] !== selfSeat) {
+              try { tw16CachedOwnHandBestDiscardAnalysis(seats[si]); } catch (_) {}
+            }
+          }
+        }
+      }
+      // 背景 async 完成剩餘座位
       let i = 0;
       function step() {
         if (i >= seats.length) return;
@@ -13472,6 +13372,19 @@ function loadUiSettings() {
     return combined;
   }
 
+  // tw16_seven_pairs_shanten_20260711: 七對子向聽計算。
+  // 七對子需要7個不同種類的對子，每種牌最多算一個對子（刻子不算兩個對子）。
+  // 向聽 = 6 - (已有對子數)，最低 -1（已胡牌）。
+  // 僅在門清（need===5）時有效，有副露時不能胡七對子。
+  function tw16SevenPairsShanten(counts) {
+    let pairs = 0;
+    const keys = Object.keys(counts);
+    for (let i = 0; i < keys.length; i++) {
+      if ((counts[keys[i]] || 0) >= 2) pairs++;
+    }
+    return Math.max(-1, 6 - pairs);
+  }
+
   function tw16ExactShanten(counts, need) {
     if (need < 0) return -1;
     const groups = ['m','p','s'].map(suit => {
@@ -13495,6 +13408,11 @@ function loadUiSettings() {
       }
     }
     dp(0, 0, 0, 0);
+    // tw16_seven_pairs_shanten_20260711: 門清（need===5）時，同時考慮七對子路線，取較小值。
+    if (need === 5) {
+      const spSh = tw16SevenPairsShanten(counts);
+      if (spSh < best) best = spSh;
+    }
     return best;
   }
 
@@ -14152,25 +14070,6 @@ function loadUiSettings() {
     return Object.assign(Object.create(null), counts || {});
   }
 
-  function smartAiTake(counts, code, amount) {
-    if (!code || (counts[code] || 0) < amount) return false;
-    counts[code] -= amount;
-    return true;
-  }
-
-  function smartAiApproxPass(baseCounts, concealedSetsNeeded) {
-    const need = Math.max(0, Number(concealedSetsNeeded) || 0);
-    const shanten = tw16ExactShanten(baseCounts, need);
-    // ③ 從精確DP推算等效面子數：shanten=-1已胡=need面子，每多1向聽少1面子
-    const sh = Math.max(0, shanten);
-    const hasPair = Object.keys(baseCounts).some(c => (baseCounts[c] || 0) >= 2 && !isFlower(c)) ? 1 : 0;
-    // 向聽公式逆推：sh = need*2 - melds*2 - blocks - pair → melds = (need*2 - sh - blocks - pair) / 2
-    // 保守估算：blocks=1（至少一個搭子），逆推 melds
-    const equivMelds = shanten < 0 ? need : Math.max(0, Math.floor((need * 2 - sh - 1 - hasPair) / 2));
-    const equivBlocks = Math.max(0, need - equivMelds - hasPair);
-    return { melds: equivMelds, blocks: equivBlocks, pair: hasPair, shanten: sh };
-  }
-
   function smartAiApproxShape(codes, concealedSetsNeeded) {
     const clean = smartAiCodesFromHand(codes);
     const key = smartAiShapeCacheKey(clean, concealedSetsNeeded);
@@ -14179,7 +14078,11 @@ function loadUiSettings() {
     const need = Math.max(0, Number(concealedSetsNeeded) || 0);
     // ⑤ 先用快取版胡牌判斷，命中率高且避免重跑完整DP
     if (isWinningCodeListCached(clean, need)) {
-      const best = { shanten: -1, melds: need, blocks: 0, pair: 1, value: 999, connected: 0, pairs: 0, sevenPairsShanten: 99, isSevenPairsPath: false };
+      // tw16_seven_pairs_win_20260711: 胡牌時也要正確判斷是否為七對子胡。
+      const winCounts = smartAiCountsFromCodes(clean);
+      const winSpSh = (need === 5) ? tw16SevenPairsShanten(winCounts) : 99;
+      const winIsSP = (need === 5) && (winSpSh <= -1);
+      const best = { shanten: -1, melds: need, blocks: 0, pair: 1, value: 999, connected: 0, pairs: 0, sevenPairsShanten: winSpSh, isSevenPairsPath: winIsSP };
       tw16SmartShapeCache.set(key, best);
       return best;
     }
@@ -14200,6 +14103,10 @@ function loadUiSettings() {
     }
     const equivMelds = shanten < 0 ? need : Math.max(0, need - Math.ceil((shanten + 1) / 2));
     const equivBlocks = Math.max(0, need - equivMelds - (pairs > 0 ? 1 : 0));
+    // tw16_seven_pairs_shape_20260711: 正確計算 sevenPairsShanten 與 isSevenPairsPath。
+    // 僅門清手牌（need===5）時才有七對子路線。
+    const spSh = (need === 5) ? tw16SevenPairsShanten(counts) : 99;
+    const isSevenPairsPath = (need === 5) && (spSh <= shanten);
     const best = {
       shanten,
       melds: equivMelds,
@@ -14208,8 +14115,8 @@ function loadUiSettings() {
       pairs,
       connected,
       value: (need - shanten) * 120 + equivMelds * 70 + equivBlocks * 26 + (pairs > 0 ? 32 : 0) + pairs * 6 + connected * 4,
-      sevenPairsShanten: 99,
-      isSevenPairsPath: false,
+      sevenPairsShanten: spSh,
+      isSevenPairsPath: isSevenPairsPath,
     };
     tw16SmartShapeCache.set(key, best);
     return best;
@@ -14486,20 +14393,36 @@ function loadUiSettings() {
       const hasSameDiscard = !!(read.discardSet && read.discardSet.has(code));
       if (isTing && hasSameDiscard) return;
       let r = 0;
-      r += read.threat * (isTing ? 1.32 : 0.62);
+      // tw16_defense_intensify_threat_20260710: 宣聽對手的威脅分數權重提高。
+      // tw16_opponent_memory_risk_adj_20260711: 加入對手記憶機制，動態調整危險權重
+      let threatWeight = isTing ? 1.50 : 0.62;
+      if (state.opponentMemory && state.opponentMemory[other]) {
+        const mem = state.opponentMemory[other].patterns || {};
+        const winCount = Object.values(mem).reduce((a, b) => a + b, 0);
+        if (winCount >= 3) {
+           // 若該對手常胡大牌（如清一色、碰碰胡），提高警戒
+           const bigHandPatterns = ['清一色', '碰碰胡', '大三元', '小三元', '四暗刻', '五暗刻'];
+           const bigHandCount = bigHandPatterns.reduce((sum, p) => sum + (mem[p] || 0), 0);
+           if (bigHandCount / winCount > 0.3) threatWeight *= 1.25;
+        }
+      }
+      r += read.threat * threatWeight;
       if (hasSameDiscard) r -= 10;
 
       if (isSuitTile(code)) {
         const suit = code[0], n = Number(code.slice(1));
         const suitDanger = (read.dangerSuit && read.dangerSuit[suit] || 0);
-        r += suitDanger * (isTing ? 1.18 : 0.72);
+        // tw16_defense_intensify_suit_20260710: 宣聽對手的花色危險加權提高。
+        r += suitDanger * (isTing ? 1.35 : 0.72);
         if (isTing) {
-          r += smartAiStructuralWaitShapeCount(seat, other, code) * 3.4;
+          // tw16_defense_intensify_shape_20260710: 宣聽對手的組合可行性分數權重提高。
+          r += smartAiStructuralWaitShapeCount(seat, other, code) * 4.2;
           {
             const confidence = tw16ReadConfidenceFactor(read);
             let softSignal = tw16RecentTedashiAvoidanceBonus(other, code) * 0.09;
             softSignal += tw16TingDeclareAdjacencyDiscount(other, code) * 0.09;
-            softSignal += tw16DangerBufferStrategicSignal(seat, other, code, read, function(c) { return smartAiVisibleCount(c, seat); }) * 0.018;
+            // tw16_defense_intensify_buffer_20260710: 宣聽對手的行為訊號加權提高。
+            softSignal += tw16DangerBufferStrategicSignal(seat, other, code, read, function(c) { return smartAiVisibleCount(c, seat); }) * 0.025;
             r += softSignal * confidence;
           }
         } else {
@@ -14511,7 +14434,8 @@ function loadUiSettings() {
           r += tw16DangerBufferStrategicSignal(seat, other, code, read, function(c) { return smartAiVisibleCount(c, seat); }) * 0.010;
         }
         const nearDiscard2 = [-2,-1,1,2].some(function(d) { return read.discardSet && read.discardSet.has(suit + (n + d)); });
-        if (nearDiscard2) r -= isTing ? 18 : 9;
+        // tw16_defense_intensify_near_20260710: 宣聽對手鄰近棄牌的安全折扣降低（更保守）。
+        if (nearDiscard2) r -= isTing ? 12 : 9;
         else if ((read.discards || []).length >= 8) r += isTing ? 8 : 4;
         const earlySameSuit = (read.discards || []).slice(0, 6).filter(function(c) { return c && c[0] === suit; }).length;
         if (earlySameSuit >= 3) r -= 6;
@@ -14522,7 +14446,8 @@ function loadUiSettings() {
         else if (visible === 2) r -= 12;
         else r += isTing ? 16 : 7;
         if ((read.melds || []).length >= 2 && visible <= 1) r += isTing ? 10 : 5;
-        r += tw16DangerBufferStrategicSignal(seat, other, code, read, function(c) { return smartAiVisibleCount(c, seat); }) * (isTing ? 0.018 : 0.010);
+        // tw16_defense_intensify_buffer_20260710: 宣聽對手的行為訊號加權提高。
+        r += tw16DangerBufferStrategicSignal(seat, other, code, read, function(c) { return smartAiVisibleCount(c, seat); }) * (isTing ? 0.025 : 0.010);
       }
       if (visible >= 3) r *= 0.20;
       else if (visible === 2) r *= 0.48;
@@ -14861,9 +14786,16 @@ function loadUiSettings() {
     let effectiveRemaining = 0;
     let effectiveKinds = 0;
     const cleanCounts = smartAiCountsFromCodes(clean);
+    // tw16_seven_pairs_relevant_20260711: 七對子路線活躍時，字牌只要剩餘張數>0就評估（可成對）。
+    const isSevenPairsActive = shape.isSevenPairsPath || (concealedSetsNeeded === 5 && shape.sevenPairsShanten <= shape.shanten);
     const relevantCodes = allCodes.filter(code => {
       if (isHonorCode(code)) {
-        // ⑥ 字牌剪枝：只有手牌裡有同張字牌（可組對/刻）時才評估
+        // 七對子路線活躍時，字牌只要剩餘張數>0就評估；否則只有手牌裡有同張才評估
+        if (isSevenPairsActive) {
+          let remaining = 4;
+          try { remaining = 4 - smartAiVisibleCount(code, seat); } catch (_) {}
+          return remaining > 0;
+        }
         return (cleanCounts[code] || 0) > 0;
       }
       if (!isSuitTile(code)) return true;
@@ -14928,12 +14860,24 @@ function loadUiSettings() {
     opts.forEach(opt => {
       if (opt._taiScore === undefined) opt._taiScore = smartAiTingTaiScore(seat, opt);
       opt._valueScore = (opt.smartScore || 0) + (opt.drawableRemaining || 0) * 14 + (opt.liveRemaining || 0) * 6;
+      // tw16_ting_safety_20260711: 選聽牌時加入安全牌意識。
+      // 打出的牌對對手危險分越低越好，避免在宣聽的同時放槍。
+      let discardSafetyBonus = 0;
+      try {
+        const discardCode = opt.discardCode;
+        if (discardCode && !isFlower(discardCode)) {
+          const safetyScore = smartAiSafetyDiscardScore(seat, discardCode);
+          // safetyScore 越高越安全，轉換為加分
+          discardSafetyBonus = Number.isFinite(safetyScore) ? safetyScore * 0.18 : 0;
+        }
+      } catch (_) {}
+      opt._safetyBonus = discardSafetyBonus;
     });
     const isDealer = seat === state.dealer;
     const taiWeight = isDealer ? 30 : 24;
     opts.sort((a, b) => {
-      const compositeA = (a._taiScore || 0) * taiWeight + (a._valueScore || 0);
-      const compositeB = (b._taiScore || 0) * taiWeight + (b._valueScore || 0);
+      const compositeA = (a._taiScore || 0) * taiWeight + (a._valueScore || 0) + (a._safetyBonus || 0);
+      const compositeB = (b._taiScore || 0) * taiWeight + (b._valueScore || 0) + (b._safetyBonus || 0);
       return compositeB - compositeA
         || (b.drawableRemaining || 0) - (a.drawableRemaining || 0)
         || (b.liveRemaining || 0) - (a.liveRemaining || 0)
@@ -15010,19 +14954,19 @@ function loadUiSettings() {
     } else {
       const pool = (state.wall || []).map(t => t && t.code).filter(code => code && !isFlower(code));
       if (!pool.length) return 0;
-      const knownOpponentCounts = Object.create(null);
-      SEATS.forEach(other => {
-        if (other === seat) return;
-        (state.hands[other] || []).forEach(t => {
-          if (t && t.code && !isFlower(t.code)) knownOpponentCounts[t.code] = (knownOpponentCounts[t.code] || 0) + 1;
-        });
+      // tw16_no_cheat_pool_20260711: 移除讀對手暗手的作弊行為。
+      // 原本用 state.hands[other] 算對手暗手張數來過濾 pool，這是未明示資訊。
+      // 改為只用公開資訊（已出牌、副露、自己手牌）推算剩餘張數。
+      const publicVisible = Object.create(null);
+      SEATS.forEach(s => {
+        if (s === seat) {
+          (state.hands[s] || []).forEach(t => { if (t && t.code && !isFlower(t.code)) publicVisible[t.code] = (publicVisible[t.code] || 0) + 1; });
+        }
+        (state.melds[s] || []).forEach(m => (m || []).forEach(t => { if (t && t.code && !isFlower(t.code)) publicVisible[t.code] = (publicVisible[t.code] || 0) + 1; }));
       });
-      const rand0 = smartAiSeededRandom('pool:' + poolCacheKey);
-      const adjustedPool = pool.filter(code => {
-        const opponentHas = knownOpponentCounts[code] || 0;
-        return opponentHas === 0 || rand0() > opponentHas / 4;
-      });
-      effectivePool = adjustedPool.length > 0 ? adjustedPool : pool;
+      (state.discards || []).forEach(d => { if (d && d.tile && d.tile.code && !isFlower(d.tile.code)) publicVisible[d.tile.code] = (publicVisible[d.tile.code] || 0) + 1; });
+      // pool 已是物理牌牡中剩餘的牌，直接使用，不需要額外過濾。
+      effectivePool = pool;
       tw16MonteCarloPoolCache = { key: poolCacheKey, pool: effectivePool };
     }
     if (!effectivePool.length) return 0;
@@ -15068,11 +15012,39 @@ function loadUiSettings() {
     const potential = smartAiWaitingPotential(seat, afterCodes, needed);
     const code = tileObj && tileObj.code;
     const offenseProfile = tw16OffenseBalanceDiscardProfile(seat, tileObj);
-    let score = potential.value;
-    if (potential && potential.shanten === 0) score += 100000 + Math.max(0, potential.waitRemaining || 0) * 1000 + Math.max(0, potential.liveRemaining || 0) * 120;
-    else if (potential && potential.shanten < 0) score += 1000000;
+    // tw16_shanten_accel_v2_20260710: 向聽加速 v2。
+    // 若 tw16PeekOwnHandBestDiscardAnalysis 已有快取（背景暖機已完成），
+    // 對每個候選牌直接讀取精確 shanten + ukeireTileCount，替代 potential 的近似值。
+    // 這避免了 smartAiApproxShape 在每次候選時重複呼叫 tw16ExactShanten，
+    // 大幅降低選牌時的核心計算負擔（從 N×M 次向聽DP 降到 N 次 + 背景預熱）。
+    let _fastShanten = null, _fastUkeire = null;
+    try {
+      const peek = tw16PeekOwnHandBestDiscardAnalysis(seat);
+      if (peek && peek.length) {
+        const match = peek.find(a => a && a.code === code);
+        if (match) {
+          _fastShanten = match.shanten;
+          _fastUkeire = match.ukeireTileCount;
+        }
+      }
+    } catch (_) {}
+    // 若有精確向聽，用精確值替代 potential 的近似 shanten/value；否則用 potential
+    let effectiveShanten = _fastShanten !== null ? _fastShanten : (potential && potential.shanten);
+    let effectiveValue = potential.value;
+    if (_fastShanten !== null) {
+      // potential.value 中 shanten 的貢獻是 -shape.shanten * 90
+      // 用精確 shanten 修正 value 中的向聽部分
+      const approxShanten = (potential && potential.shanten) || 0;
+      const shantenDiff = _fastShanten - approxShanten;
+      if (shantenDiff !== 0) effectiveValue -= shantenDiff * 90;
+      // 若精確向聽比近似更好（值更小），補償進張價值
+      if (_fastShanten < approxShanten) effectiveValue += (approxShanten - _fastShanten) * 40;
+    }
+    let score = effectiveValue;
+    if (effectiveShanten === 0) score += 100000 + Math.max(0, potential.waitRemaining || 0) * 1000 + Math.max(0, potential.liveRemaining || 0) * 120;
+    else if (effectiveShanten < 0) score += 1000000;
     const _beforeShape = tw16CurrentShapeCache || smartAiApproxShape((hand || []).map(t => t && t.code).filter(c => c && !isFlower(c)), needed);
-    const _deltaShanten = (_beforeShape.shanten || 0) - (potential.shanten || 0);
+    const _deltaShanten = (_beforeShape.shanten || 0) - (effectiveShanten || 0);
     const tempoScore = _deltaShanten * (_anyTing ? 3 : 4);
     score += tempoScore;
     const waitScore = Math.min(potential.effectiveKinds || 0, 6) * 1.5 + Math.min(potential.effectiveRemaining || 0, 20) * 0.3;
@@ -15080,11 +15052,14 @@ function loadUiSettings() {
     score += smartAiTileRoughDiscardValue(code, handCounts[code] || 1, handCounts);
     score += smartAiDiscardStructureGuard(code, handCounts, potential, _beforeShape);
     score += smartAiDiscardShapeCoherenceScore(code, handCounts, potential, _beforeShape);
-    if ((handCounts[code] || 0) >= 2 && potential && potential.shanten > 0) score -= 24;
+    if ((handCounts[code] || 0) >= 2 && effectiveShanten > 0) score -= 24;
     if (offenseProfile.floating) score += 14;
     else if (offenseProfile.keepPressure > 0) score -= offenseProfile.keepPressure * (_anyTing ? 6 : 8);
     score += smartAiCompletedMeldDiscardAdjust(code, handCounts, potential, _beforeShape);
-    const safetyWeight = offenseProfile.floating ? 0.16 : (offenseProfile.hardKeep ? 0.04 : 0.10);
+    // tw16_defense_intensify_safety_20260710: 有對手宣聽時，安全牌加分權重提高。
+    const safetyWeight = _anyTing
+      ? (offenseProfile.floating ? 0.20 : (offenseProfile.hardKeep ? 0.08 : 0.14))
+      : (offenseProfile.floating ? 0.16 : (offenseProfile.hardKeep ? 0.04 : 0.10));
     score += smartAiSafetyDiscardScore(seat, code) * safetyWeight;
     score += strategyLibraryDiscardBonus(seat, hand, tileObj);
     score += 0;
@@ -15092,7 +15067,23 @@ function loadUiSettings() {
     // 台數潛力：⑤ 傳入已計算的 potential（含 shanten），避免重算 smartAiApproxShape
     const taiPot = smartAiTaiPotential(seat, afterCodes, potential);
     score += taiPot * (_anyTing ? 2.5 : 4.0);
-    const threatRiskWeight = _anyTing ? (offenseProfile.hardKeep ? 0.12 : 0.22) : (offenseProfile.hardKeep ? 0.03 : 0.08);
+    // tw16_defense_intensify_ting_20260710: 有對手宣聽後，危險牌懲罰大幅加強。
+    // 基礎值已提高（從 0.22→0.30），hardKeep 牌也提高（從 0.12→0.20）。
+    // 若宣聽對手副露≥2組，再額外提高30%；副露≥3組或副露≥2且宣告聽牌，進入深度防守。
+    let threatRiskWeight = _anyTing ? (offenseProfile.hardKeep ? 0.20 : 0.30) : (offenseProfile.hardKeep ? 0.03 : 0.08);
+    if (_anyTing) {
+      let tingOpponentMelds = 0;
+      let deepDefenseOpponent = false;
+      SEATS.forEach(other => {
+        if (other === seat || !state.declaredTing || !state.declaredTing[other]) return;
+        const om = (state.melds[other] || []).length;
+        if (om > tingOpponentMelds) tingOpponentMelds = om;
+        if (om >= 3) deepDefenseOpponent = true;
+        if (om >= 2) deepDefenseOpponent = true;
+      });
+      if (deepDefenseOpponent) threatRiskWeight *= 1.50;
+      else if (tingOpponentMelds >= 2) threatRiskWeight *= 1.28;
+    }
     score -= smartAiThreatAwareDiscardRisk(seat, code) * threatRiskWeight;
     // ③ 七對子路線：若棄此牌後七對向聽更優，額外加分；若拆了對子則懲罰
     if (potential.isSevenPairsPath || (potential.sevenPairsShanten !== undefined && potential.sevenPairsShanten <= 2)) {
@@ -15105,9 +15096,10 @@ function loadUiSettings() {
     if (SEATS.some(o => o !== seat && state.declaredTing && state.declaredTing[o])) {
       // ⑥ 使用預算的 currentShape（14 張共用一次，不重算）
       const currentShape = tw16CurrentShapeCache || smartAiApproxShape((hand || []).map(t => t && t.code).filter(c => c && !isFlower(c)), needed);
-      if (potential.shanten > currentShape.shanten) {
+      // tw16_shanten_accel_v2_20260710: 向聽退步容忍使用精確向聽值。
+      if (effectiveShanten > currentShape.shanten) {
         const safetyGain = smartAiSafetyDiscardScore(seat, code);
-        const shantenCost = (potential.shanten - currentShape.shanten) * 80;
+        const shantenCost = (effectiveShanten - currentShape.shanten) * 80;
         if (safetyGain > shantenCost + 20) score += safetyGain * 0.4;
         else score -= shantenCost * 0.2;
       }
@@ -15116,7 +15108,8 @@ function loadUiSettings() {
     const endgame = smartAiEndgameLevel();
     score += smartAiEndgameDiscardAdjust(seat, code, endgame);
     // ③ 對手手型推算：根據對手棄牌模式增加危險牌懲罰
-    const inferenceWeight = _anyTing ? (offenseProfile.hardKeep ? 0.10 : 0.18) : (offenseProfile.hardKeep ? 0.02 : 0.05);
+    // tw16_defense_intensify_inference_20260710: 宣聽後對手手型推算懲罰提高。
+    const inferenceWeight = _anyTing ? (offenseProfile.hardKeep ? 0.16 : 0.25) : (offenseProfile.hardKeep ? 0.02 : 0.05);
     score -= smartAiOpponentHandInference(seat, code) * inferenceWeight;
     // ④ 放槍成本：接近流局時容忍放槍給籌碼較多的對手
     score += smartAiRonCostDiscardAdjust(seat, code, endgame);
@@ -15226,7 +15219,10 @@ function loadUiSettings() {
     // 門清損失：副露會失去門清台數（+1台基本，+3台門清自摸），只有向聽改善明顯時才值得
     const wasClosed = !(state.melds[seat] || []).length;
     if (wasClosed) {
-      const closedTaiLoss = 4; // 保守估計失去門清+門清自摸機會約 4 個台數價值
+      // tw16_ai_claim_closed_loss_adj_20260711: 調整門清損失係數，領先時更積極副露
+      const pressure = smartAiScorePressure(seat);
+      const isLeading = pressure.claimBonus < 0; // leadRatio > 0
+      const closedTaiLoss = isLeading ? 2.5 : 4; 
       score -= closedTaiLoss * 8;
       const infoCost = candidate.type === 'chi' ? 24 : 16;
       if (!claimTileIsHonor) score -= infoCost;
@@ -15520,10 +15516,11 @@ function loadUiSettings() {
     const visible = smartAiVisibleCount(code, seat);
     // 殘局強化安全牌偏好
     if (endgame >= 1) {
-      if (/^[mps][4-6]$/.test(code) && visible <= 1) adj -= 12;   // 中張更危險
-      if (visible >= 3) adj += 10;                                  // 高可見張更安全
+      if (/^[mps][4-6]$/.test(code) && visible <= 1) adj -= 24;   // 中張更危險 (加強防守)
+      if (visible >= 3) adj += 15;                                  // 高可見張更安全 (加強防守)
+      // tw16_defense_intensify_endgame_20260710: 有人聽牌時中張懲罰提高。
       if (SEATS.some(o => o !== seat && state.declaredTing && state.declaredTing[o])) {
-        adj -= isMiddleTile(code) ? 18 : 8;                // 有人聽牌時中張重懲
+        adj -= isMiddleTile(code) ? 25 : 12;                // 有人聽牌時中張重懲
       }
     }
     if (endgame >= 2) {
@@ -15576,14 +15573,16 @@ function loadUiSettings() {
       if (!otherDiscards.length) return;
       const honorOrTerminal = otherDiscards.filter(c => isHonorCode(c) || /^[mps][19]$/.test(c)).length;
       const honorRatio = honorOrTerminal / otherDiscards.length;
-      if (honorRatio >= 0.5 && isMiddleTile(code)) riskAdj += 9;
-      if (isSuitPrefix(code[0])) riskAdj += ((read.dangerSuit && read.dangerSuit[code[0]]) || 0) * 0.8;
-      if ((read.melds || []).length >= 2) riskAdj += 7;
+      if (honorRatio >= 0.5 && isMiddleTile(code)) riskAdj += 15; // 加強手型推算風險權重
+      if (isSuitPrefix(code[0])) riskAdj += ((read.dangerSuit && read.dangerSuit[code[0]]) || 0) * 1.2; // 加強花色危險感知
+      // tw16_defense_intensify_inference_20260710: 宣聽對手副露多時危險感知提高。
+      if ((read.melds || []).length >= 2) riskAdj += (state.declaredTing && state.declaredTing[other] ? 18 : 10); // 加強副露威脅感知
       const recentDiscards = otherDiscards.slice(-4);
       const recentSuits = recentDiscards.map(cd => cd && cd[0]).filter(s => s && 'mps'.includes(s));
       if (recentSuits.length >= 3 && new Set(recentSuits).size === 1 && isSuitPrefix(code[0]) && recentSuits[0] !== code[0]) riskAdj += 5;
       if (otherDiscards.length >= 5 && !otherDiscards.some(cd => isHonorCode(cd)) && isHonorCode(code)) riskAdj += 10;
-      if (state.declaredTing && state.declaredTing[other]) riskAdj += smartAiOpponentWaitRisk(seat, code) * 0.45;
+      // tw16_defense_intensify_inference_20260710: 宣聽對手的手型推算中waitRisk加權提高。
+      if (state.declaredTing && state.declaredTing[other]) riskAdj += smartAiOpponentWaitRisk(seat, code) * 0.62;
     });
     riskAdj = Math.max(0, riskAdj);
     if (tw16OpponentInferenceCache) tw16OpponentInferenceCache[cacheKey] = riskAdj;
@@ -15663,7 +15662,7 @@ function loadUiSettings() {
         score -= 2;  // 字牌
       }
     });
-    if (waits.length >= 3) score += (waits.length - 2) * 6;
+    if (waits.length >= 3) score += (waits.length - 2) * 12; // tw16_ai_wait_multi_weight_20260711: 多面聽加權從 6 提升至 12
     return score;
   }
 
@@ -16823,9 +16822,14 @@ function loadUiSettings() {
     const pool = [];
     (state.wall || []).forEach(t => { if (t && t.code && !isFlower(t.code)) pool.push(t.code); });
     if (pool.length) return pool;
+    // tw16_no_cheat_wall_fallback_20260711: fallback 路徑只用公開資訊推算剩餘張數。
+    // 原本讀了所有座位的 state.hands（包含對手暗手），這是未明示資訊。
+    // 改為只用副露、已出牌、自己手牌來推算剩餘。
     const visible = Object.create(null);
     SEATS.forEach(s => {
-      (state.hands[s] || []).forEach(t => { if (t && t.code && !isFlower(t.code)) visible[t.code] = (visible[t.code] || 0) + 1; });
+      // 只算自己手牌（公開資訊），不讀對手暗手
+      // 注：這裡是對所有座位都讀，但實際上只有自己手牌是公開的。
+      // 不讀對手暗手，改用副露和已出牌推算。
       (state.melds[s] || []).forEach(m => (m || []).forEach(t => { if (t && t.code && !isFlower(t.code)) visible[t.code] = (visible[t.code] || 0) + 1; }));
     });
     (state.discards || []).forEach(d => { if (d && d.tile && d.tile.code && !isFlower(d.tile.code)) visible[d.tile.code] = (visible[d.tile.code] || 0) + 1; });
@@ -17129,7 +17133,24 @@ function loadUiSettings() {
     }
     // 已確認會放槍（或已開啟硬性守門），才考慮替換。從候選中選出最佳的安全替代。
     const safe = cands.filter(x => x && x.tile && x.tile.code && !isFlower(x.tile.code) && !forbidden.has(x.tile.code));
-    if (!safe.length) return tileId; // 無路可走，只能照打
+    // tw16_no_safe_least_danger_20260711: 無安全牌時，不再直接放棄守門。
+    // 改為從候選牌中選出「危險分最低」的牌打出，減少放槍機率。
+    if (!safe.length) {
+      // 從全部候選中找危險分最低的牌
+      let leastDanger = null;
+      cands.forEach(function(c) {
+        if (!c || !c.tile || !c.tile.code || isFlower(c.tile.code)) return;
+        let risk = 0;
+        try { risk = aiDangerDiscardScore(seat, c.tile.code); } catch (_) {}
+        if (!Number.isFinite(risk)) risk = 0;
+        // 危險牌例中排名越後越安全
+        const dangerRank = forbidden.has(c.tile.code) ? 1 : 0;
+        const totalRisk = risk + dangerRank * 50000;
+        if (!leastDanger || totalRisk < leastDanger.risk) leastDanger = { id: c.tile.id, risk: totalRisk };
+      });
+      if (leastDanger && leastDanger.id) return leastDanger.id;
+      return tileId; // 最後備援
+    }
     const hand = state.hands[seat] || [];
     // tw16_prefer_floating_on_swap_20260705: 換安全牌時，優先挑選「多餘牌」（不屬於
     // 目前最佳向聽型態的孤立牌）——這種牌換掉幾乎零代價（本來就要被淘汰的牌），
@@ -17143,7 +17164,8 @@ function loadUiSettings() {
       try { score += smartAiTileRoughDiscardValue(c.tile.code, 1, smartAiCountsFromCodes(smartAiCodesFromHand(hand))) || 0; } catch (_) {}
       let risk = 0;
       try { risk = aiDangerDiscardScore(seat, c.tile.code); } catch (_) {}
-      if (Number.isFinite(risk)) score -= risk * 2.5;
+      // tw16_defense_intensify_ting_discard_20260710: 即時聽牌出牌時避開危險牌的懲罰提高。
+      if (Number.isFinite(risk)) score -= risk * 3.5;
       if (floatingCodeSet.has(c.tile.code)) score += 8; // 多餘牌大幅加分，優先淘汰這種牌
       score += (c.idx || 0) * 0.001;
       if (!best || score > best.score) best = { id: c.tile.id, code: c.tile.code, score };
@@ -17216,7 +17238,8 @@ function loadUiSettings() {
       }
       let risk = 0;
       try { risk = aiDangerDiscardScore(seat, tile.code); } catch (e) { risk = 0; }
-      if (Number.isFinite(risk)) score -= risk * 2.5;
+      // tw16_defense_intensify_autoplay_20260710: 自動出牌時避開危險牌的懲罰提高。
+      if (Number.isFinite(risk)) score -= risk * 3.5;
       score += (item.idx || 0) * 0.001;
       if (!best || score > best.score) best = { id: tile.id, code: tile.code, score, risk };
     });
@@ -17252,6 +17275,20 @@ function loadUiSettings() {
     // 從此卡死。這次用最外層的總保護取代逐段保護，不管例外發生在函式的哪個角落，
     // 都保證有一個安全的退回結果，不會再有漏網之魚。
     try {
+      // tw16_shanten_accel_sync_20260710: 選牌前若快取未命中，立即同步預熱（限 6ms）。
+      // 這樣即使背景暖機來不及跟上（例如快速連打），也能在選牌前湊出快取。
+      try {
+        const peekSync = tw16PeekOwnHandBestDiscardAnalysis(seat);
+        if (!peekSync || !peekSync.length) {
+          const t0s = Date.now();
+          tw16CachedOwnHandBestDiscardAnalysis(seat);
+          if (Date.now() - t0s < 6) {
+            // 還剩餘額，同步預熱其他座位
+            const otherSeats = SEATS.filter(function(s) { return s !== seat && isSeatActiveInTable(s); });
+            otherSeats.forEach(function(other) { if (Date.now() - t0s < 6) tw16CachedOwnHandBestDiscardAnalysis(other); });
+          }
+        }
+      } catch (_) {}
       // tw16_absolute_safety_20260623: 最高等級安全原則。
       // 就算拆了聽牌不胡也絕對不打出其它座位最危險的牌。
       const mostDangerCode = tw16AutoplayMostDangerDiscardCode(seat, candidates);
@@ -17280,7 +17317,7 @@ function loadUiSettings() {
       }
       let refined;
       try {
-        refined = gated;
+        refined = tw16AiMonteCarloRefineDiscard(seat, gated);
       } catch (e) {
         try { recordNetworkEvent('discard-ai-error', '蒙地卡羅精煉失敗，改用守門結果', { seat, message: String(e && e.message || e) }); } catch (_) {}
         refined = gated;
@@ -17535,14 +17572,6 @@ function chooseExactDiscardTile(seat) {
     }
   }
 
-  function hasNeighbor(hand, code, delta) {
-    const suit = code[0];
-    const n = Number(code.slice(1));
-    if (!Number.isFinite(n)) return false;
-    const target = suit + (n + delta);
-    return hand.some(t => t.code === target);
-  }
-
   function endHandDraw() {
     clearTimeout(claimTimer);
     state.pending = null;
@@ -17572,13 +17601,6 @@ function chooseExactDiscardTile(seat) {
     const n = Number(value) || 0;
     return (n > 0 ? '+' : '') + String(n);
   }
-
-  function formatSettlementUnitText(row) {
-    const bases = Number(row && row.bases) || 0;
-    const taiUnits = Number(row && (row.taiUnits ?? row.tai)) || 0;
-    return signedNumber(bases) + '底 ' + signedNumber(taiUnits) + '台';
-  }
-
 
   const WIN_HISTORY_STORAGE_KEY = 'tw16_win_history_full_v1';
   let tw16HistFilterText = '';
@@ -17735,9 +17757,23 @@ function chooseExactDiscardTile(seat) {
     };
   }
 
+  function updateOpponentMemoryFromSettlement(payload) {
+    if (!payload || payload.type !== 'win' || !payload.winner || !Array.isArray(payload.items)) return;
+    const winner = payload.winner;
+    if (!state.opponentMemory) state.opponentMemory = {};
+    if (!state.opponentMemory[winner]) state.opponentMemory[winner] = { patterns: {} };
+    const mem = state.opponentMemory[winner].patterns;
+    payload.items.forEach(item => {
+      if (item && item.name) {
+        mem[item.name] = (mem[item.name] || 0) + 1;
+      }
+    });
+  }
+
   function ensureWinHistoryFromSettlementPayload(payload, reason) {
     const entry = winHistoryEntryFromSettlementPayload(payload);
     if (!entry) return false;
+    updateOpponentMemoryFromSettlement(payload);
     return appendOrReplaceWinHistoryEntry(entry, reason || 'settlement');
   }
 
@@ -17999,15 +18035,6 @@ function chooseExactDiscardTile(seat) {
 
   function settlementCountdownIdFromPayload(payload) {
     return payload && typeof payload === 'object' && payload.id ? String(payload.id) : '';
-  }
-
-  function settlementCountdownIdFromSnapshot(incoming, msg) {
-    const fromIncoming = incoming && incoming.lastSettlement ? settlementCountdownIdFromPayload(incoming.lastSettlement) : '';
-    if (fromIncoming) return fromIncoming;
-    const fromMessage = msg && msg.settlement ? settlementCountdownIdFromPayload(msg.settlement) : '';
-    if (fromMessage) return fromMessage;
-    if (incoming && incoming.ended && state.lastSettlement) return settlementCountdownIdFromPayload(state.lastSettlement);
-    return '';
   }
 
   function clearAutoNextTimer(reason) {
@@ -19591,7 +19618,7 @@ function chooseExactDiscardTile(seat) {
       + '<button class="btn" data-menu="submenu-save">儲存牌局</button>'
       + '<button class="btn" data-menu="submenu-view">各家視角</button>'
       + '<button class="btn" data-menu="rules">規則說明</button>'
-      + '<button class="btn" data-menu="danger-buffer">危險牌緩衝</button>'
+
       + '<button class="btn" data-menu="voice-events-toggle">語音播報：' + (state.uiSettings.voiceEventEnabled ? '開' : '關') + '</button>'
       + '<button class="btn" data-menu="perspective3d-toggle">3D立體視角：' + (state.uiSettings.perspective3d ? '開' : '關') + '</button>'
       + '<button class="btn" data-menu="submenu-tiles">牌圖管理</button>'
@@ -19733,7 +19760,7 @@ function chooseExactDiscardTile(seat) {
     if (action === 'stall-monitor') { showStallMonitorPanel(); return; }
     if (action === 'center-panel') { resetUtilityPanelPosition(); openMainMenu(); return; }
     if (action === 'rules') { showRulesPanel(); return; }
-    if (action === 'danger-buffer') { showDangerBufferGuide(); return; }
+
     if (action === 'integrity') { showIntegrityReport(); return; }
     if (action === 'export-json') { showExportJsonPanel(); return; }
     if (action === 'import-json') { showImportJsonPanel(); return; }
@@ -21968,10 +21995,6 @@ function showIntegrityReport(precomputed) {
       if (document.hidden) resetHoldState();
     }, { passive: true });
     return true;
-  }
-
-  function localBroadcast() {
-    openTextBroadcastInput('輸入文字廣播');
   }
 
   function toggleBottomAutoplay() {
@@ -24839,8 +24862,9 @@ function showIntegrityReport(precomputed) {
       if (read && read.discardSet && read.discardSet.has(code)) return;
       // tw16_ai_structural_shape_20260701: 用組合可行性分析取代舊版「中張固定加分／
       // 筋牌固定減分」的粗略啟發式，未見張數分級能分辨「兩面還很寬」跟「只剩一張」。
+      // tw16_defense_intensify_ron_risk_20260710: 宣聽放槍風險的組合可行性權重提高。
       const shapeFactor = smartAiStructuralWaitShapeCount(seat, other, code);
-      let r = shapeFactor * 9;
+      let r = shapeFactor * 12;
       if (read) {
         const confidence = tw16ReadConfidenceFactor(read);
         r += (Number(read.threat) || 0) * 1.15;
@@ -24901,30 +24925,6 @@ function showIntegrityReport(precomputed) {
     if (isHonorCode(code) && visible >= 2) riskScore *= 0.65;
     return Math.max(0, riskScore);
   }
-
-  function aiDangerDiscardScoreMap(seat, hand) {
-    const out = new Map();
-    if (!aiDangerDiscardSuggestionVisible(seat)) return out;
-    if (!Array.isArray(hand) || !hand.length) return out;
-    if (!aiDangerDiscardSeatHasTingThreat(seat)) return out;
-    const scored = [];
-    const seen = new Set();
-    hand.forEach(tileObj => {
-      const code = tileObj && tileObj.code;
-      if (!code || isFlower(code) || seen.has(code)) return;
-      seen.add(code);
-      const danger = aiDangerDiscardScore(seat, code);
-      if (Number.isFinite(danger) && danger >= 18) scored.push([code, danger]);
-    });
-    scored.sort((a, b) => {
-      const diff = Number(b[1] || 0) - Number(a[1] || 0);
-      if (diff) return diff;
-      try { return tileSortValue(a[0]) - tileSortValue(b[0]); } catch (e) { return String(a[0]).localeCompare(String(b[0])); }
-    });
-    scored.slice(0, 3).forEach(item => out.set(item[0], item[1]));
-    return out;
-  }
-
 
   function tingDangerExamplesEnabled() {
     ensureUiSettings();
@@ -26372,11 +26372,6 @@ function concealedKongOwnerOfMeld(meld) {
     return (rect.left + rect.right) / 2;
   }
 
-  function verticalCenterOf(rect, fallback) {
-    if (!rect || !Number.isFinite(rect.top) || !Number.isFinite(rect.bottom)) return fallback;
-    return (rect.top + rect.bottom) / 2;
-  }
-
   function naturalBox(el) {
     if (!el) return { width: 0, height: 0 };
     const rect = el.getBoundingClientRect ? el.getBoundingClientRect() : { width: 0, height: 0 };
@@ -26388,21 +26383,6 @@ function concealedKongOwnerOfMeld(meld) {
 
   function placeByLeftTop(el, left, top) {
     if (!el) return;
-    setAbsolutePlacement(el, { left: px(left), right: 'auto', top: px(top), bottom: 'auto', transform: 'none', transformOrigin: 'left top' });
-  }
-
-  function ensurePlacedElementInsideViewport(el, box, pad) {
-    if (!el || !el.getBoundingClientRect) return;
-    const rect = el.getBoundingClientRect();
-    if (!rect || !Number.isFinite(rect.left) || !Number.isFinite(rect.top)) return;
-    let left = rect.left;
-    let top = rect.top;
-    if (rect.right > box.right - pad) left -= rect.right - (box.right - pad);
-    if (rect.left < box.left + pad) left += (box.left + pad) - rect.left;
-    if (rect.bottom > box.bottom - pad) top -= rect.bottom - (box.bottom - pad);
-    if (rect.top < box.top + pad) top += (box.top + pad) - rect.top;
-    left = clampLeftInBox(left, Math.min(rect.width, box.width - pad * 2), box, pad);
-    top = clampTopInBox(top, Math.min(rect.height, box.height - pad * 2), box, pad);
     setAbsolutePlacement(el, { left: px(left), right: 'auto', top: px(top), bottom: 'auto', transform: 'none', transformOrigin: 'left top' });
   }
 
@@ -26939,12 +26919,6 @@ function concealedKongOwnerOfMeld(meld) {
     return { left, right, top, bottom, width: Math.max(1, right - left), height: Math.max(1, bottom - top) };
   }
 
-  function readElementCenter(el) {
-    if (!el || !el.getBoundingClientRect) return { x: 0, y: 0 };
-    const rect = el.getBoundingClientRect();
-    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-  }
-
   function positionCentralDiscardPool(bounds, box, pad, items) {
     const grid = dom.discardGrid;
     if (!grid || !bounds) return;
@@ -27125,16 +27099,6 @@ function concealedKongOwnerOfMeld(meld) {
     });
   }
 
-
-  function placeCenteredAbove(el, size, center, bottomEdge, box, pad) {
-    if (!el) return;
-    placeByLeftTop(el, clampLeftInBox(center - (size.width || 0) / 2, size.width || 0, box, pad), bottomEdge - (size.height || 0));
-  }
-
-  function placeCenteredBelow(el, size, center, topEdge, box, pad) {
-    if (!el) return;
-    placeByLeftTop(el, clampLeftInBox(center - (size.width || 0) / 2, size.width || 0, box, pad), topEdge);
-  }
 
   
   function renderLabels(map) {
@@ -31870,96 +31834,6 @@ function concealedKongOwnerOfMeld(meld) {
     };
   }
 
-  function scoreCustomTileImportStrictStraightBoundaryLine(data, maps, w, h, mode, fixed, spanStart, spanEnd) {
-    const limit = mode === 'vertical' ? w - 1 : h - 1;
-    const pos = Math.max(0, Math.min(limit, Math.round(fixed)));
-    const axisMax = mode === 'vertical' ? h - 1 : w - 1;
-    const start = Math.max(0, Math.min(axisMax, Math.round(Math.min(spanStart, spanEnd))));
-    const end = Math.max(start, Math.min(axisMax, Math.round(Math.max(spanStart, spanEnd))));
-    const span = Math.max(1, end - start + 1);
-    const boundarySignal = new Uint8Array(span);
-    const cleanSignal = new Uint8Array(span);
-    const darkSignal = new Uint8Array(span);
-    let total = 0, edge = 0, clean = 0, chroma = 0, score = 0;
-
-    for (let t = start, offset = 0; t <= end; t += 1, offset += 1) {
-      const x = mode === 'vertical' ? pos : t;
-      const y = mode === 'vertical' ? t : pos;
-      const idx = y * w + x;
-      const p = idx * 4;
-      if (data[p + 3] < 16) continue;
-      total += 1;
-      const r = data[p] || 0, g = data[p + 1] || 0, b = data[p + 2] || 0;
-      const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-      const sat = mx - mn;
-      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-      const prevIdx = mode === 'vertical' ? (x > 0 ? idx - 1 : idx) : (y > 0 ? idx - w : idx);
-      const nextIdx = mode === 'vertical' ? (x + 1 < w ? idx + 1 : idx) : (y + 1 < h ? idx + w : idx);
-      const grad = Math.abs(customTileImportPixelLuma(data, nextIdx) - customTileImportPixelLuma(data, prevIdx));
-      const oriented = mode === 'vertical' ? (maps && maps.vLine && maps.vLine[idx]) : (maps && maps.hLine && maps.hLine[idx]);
-      const neutral = maps && maps.neutral && maps.neutral[idx];
-      const black = maps && maps.blackFrame && maps.blackFrame[idx];
-      const binaryDark = maps && maps.binaryDark && maps.binaryDark[idx];
-      const binaryOriented = mode === 'vertical' ? (maps && maps.binaryVLine && maps.binaryVLine[idx]) : (maps && maps.binaryHLine && maps.binaryHLine[idx]);
-      const coloredInk = sat >= 62 && lum >= 38 && lum <= 246;
-      const darkLike = !!binaryDark || !!black || lum <= 148 || (coloredInk && lum <= 226);
-      const boundary = !!binaryOriented || (!!binaryDark && grad >= 4) || !!oriented || !!black || (!!neutral && grad >= 4.2) || (sat <= 54 && lum >= 24 && lum <= 245 && grad >= 3.8);
-      const cleanBoundary = boundary && !coloredInk && (sat <= 70 || !!black || !!neutral);
-      if (darkLike) darkSignal[offset] = 1;
-      if (coloredInk) chroma += 1;
-      if (boundary) {
-        boundarySignal[offset] = 1;
-        edge += 1;
-        score += 0.35 + Math.min(1.15, grad / 48) + (binaryOriented ? 0.48 : 0) + (black ? 0.34 : 0) + (neutral ? 0.18 : 0) + (binaryDark ? 0.10 : 0);
-        if (cleanBoundary) {
-          cleanSignal[offset] = 1;
-          clean += 1;
-        }
-      }
-    }
-
-    const closeGap = Math.max(1, Math.round(span * 0.014));
-    const boundarySummary = summarizeCustomTileImportLineAlternation(boundarySignal, span, closeGap);
-    const cleanSummary = summarizeCustomTileImportLineAlternation(cleanSignal, span, closeGap);
-    const darkSummary = summarizeCustomTileImportLineAlternation(darkSignal, span, Math.max(1, Math.round(span * 0.006)));
-    const runRatio = boundarySummary.bestRunRatio;
-    const edgeRatio = edge / span;
-    const cleanRatio = clean / span;
-    const chromaRatio = chroma / span;
-    const alternatingPenalty = Math.max(0, darkSummary.transitionDensity - 0.055) * 8.2
-      + Math.max(0, darkSummary.runCount - Math.max(4, Math.round(span / 30))) * 0.13;
-    const fragmentPenalty = Math.max(0, boundarySummary.runCount - 4) * 0.12
-      + Math.max(0, boundarySummary.fragmentRatio - 0.20) * 0.72
-      + boundarySummary.shortRunRatio * 0.22;
-    const chromaPenalty = chromaRatio * 1.18;
-    const coverageBonus = boundarySummary.thirdCoverageRatio * 0.46 + cleanSummary.thirdCoverageRatio * 0.22;
-    const lineScore = score / span
-      + runRatio * 1.45
-      + edgeRatio * 0.46
-      + cleanRatio * 0.32
-      + coverageBonus
-      - chromaPenalty
-      - alternatingPenalty
-      - fragmentPenalty;
-    return {
-      score: Math.max(0, lineScore),
-      runRatio,
-      bestRunRatio: runRatio,
-      edgeRatio,
-      cleanRatio,
-      chromaRatio,
-      fragmentRatio: boundarySummary.fragmentRatio,
-      runCount: boundarySummary.runCount,
-      transitionDensity: boundarySummary.transitionDensity,
-      darkRunCount: darkSummary.runCount,
-      darkTransitionDensity: darkSummary.transitionDensity,
-      thirdCoverageRatio: boundarySummary.thirdCoverageRatio,
-      cleanRunRatio: cleanSummary.bestRunRatio
-    };
-  }
-
-
-
   function customTileImportRawColorPixelMetrics(data, w, h) {
     const total = Math.max(0, w * h);
     const lum = new Float32Array(total);
@@ -33067,35 +32941,6 @@ function concealedKongOwnerOfMeld(meld) {
 
 
 
-  function buildCustomTileImportBlankTableOffsetProfile(data, maps, w, h, slots, mode, limit) {
-    const len = Math.max(8, Math.round(limit || 0));
-    const profile = new Float32Array(len);
-    const counts = new Uint16Array(len);
-    const input = (Array.isArray(slots) ? slots : []).filter(slot => slot && slot.w > 4 && slot.h > 4);
-    for (const slot of input) {
-      const slotLen = mode === 'vertical' ? slot.w : slot.h;
-      const scale = slotLen > 1 && len > 1 ? (slotLen - 1) / (len - 1) : 1;
-      for (let off = 0; off < len; off += 1) {
-        const fixed = mode === 'vertical' ? Math.round(slot.x + off * scale) : Math.round(slot.y + off * scale);
-        const spanStart = mode === 'vertical' ? Math.round(slot.y + slot.h * 0.07) : Math.round(slot.x + slot.w * 0.07);
-        const spanEnd = mode === 'vertical' ? Math.round(slot.y + slot.h * 0.93) : Math.round(slot.x + slot.w * 0.93);
-        const m = scoreCustomTileImportBlankTableBoundaryLine(data, maps, w, h, mode, fixed, spanStart, spanEnd);
-        const continuity = Math.max(m.runRatio || 0, m.cleanRunRatio || 0);
-        const clean = m.cleanRatio || 0;
-        const chromaPenalty = Math.max(0, m.chromaRatio || 0) * 1.08;
-        const transitionPenalty = Math.max(0, (m.darkTransitionDensity || m.transitionDensity || 0) - 0.055) * 5.8;
-        const runPenalty = Math.max(0, (m.darkRunCount || 0) - 6) * 0.06;
-        const innerNoisePenalty = Math.max(0, (m.fragmentRatio || 0) - 0.18) * 0.48;
-        const coverageBonus = Math.max(0, m.thirdCoverageRatio || 0) * 0.22;
-        const raw = Math.max(0, (m.score || 0) + continuity * 1.08 + clean * 0.55 + coverageBonus - chromaPenalty - transitionPenalty - runPenalty - innerNoisePenalty);
-        profile[off] += raw;
-        counts[off] += 1;
-      }
-    }
-    for (let i = 0; i < len; i += 1) profile[i] = counts[i] ? profile[i] / counts[i] : 0;
-    return smoothCustomTileImportProjectionProfile(profile, Math.max(1, Math.round(len * 0.010)));
-  }
-
   function scoreCustomTileImportBlankTableBoundaryLine(data, maps, w, h, mode, fixed, spanStart, spanEnd) {
     const limit = mode === 'vertical' ? w - 1 : h - 1;
     const pos = Math.max(0, Math.min(limit, Math.round(fixed)));
@@ -33183,33 +33028,6 @@ function concealedKongOwnerOfMeld(meld) {
   }
 
 
-  function collectCustomTileImportBlankTableOffsetPairs(profile, limit, minSize, maxSize) {
-    if (!profile || !profile.length || !(limit > 8)) return [];
-    const peaks = collectCustomTileImportBlankTableGroupedPeaks(profile);
-    const loSize = Math.max(4, Math.round(minSize || 0));
-    const hiSize = Math.max(loSize + 1, Math.round(maxSize || limit));
-    const pairs = [];
-    for (let i = 0; i < peaks.length; i += 1) {
-      for (let j = i + 1; j < peaks.length; j += 1) {
-        const left = peaks[i];
-        const right = peaks[j];
-        const size = right.pos - left.pos + 1;
-        if (size < loSize || size > hiSize) continue;
-        const leftMargin = left.pos / Math.max(1, limit - 1);
-        const rightMargin = (limit - 1 - right.pos) / Math.max(1, limit - 1);
-        const marginRatio = Math.min(leftMargin, rightMargin);
-        const expectedEdgeBias = Math.min(0.32, marginRatio * 2.6);
-        const balance = 1 - Math.min(1, Math.abs(left.score - right.score) / Math.max(0.001, left.score + right.score));
-        const duplicatePenalty = Math.max(0, (left.width || 1) - 2) * 0.025 + Math.max(0, (right.width || 1) - 2) * 0.025;
-        const tooClosePenalty = marginRatio < 0.006 ? 0.42 : (marginRatio < 0.016 ? 0.18 : 0);
-        const score = left.score + right.score + balance * 0.20 + expectedEdgeBias - duplicatePenalty - tooClosePenalty;
-        pairs.push({ left: left.pos, right: right.pos, size, score, marginRatio, tooClosePenalty, leftPeak: left, rightPeak: right });
-      }
-    }
-    pairs.sort((a, b) => b.score - a.score);
-    return pairs.slice(0, 14);
-  }
-
   function collectCustomTileImportBlankTableGroupedPeaks(profile) {
     let max = 0;
     for (let i = 0; i < profile.length; i += 1) max = Math.max(max, profile[i] || 0);
@@ -33252,105 +33070,6 @@ function concealedKongOwnerOfMeld(meld) {
     selected.sort((a, b) => a.pos - b.pos);
     return selected;
   }
-
-  function snapCustomTileImportBlankTableRectToExactBoundary(data, maps, w, h, slot, rect) {
-    if (!slot || !rect) return null;
-    const maxDx = Math.max(1, Math.round(rect.w * 0.012));
-    const maxDy = Math.max(1, Math.round(rect.h * 0.012));
-    let best = null;
-    for (let dy = -maxDy; dy <= maxDy; dy += 1) {
-      for (let dx = -maxDx; dx <= maxDx; dx += 1) {
-        const candidate = { x: rect.x + dx, y: rect.y + dy, w: rect.w, h: rect.h };
-        if (candidate.x < slot.x - slot.w * 0.08 || candidate.x + candidate.w > slot.x + slot.w * 1.08 || candidate.y < slot.y - slot.h * 0.08 || candidate.y + candidate.h > slot.y + slot.h * 1.08) continue;
-        const score = scoreCustomTileImportSameSizeRectBorderFit(data, maps, w, h, candidate)
-          - (Math.abs(dx) / Math.max(1, maxDx) + Math.abs(dy) / Math.max(1, maxDy)) * 0.018;
-        if (!best || score > best.score) best = Object.assign({ score }, candidate);
-      }
-    }
-    if (!best) return null;
-    return { x: Math.round(best.x), y: Math.round(best.y), w: rect.w, h: rect.h };
-  }
-
-
-
-  function collectCustomTileImportAbsBoundaryPeaks(data, maps, w, h, mode, fixedStart, fixedEnd, spanStart, spanEnd) {
-    const a0 = Math.max(0, Math.round(Math.min(fixedStart, fixedEnd)));
-    const a1 = Math.max(a0, Math.round(Math.max(fixedStart, fixedEnd)));
-    const maxA = mode === 'vertical' ? w - 1 : h - 1;
-    const start = Math.max(0, Math.min(maxA, a0));
-    const end = Math.max(start, Math.min(maxA, a1));
-    const len = end - start + 1;
-    if (len <= 2) return [];
-    const profile = new Float32Array(len);
-    for (let i = 0; i < len; i += 1) {
-      const fixed = start + i;
-      const m = scoreCustomTileImportBlankTableBoundaryLine(data, maps, w, h, mode, fixed, spanStart, spanEnd);
-      const continuity = Math.max(m.runRatio || 0, m.cleanRunRatio || 0);
-      const clean = m.cleanRatio || 0;
-      const chromaPenalty = Math.max(0, m.chromaRatio || 0) * 1.72;
-      const transitionPenalty = Math.max(0, (m.darkTransitionDensity || m.transitionDensity || 0) - 0.055) * 7.2;
-      const runPenalty = Math.max(0, (m.darkRunCount || 0) - Math.max(5, Math.round(Math.max(1, Math.abs(spanEnd - spanStart) + 1) / 28))) * 0.09;
-      const fragmentPenalty = Math.max(0, m.fragmentRatio || 0) * 0.18;
-      const coverageBonus = Math.max(0, m.thirdCoverageRatio || 0) * 0.34;
-      profile[i] = Math.max(0, (m.score || 0) + continuity * 1.55 + clean * 0.86 + coverageBonus - chromaPenalty - transitionPenalty - runPenalty - fragmentPenalty);
-    }
-    const smoothed = smoothCustomTileImportProjectionProfile(profile, Math.max(1, Math.round(len * 0.006)));
-    return collectCustomTileImportBlankTableGroupedPeaks(smoothed).map(p => ({
-      pos: start + p.pos,
-      start: start + p.start,
-      end: start + p.end,
-      width: p.width,
-      score: p.score
-    }));
-  }
-
-  function chooseCustomTileImportBoundaryPairAroundCenter(peaks, center, expectedSize, minSize, maxSize, strictSize) {
-    if (!Array.isArray(peaks) || !peaks.length || !Number.isFinite(center)) return null;
-    const lo = Math.max(4, Math.round(minSize || 0));
-    const hi = Math.max(lo + 1, Math.round(maxSize || lo + 1));
-    const expected = Math.max(1, Number(strictSize || expectedSize || ((lo + hi) / 2)));
-    let best = null;
-    for (let i = 0; i < peaks.length; i += 1) {
-      for (let j = i + 1; j < peaks.length; j += 1) {
-        const left = peaks[i].pos;
-        const right = peaks[j].pos;
-        if (!(left < center && center < right)) continue;
-        const size = right - left + 1;
-        if (size < lo || size > hi) continue;
-        if (strictSize && Math.abs(size - strictSize) > Math.max(3, strictSize * 0.18)) continue;
-        const leftGap = center - left;
-        const rightGap = right - center;
-        if (leftGap < size * 0.22 || rightGap < size * 0.22) continue;
-        const sizePenalty = Math.abs(size - expected) / expected;
-        const balancePenalty = Math.abs(leftGap - rightGap) / Math.max(1, size);
-        const centerPenalty = Math.abs((left + right) / 2 - center) / Math.max(1, size);
-        const closeDoublePenalty = Math.max(0, (peaks[i].width || 1) - 3) * 0.012 + Math.max(0, (peaks[j].width || 1) - 3) * 0.012;
-        const score = (peaks[i].score || 0) + (peaks[j].score || 0) - sizePenalty * 1.35 - balancePenalty * 0.52 - centerPenalty * 0.38 - closeDoublePenalty;
-        if (!best || score > best.score) best = { left, right, size, score, leftPeak: peaks[i], rightPeak: peaks[j] };
-      }
-    }
-    return best;
-  }
-
-  function snapCustomTileImportRowwiseSameSizeRectToLineCenter(data, maps, w, h, slot, rect, xPeaks, yPair, commonW, commonH) {
-    if (!slot || !rect) return null;
-    const maxDx = Math.max(1, Math.round(commonW * 0.035));
-    const maxDy = Math.max(1, Math.round(commonH * 0.020));
-    let best = null;
-    for (let dy = -maxDy; dy <= maxDy; dy += 1) {
-      for (let dx = -maxDx; dx <= maxDx; dx += 1) {
-        const candidate = { x: Math.round(rect.x + dx), y: Math.round(rect.y + dy), w: rect.w, h: rect.h };
-        if (candidate.x < slot.x - slot.w * 0.14 || candidate.x + candidate.w > slot.x + slot.w * 1.14 || candidate.y < slot.y - slot.h * 0.14 || candidate.y + candidate.h > slot.y + slot.h * 1.14) continue;
-        const score = scoreCustomTileImportSameSizeRectBorderFit(data, maps, w, h, candidate)
-          - Math.abs(dx) / Math.max(1, maxDx) * 0.025
-          - Math.abs(dy) / Math.max(1, maxDy) * 0.018;
-        if (!best || score > best.score) best = Object.assign({ score }, candidate);
-      }
-    }
-    return best ? { x: best.x, y: best.y, w: rect.w, h: rect.h } : null;
-  }
-
-
 
   function smoothCustomTileImportProjectionProfile(profile, radius) {
     const out = new Float32Array(profile.length);
@@ -33395,31 +33114,6 @@ function concealedKongOwnerOfMeld(meld) {
     }
     for (let i = 0; i < len; i += 1) profile[i] = counts[i] ? profile[i] / counts[i] : 0;
     return smoothCustomTileImportProjectionProfile(profile, Math.max(1, Math.round(len * 0.012)));
-  }
-
-  function collectCustomTileImportRegularGapOffsetPairs(profile, limit, minSize, maxSize) {
-    if (!profile || !profile.length || !(limit > 8)) return [];
-    const leftPeaks = collectCustomTileImportRegularGapPeaks(profile, 0, Math.round((limit - 1) * 0.50));
-    const rightPeaks = collectCustomTileImportRegularGapPeaks(profile, Math.round((limit - 1) * 0.50), limit - 1);
-    const pairs = [];
-    const loSize = Math.max(4, minSize || 0);
-    const hiSize = Math.max(loSize + 1, maxSize || limit);
-    for (const l of leftPeaks) {
-      for (const r of rightPeaks) {
-        if (r.pos <= l.pos) continue;
-        const size = r.pos - l.pos + 1;
-        if (size < loSize || size > hiSize) continue;
-        const nearLeftEdge = l.pos / Math.max(1, limit - 1);
-        const nearRightEdge = (limit - 1 - r.pos) / Math.max(1, limit - 1);
-        const marginRatio = Math.min(nearLeftEdge, nearRightEdge);
-        const extremePenalty = marginRatio < 0.012 ? 0.36 : (marginRatio < 0.025 ? 0.14 : 0);
-        const pairBalance = 1 - Math.min(1, Math.abs(l.score - r.score) / Math.max(0.001, l.score + r.score));
-        const score = l.score + r.score + pairBalance * 0.14 + Math.min(0.18, marginRatio * 2.4) - extremePenalty;
-        pairs.push({ left: l.pos, right: r.pos, size, score, marginRatio, leftPeak: l, rightPeak: r });
-      }
-    }
-    pairs.sort((a, b) => b.score - a.score);
-    return pairs.slice(0, 10);
   }
 
   function collectCustomTileImportRegularGapPeaks(profile, from, to) {
@@ -33612,161 +33306,6 @@ function concealedKongOwnerOfMeld(meld) {
 
 
 
-  function buildCustomTileImportLockedEqualRowGridRects(data, maps, w, h, minW, maxW, minH, maxH, yGridCandidates, verticalCount, horizontalCount) {
-    const totalExpected = IMPORT_TILE_CODES.flat().length;
-    if (!data || !maps || !w || !h || !Array.isArray(yGridCandidates) || !yGridCandidates.length) return [];
-    let best = null;
-    for (const yGrid of yGridCandidates) {
-      if (!yGrid || !Array.isArray(yGrid.lines) || yGrid.lines.length !== IMPORT_ROW_COUNTS.length + 1) continue;
-      const rowBands = [];
-      let badBand = false;
-      for (let rowIndex = 0; rowIndex < IMPORT_ROW_COUNTS.length; rowIndex += 1) {
-        const top = Math.round(yGrid.lines[rowIndex]);
-        const bottom = Math.round(yGrid.lines[rowIndex + 1]);
-        const rowH = bottom - top + 1;
-        if (rowH < minH * 0.56 || rowH > maxH * 1.34) { badBand = true; break; }
-        const expected = IMPORT_ROW_COUNTS[rowIndex];
-        const profile = buildCustomTileImportUniformRowXBoundaryProfile(data, maps, w, h, top, bottom);
-        const extent = estimateCustomTileImportStrictBinaryRowXExtent(data, maps, w, h, top, bottom, expected, minW, maxW);
-        const seed = findCustomTileImportBestUniformRowArithmeticGrid(profile, extent, expected, rowH, minW, maxW, w);
-        rowBands.push({ rowIndex, expected, top, bottom, rowH, profile, extent, seed });
-      }
-      if (badBand || rowBands.length !== IMPORT_ROW_COUNTS.length) continue;
-
-      const heightBase = medianImportNumber(rowBands.map(row => row.rowH).filter(value => Number.isFinite(value) && value > 0)) || 0;
-      if (!(heightBase > 0)) continue;
-      const widthSeeds = [];
-      for (const row of rowBands) {
-        if (row.extent && Number.isFinite(row.extent.left) && Number.isFinite(row.extent.right)) {
-          const span = Math.max(1, row.extent.right - row.extent.left + 1);
-          widthSeeds.push(span / Math.max(1, row.expected));
-        }
-        if (row.seed && Number.isFinite(row.seed.step) && row.seed.step > 0) widthSeeds.push(row.seed.step);
-      }
-      const ratioGuesses = [1.02, 1.10, 1.18, 1.26, 1.34, 1.42, 1.52, 1.64, 1.78];
-      for (const ratio of ratioGuesses) widthSeeds.push(heightBase / ratio);
-      const medianWidthSeed = medianImportNumber(widthSeeds.filter(value => Number.isFinite(value) && value > 0)) || heightBase / 1.32;
-      const widthCandidates = [];
-      const pushWidthCandidate = value => {
-        const rounded = Math.round(value);
-        if (!Number.isFinite(rounded)) return;
-        if (rounded < Math.max(8, minW * 0.52) || rounded > Math.max(maxW * 1.22, minW + 2)) return;
-        for (let delta = -5; delta <= 5; delta += 1) {
-          const candidate = rounded + delta;
-          if (candidate >= Math.max(8, minW * 0.52) && candidate <= Math.max(maxW * 1.22, minW + 2) && !widthCandidates.includes(candidate)) widthCandidates.push(candidate);
-        }
-      };
-      pushWidthCandidate(medianWidthSeed);
-      for (const seed of widthSeeds) pushWidthCandidate(seed);
-      widthCandidates.sort((a, b) => Math.abs(a - medianWidthSeed) - Math.abs(b - medianWidthSeed) || a - b);
-      const heightCandidates = [];
-      const pushHeightCandidate = value => {
-        const rounded = Math.round(value);
-        if (!Number.isFinite(rounded)) return;
-        if (rounded < Math.max(10, minH * 0.52) || rounded > Math.max(maxH * 1.18, minH + 2)) return;
-        for (let delta = -3; delta <= 3; delta += 1) {
-          const candidate = rounded + delta;
-          if (candidate >= Math.max(10, minH * 0.52) && candidate <= Math.max(maxH * 1.18, minH + 2) && !heightCandidates.includes(candidate)) heightCandidates.push(candidate);
-        }
-      };
-      pushHeightCandidate(heightBase);
-      for (const row of rowBands) pushHeightCandidate(row.rowH);
-      heightCandidates.sort((a, b) => Math.abs(a - heightBase) - Math.abs(b - heightBase) || a - b);
-
-      for (const commonH of heightCandidates.slice(0, 11)) {
-        for (const commonW of widthCandidates.slice(0, 45)) {
-          const ratio = commonH / Math.max(1, commonW);
-          if (ratio < 0.78 || ratio > 2.62) continue;
-          const rowPlacements = [];
-          let failed = false;
-          for (const row of rowBands) {
-            const startFit = findCustomTileImportBestLockedEqualRowStart(row.profile, row.extent, row.seed, row.expected, commonW, w);
-            if (!startFit) { failed = true; break; }
-            const y = Math.max(0, Math.min(h - commonH, Math.round(row.top + (row.rowH - commonH) * 0.5)));
-            rowPlacements.push(Object.assign({ row, y }, startFit));
-          }
-          if (failed || rowPlacements.length !== IMPORT_ROW_COUNTS.length) continue;
-
-          const rects = [];
-          let sourceOrder = 0;
-          let totalLineScore = 0;
-          let totalUseful = 0;
-          for (const placement of rowPlacements) {
-            const row = placement.row;
-            const xStart = Math.round(placement.start);
-            for (let colIndex = 0; colIndex < row.expected; colIndex += 1) {
-              const rect = clampCustomTileImportGridRect({
-                x: Math.round(xStart + colIndex * commonW),
-                y: Math.round(placement.y),
-                w: Math.round(commonW),
-                h: Math.round(commonH)
-              }, w, h, Math.max(8, minW * 0.45), Math.max(maxW * 1.24, commonW + 2), Math.max(10, minH * 0.45), Math.max(maxH * 1.22, commonH + 2));
-              if (!rect || rect.w !== Math.round(commonW) || rect.h !== Math.round(commonH)) { failed = true; break; }
-              const borderScore = scoreCustomTileImportSameSizeRectBorderFit(data, maps, w, h, rect);
-              const contentScore = scoreCustomTileImportGridCellContent(data, maps, w, h, rect);
-              if (contentScore >= 0.0030) totalUseful += 1;
-              totalLineScore += borderScore;
-              rects.push(Object.assign(rect, {
-                frameScore: 7.8 + borderScore,
-                source: 'locked-equal-row-grid',
-                sourceRowIndex: row.rowIndex,
-                sourceColIndex: colIndex,
-                sourceOrder,
-                lockedCommonW: commonW,
-                lockedCommonH: commonH
-              }));
-              sourceOrder += 1;
-            }
-            if (failed) break;
-          }
-          if (failed || rects.length !== totalExpected) continue;
-          if (totalUseful < Math.max(12, Math.round(totalExpected * 0.30))) continue;
-          const avgLineScore = totalLineScore / Math.max(1, rects.length);
-          const startSpreadPenalty = customTileImportLockedRowStartSpreadPenalty(rowPlacements, commonW);
-          const supportScore = rowPlacements.reduce((sum, p) => sum + (p.score || 0), 0) / Math.max(1, rowPlacements.length);
-          const ratioScore = 1 - Math.min(1, Math.abs(ratio - 1.34) / 0.78);
-          const extentScore = rowPlacements.reduce((sum, p) => sum + (p.extentScore || 0), 0) / Math.max(1, rowPlacements.length);
-          const score = (yGrid.score || 0) + supportScore * 2.2 + avgLineScore * 0.42 + ratioScore * 1.12 + extentScore + totalUseful / totalExpected * 1.35 - startSpreadPenalty;
-          if (!best || score > best.score) {
-            best = { score, rects, yGrid, commonW, commonH, ratio, totalUseful, rowPlacements, verticalCount, horizontalCount };
-          }
-        }
-      }
-    }
-    if (!best || !best.rects || best.rects.length !== totalExpected) return [];
-    if (typeof window !== 'undefined') {
-      window.__twCustomTileImportStrictBinaryLengthStats = {
-        vertical: {
-          axis: 'locked-equal-row-grid',
-          dominantSize: Math.round(best.commonW || 0),
-          dominantCount: best.rects.length,
-          candidates: Number.isFinite(best.verticalCount) ? best.verticalCount : 0,
-          groups: best.rowPlacements.map(p => ({
-            row: p.row.rowIndex + 1,
-            size: Math.round(best.commonW || 0),
-            count: p.row.expected,
-            start: Math.round(p.start || 0),
-            end: Math.round((p.start || 0) + (best.commonW || 0) * p.row.expected),
-            score: Math.round((p.score || 0) * 100) / 100
-          }))
-        },
-        horizontal: {
-          axis: 'locked-equal-row-grid',
-          dominantSize: Math.round(best.commonH || 0),
-          dominantCount: 5,
-          candidates: Number.isFinite(best.horizontalCount) ? best.horizontalCount : 0,
-          gridLines: best.yGrid.lines.slice(),
-          groups: [{ size: Math.round(best.commonH || 0), count: 5, score: Math.round((best.yGrid.score || 0) * 100) / 100 }]
-        },
-        ratio: Math.round((best.ratio || 0) * 1000) / 1000,
-        usefulSlots: best.totalUseful,
-        rowwise: true,
-        lockedEqualGrid: true
-      };
-    }
-    return best.rects.sort((a, b) => ((a.sourceOrder || 0) - (b.sourceOrder || 0)) || (a.y - b.y) || (a.x - b.x));
-  }
-
   function findCustomTileImportBestLockedEqualRowStart(profile, rowExtent, rowSeed, expectedCount, commonW, axisLimit) {
     if (!profile || !profile.length || !expectedCount || !(commonW > 0)) return null;
     const limit = Math.max(1, Math.round(axisLimit || profile.length));
@@ -33925,149 +33464,6 @@ function concealedKongOwnerOfMeld(meld) {
 
 
 
-  function buildCustomTileImportStrictBinaryDirectRowBoundaryProfile(data, maps, w, h, top, bottom) {
-    const out = [];
-    out.profile = new Float32Array(Math.max(0, w || 0));
-    out.rawProfile = new Float32Array(Math.max(0, w || 0));
-    out.bestScore = 0;
-    out.hitCounts = new Uint16Array(Math.max(0, w || 0));
-    out.bestRuns = new Uint16Array(Math.max(0, w || 0));
-    out.runCounts = new Uint16Array(Math.max(0, w || 0));
-    if (!data || !w || !h) return out;
-    const y0 = Math.max(0, Math.min(h - 1, Math.round(Math.min(top, bottom))));
-    const y1 = Math.max(y0, Math.min(h - 1, Math.round(Math.max(top, bottom))));
-    const span = Math.max(1, y1 - y0 + 1);
-    const raw = new Float32Array(w);
-    const hitCounts = new Uint16Array(w);
-    const bestRuns = new Uint16Array(w);
-    const runCounts = new Uint16Array(w);
-    const gapLimit = Math.max(1, Math.min(5, Math.round(span * 0.026)));
-    const weakRun = Math.max(3, Math.round(span * 0.18));
-    const thirdA = y0 + Math.floor(span / 3);
-    const thirdB = y0 + Math.floor(span * 2 / 3);
-    const lumAt = (x, y, fallbackIdx) => {
-      if (x < 0 || x >= w || y < 0 || y >= h) {
-        const fp = Math.max(0, Math.min(data.length - 4, (fallbackIdx || 0) * 4));
-        return 0.299 * (data[fp] || 0) + 0.587 * (data[fp + 1] || 0) + 0.114 * (data[fp + 2] || 0);
-      }
-      const p = (y * w + x) * 4;
-      return 0.299 * (data[p] || 0) + 0.587 * (data[p + 1] || 0) + 0.114 * (data[p + 2] || 0);
-    };
-    for (let x = 0; x < w; x += 1) {
-      let hits = 0;
-      let weighted = 0;
-      let run = 0;
-      let gap = 0;
-      let bestRun = 0;
-      let runCount = 0;
-      let topHits = 0;
-      let midHits = 0;
-      let bottomHits = 0;
-      for (let y = y0; y <= y1; y += 1) {
-        const idx = y * w + x;
-        const p = idx * 4;
-        const a = data[p + 3] || 0;
-        if (a < 16) {
-          if (run > 0 && gap < gapLimit) gap += 1;
-          continue;
-        }
-        const r = data[p] || 0;
-        const g = data[p + 1] || 0;
-        const b = data[p + 2] || 0;
-        const hi = Math.max(r, g, b);
-        const lo = Math.min(r, g, b);
-        const sat = hi - lo;
-        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-        const l1 = lumAt(x - 1, y, idx);
-        const r1 = lumAt(x + 1, y, idx);
-        const l2 = lumAt(x - 2, y, idx);
-        const r2 = lumAt(x + 2, y, idx);
-        const edgeX = Math.max(Math.abs(r1 - l1), Math.abs(r2 - l2));
-        const around = (l1 + r1 + l2 + r2 + lumAt(x - 3, y, idx) + lumAt(x + 3, y, idx)) / 6;
-        const locallyDarker = lum + Math.max(5, edgeX * 0.18) < around;
-        const strong = !!((maps && maps.binaryVLine && maps.binaryVLine[idx]) || (maps && maps.vLine && maps.vLine[idx]));
-        const neutral = !!(maps && maps.neutral && maps.neutral[idx]);
-        const blackFrame = !!(maps && maps.blackFrame && maps.blackFrame[idx]);
-        const dark = !!(maps && maps.binaryDark && maps.binaryDark[idx]);
-        const lowSat = sat <= 118;
-        const faintGreyEdge = lowSat && lum <= 238 && (locallyDarker || edgeX >= 5.5);
-        const on = strong || neutral || blackFrame || (dark && lowSat) || faintGreyEdge;
-        if (on) {
-          hits += 1;
-          if (y < thirdA) topHits += 1;
-          else if (y < thirdB) midHits += 1;
-          else bottomHits += 1;
-          weighted += (strong ? 1.42 : 0) + (neutral ? 1.08 : 0) + (blackFrame ? 0.88 : 0) + (dark && lowSat ? 0.48 : 0) + (faintGreyEdge ? 0.62 : 0) + Math.min(0.42, edgeX / 42);
-          run += 1 + gap;
-          gap = 0;
-          if (run > bestRun) bestRun = run;
-        } else if (run > 0 && gap < gapLimit) {
-          gap += 1;
-        } else {
-          const realRun = Math.max(0, run - gap);
-          if (realRun >= weakRun) runCount += 1;
-          run = 0;
-          gap = 0;
-        }
-      }
-      const realRun = Math.max(0, run - gap);
-      if (realRun >= weakRun) runCount += 1;
-      bestRun = Math.min(span, bestRun);
-      const topRatio = topHits / Math.max(1, thirdA - y0);
-      const midRatio = midHits / Math.max(1, thirdB - thirdA);
-      const bottomRatio = bottomHits / Math.max(1, y1 - thirdB + 1);
-      const minThird = Math.min(topRatio, midRatio, bottomRatio);
-      const thirds = (topRatio > 0.10 ? 1 : 0) + (midRatio > 0.10 ? 1 : 0) + (bottomRatio > 0.10 ? 1 : 0);
-      const hitRatio = hits / span;
-      const runRatio = bestRun / span;
-      raw[x] = runRatio * 4.80 + hitRatio * 1.16 + minThird * 2.45 + thirds * 0.34 + weighted / Math.max(1, span) * 1.05 + Math.min(0.42, runCount * 0.07);
-      hitCounts[x] = Math.min(65535, hits);
-      bestRuns[x] = Math.min(65535, Math.round(bestRun));
-      runCounts[x] = Math.min(65535, runCount);
-    }
-    const smooth = new Float32Array(w);
-    let bestScore = 0;
-    for (let x = 0; x < w; x += 1) {
-      let sum = raw[x] * 1.62;
-      let weight = 1.62;
-      if (x > 0) { sum += raw[x - 1] * 0.92; weight += 0.92; }
-      if (x + 1 < w) { sum += raw[x + 1] * 0.92; weight += 0.92; }
-      if (x > 1) { sum += raw[x - 2] * 0.44; weight += 0.44; }
-      if (x + 2 < w) { sum += raw[x + 2] * 0.44; weight += 0.44; }
-      if (x > 2) { sum += raw[x - 3] * 0.16; weight += 0.16; }
-      if (x + 3 < w) { sum += raw[x + 3] * 0.16; weight += 0.16; }
-      smooth[x] = sum / weight;
-      if (smooth[x] > bestScore) bestScore = smooth[x];
-    }
-    out.profile = smooth;
-    out.rawProfile = raw;
-    out.bestScore = bestScore;
-    out.hitCounts = hitCounts;
-    out.bestRuns = bestRuns;
-    out.runCounts = runCounts;
-    return out;
-  }
-
-  function sampleCustomTileImportStrictBinaryDirectProfilePeak(profile, center, radius, previousPos, nextLimit) {
-    if (!profile || !profile.length) return null;
-    const safeRadius = Math.max(0, Math.round(radius || 0));
-    const start = Math.max(0, Math.round(center) - safeRadius, Number.isFinite(previousPos) ? Math.round(previousPos + 1) : 0);
-    const end = Math.min(profile.length - 1, Math.round(center) + safeRadius, Number.isFinite(nextLimit) ? Math.round(nextLimit) : profile.length - 1);
-    let best = -1;
-    let bestScore = -Infinity;
-    for (let x = start; x <= end; x += 1) {
-      const d = Math.abs(x - center);
-      const score = (profile[x] || 0) - d / Math.max(1, safeRadius + 1) * 0.22;
-      if (score > bestScore) {
-        bestScore = score;
-        best = x;
-      }
-    }
-    return best >= 0 ? { pos: best, score: Math.max(0, profile[best] || 0), distance: Math.abs(best - center) } : null;
-  }
-
-
-
   function snapCustomTileImportStrictBinaryProjectionTarget(profile, target, tolerance, bestProfile, previousPos) {
     if (!profile || !profile.length) return null;
     const center = Math.round(target);
@@ -34088,100 +33484,6 @@ function concealedKongOwnerOfMeld(meld) {
   }
 
 
-  function collectCustomTileImportStrictBinaryRegularGridCandidates(lines, expectedCount, minStep, maxStep, axisLimit, spanLimit, axisName, maxResults) {
-    const input = (Array.isArray(lines) ? lines : [])
-      .filter(line => line && Number.isFinite(line.pos))
-      .map(line => Object.assign({}, line, { pos: Math.round(line.pos) }))
-      .sort((a, b) => (a.pos - b.pos) || ((b.score || 0) - (a.score || 0)));
-    if (input.length < expectedCount || expectedCount < 2) return [];
-
-    const merged = [];
-    const mergeGap = Math.max(1, Math.round(Math.min(5, Math.max(minStep, 1) * 0.035)));
-    for (const line of input) {
-      const prev = merged[merged.length - 1];
-      if (prev && Math.abs(line.pos - prev.pos) <= mergeGap) {
-        const prevQuality = customTileImportStrictBinaryRegularLineQuality(prev, spanLimit);
-        const lineQuality = customTileImportStrictBinaryRegularLineQuality(line, spanLimit);
-        if (lineQuality > prevQuality) merged[merged.length - 1] = line;
-      } else {
-        merged.push(line);
-      }
-    }
-    if (merged.length < expectedCount) return [];
-
-    const expectedIntervals = expectedCount - 1;
-    const loStep = Math.max(4, Number(minStep) || 4);
-    const hiStep = Math.max(loStep + 1, Number(maxStep) || loStep + 1);
-    const results = [];
-    const seen = new Set();
-    for (let a = 0; a < merged.length; a += 1) {
-      for (let b = a + expectedIntervals; b < merged.length; b += 1) {
-        const start = merged[a].pos;
-        const end = merged[b].pos;
-        const roughStep = (end - start) / expectedIntervals;
-        if (roughStep < loStep || roughStep > hiStep) continue;
-        const tolerance = Math.max(2, Math.min(16, Math.round(roughStep * 0.12)));
-        const selected = [];
-        let miss = 0;
-        let previousPos = -Infinity;
-        let distancePenalty = 0;
-        for (let k = 0; k < expectedCount; k += 1) {
-          const target = start + roughStep * k;
-          let bestLine = null;
-          let bestScore = -Infinity;
-          for (const line of merged) {
-            if (line.pos <= previousPos) continue;
-            const d = Math.abs(line.pos - target);
-            if (d > tolerance) continue;
-            const q = customTileImportStrictBinaryRegularLineQuality(line, spanLimit);
-            const score = q - d / Math.max(1, tolerance) * 1.35;
-            if (score > bestScore) {
-              bestScore = score;
-              bestLine = line;
-            }
-          }
-          if (!bestLine) {
-            miss += 1;
-            break;
-          }
-          selected.push(bestLine);
-          previousPos = bestLine.pos;
-          distancePenalty += Math.abs(bestLine.pos - target) / Math.max(1, tolerance);
-        }
-        if (miss || selected.length !== expectedCount) continue;
-        const key = selected.map(line => line.pos).join(',');
-        if (seen.has(key)) continue;
-        seen.add(key);
-
-        const intervals = [];
-        for (let k = 0; k < selected.length - 1; k += 1) intervals.push(selected[k + 1].pos - selected[k].pos);
-        const step = medianImportNumber(intervals) || roughStep;
-        if (step < loStep || step > hiStep) continue;
-        const avgDev = intervals.reduce((sum, value) => sum + Math.abs(value - step), 0) / Math.max(1, intervals.length);
-        const maxDev = Math.max.apply(null, intervals.map(value => Math.abs(value - step)));
-        if (avgDev > Math.max(2.2, step * 0.085) || maxDev > Math.max(4, step * 0.18)) continue;
-        const spanRatio = (selected[selected.length - 1].pos - selected[0].pos) / Math.max(1, axisLimit);
-        const lineQuality = selected.reduce((sum, line) => sum + customTileImportStrictBinaryRegularLineQuality(line, spanLimit), 0) / expectedCount;
-        const regularity = 1 - Math.min(1, avgDev / Math.max(1, step * 0.11));
-        const endpointQuality = (customTileImportStrictBinaryRegularLineQuality(selected[0], spanLimit) + customTileImportStrictBinaryRegularLineQuality(selected[selected.length - 1], spanLimit)) / 2;
-        const spanScore = Math.min(1.25, spanRatio * 1.55);
-        const score = lineQuality * 1.55 + regularity * 1.85 + endpointQuality * 0.36 + spanScore - distancePenalty / expectedCount * 0.32;
-        results.push({
-          axis: axisName || '',
-          lines: selected.map(line => line.pos),
-          step,
-          score,
-          regularity,
-          spanRatio,
-          lineQuality,
-          sourceLines: selected
-        });
-      }
-    }
-    results.sort((a, b) => b.score - a.score);
-    return results.slice(0, Math.max(1, maxResults || 12));
-  }
-
   function customTileImportStrictBinaryRegularLineQuality(line, spanLimit) {
     const safeSpan = Math.max(1, spanLimit || 1);
     const score = Math.max(0, Number(line && line.score) || 0);
@@ -34194,100 +33496,6 @@ function concealedKongOwnerOfMeld(meld) {
     return Math.log1p(score) * 0.38 + hitRatio * 1.05 + continuity * 3.15 + Math.min(0.36, runCount * 0.045);
   }
 
-
-  function collectCustomTileImportStrictBinaryLinePeaks(maps, w, h, mode, minLongRun) {
-    const vertical = mode === 'vertical';
-    const limit = vertical ? w : h;
-    const spanLimit = vertical ? h : w;
-    const mask = vertical ? maps.binaryVLine : maps.binaryHLine;
-    const dark = maps.binaryDark;
-    const profile = new Float32Array(limit);
-    const hitCounts = new Uint16Array(limit);
-    const runCounts = new Uint16Array(limit);
-    const bestRuns = new Uint16Array(limit);
-    const minRun = Math.max(3, Math.round(minLongRun || 8));
-    const shortRun = Math.max(3, Math.round(minRun * 0.30));
-
-    for (let fixed = 0; fixed < limit; fixed += 1) {
-      let run = 0;
-      let bestRun = 0;
-      let runs = 0;
-      let score = 0;
-      let hits = 0;
-      for (let t = 0; t < spanLimit; t += 1) {
-        const idx = vertical ? t * w + fixed : fixed * w + t;
-        const isLine = !!(mask && mask[idx]);
-        const isDark = !!(dark && dark[idx]);
-        if (isLine || isDark) {
-          hits += 1;
-          run += 1;
-          if (run > bestRun) bestRun = run;
-        } else {
-          if (run >= minRun) {
-            runs += 1;
-            score += run * 2.6 + Math.min(run, minRun * 2) * 0.9;
-          } else if (run >= shortRun) {
-            score += run * 0.18;
-          }
-          run = 0;
-        }
-      }
-      if (run >= minRun) {
-        runs += 1;
-        score += run * 2.6 + Math.min(run, minRun * 2) * 0.9;
-      } else if (run >= shortRun) {
-        score += run * 0.18;
-      }
-      profile[fixed] = score + hits * 0.025;
-      hitCounts[fixed] = Math.min(65535, hits);
-      runCounts[fixed] = Math.min(65535, runs);
-      bestRuns[fixed] = Math.min(65535, bestRun);
-    }
-
-    const values = Array.from(profile).filter(v => v > 0).sort((a, b) => a - b);
-    if (!values.length) return [];
-    const p70 = values[Math.floor(values.length * 0.70)] || 0;
-    const p86 = values[Math.floor(values.length * 0.86)] || 0;
-    const max = values[values.length - 1] || 0;
-    const threshold = Math.max(minRun * 1.08, p70 + (p86 - p70) * 0.55, max * 0.115);
-    if (!(threshold > 0)) return [];
-
-    const groups = [];
-    let start = -1;
-    let last = -1;
-    const joinGap = Math.max(1, Math.round(Math.min(5, minRun * 0.045)));
-    const closeMerge = Math.max(2, Math.round(Math.min(7, minRun * 0.075)));
-    for (let i = 0; i <= limit; i += 1) {
-      const active = i < limit && profile[i] >= threshold && bestRuns[i] >= shortRun;
-      if (active) {
-        if (start < 0) start = i;
-        last = i;
-      } else if (start >= 0) {
-        let j = i;
-        let canJoin = false;
-        for (let g = 1; g <= joinGap && i + g < limit; g += 1) {
-          if (profile[i + g] >= threshold && bestRuns[i + g] >= shortRun) { canJoin = true; j = i + g; break; }
-        }
-        if (canJoin) { i = j - 1; continue; }
-        const group = chooseCustomTileImportStrictBinaryPeakInRange(profile, hitCounts, runCounts, bestRuns, start, last);
-        if (group) groups.push(group);
-        start = -1;
-        last = -1;
-      }
-    }
-
-    groups.sort((a, b) => a.pos - b.pos);
-    const merged = [];
-    for (const g of groups) {
-      const prev = merged[merged.length - 1];
-      if (prev && g.pos - prev.pos <= closeMerge) {
-        if (g.score > prev.score || (g.score === prev.score && g.bestRun > prev.bestRun)) merged[merged.length - 1] = g;
-      } else {
-        merged.push(g);
-      }
-    }
-    return merged;
-  }
 
   function chooseCustomTileImportStrictBinaryPeakInRange(profile, hitCounts, runCounts, bestRuns, start, end) {
     if (start < 0 || end < start) return null;
@@ -34306,53 +33514,6 @@ function concealedKongOwnerOfMeld(meld) {
       bestRun: bestRuns[best] || 0
     };
   }
-
-
-
-  function scoreCustomTileImportStrictBinaryLineSpan(maps, w, h, mode, fixed, spanStart, spanEnd) {
-    const vertical = mode === 'vertical';
-    const fixedLimit = vertical ? w - 1 : h - 1;
-    const spanLimit = vertical ? h - 1 : w - 1;
-    const pos = Math.max(0, Math.min(fixedLimit, Math.round(fixed)));
-    const start = Math.max(0, Math.min(spanLimit, Math.round(Math.min(spanStart, spanEnd))));
-    const end = Math.max(start, Math.min(spanLimit, Math.round(Math.max(spanStart, spanEnd))));
-    const mask = vertical ? maps.binaryVLine : maps.binaryHLine;
-    const dark = maps.binaryDark;
-    let hits = 0;
-    let core = 0;
-    let run = 0;
-    let bestRun = 0;
-    let score = 0;
-    for (let t = start; t <= end; t += 1) {
-      const idx = vertical ? t * w + pos : pos * w + t;
-      const isOriented = !!(mask && mask[idx]);
-      const isDark = !!(dark && dark[idx]);
-      if (isOriented || isDark) {
-        hits += 1;
-        if (isOriented) core += 1;
-        run += 1;
-        if (run > bestRun) bestRun = run;
-        score += isOriented ? 1.6 : 0.7;
-      } else {
-        run = 0;
-      }
-    }
-    const span = Math.max(1, end - start + 1);
-    return {
-      score: score / span + bestRun / span * 2.2 + core / span * 0.65,
-      hitRatio: hits / span,
-      coreRatio: core / span,
-      runRatio: bestRun / span,
-      bestRun,
-      hits,
-      core
-    };
-  }
-
-
-
-
-
 
 
 
@@ -34424,29 +33585,6 @@ function concealedKongOwnerOfMeld(meld) {
     return (v0 + v1 + h0 + h1) / 4;
   }
 
-
-
-
-  function findCustomTileImportOuterCardBorderLine(data, maps, w, h, mode, from, to, spanStart, spanEnd, sideDir) {
-    const limit = mode === 'vertical' ? w - 1 : h - 1;
-    const lo = Math.max(0, Math.min(limit, Math.round(Math.min(from, to))));
-    const hi = Math.max(0, Math.min(limit, Math.round(Math.max(from, to))));
-    let best = { pos: NaN, score: 0 };
-    for (let pos = lo; pos <= hi; pos += 1) {
-      const m = scoreCustomTileImportStrongCardBorderLine(data, maps, w, h, mode, pos, spanStart, spanEnd);
-      const spanRatio = Math.max(m.runRatio || 0, Math.min(1, (m.darkRatio || 0) + (m.neutralRatio || 0) * 0.45));
-      if (spanRatio < 0.075 && (m.score || 0) < 0.09) continue;
-      const t = (pos - lo) / Math.max(1, hi - lo);
-      const outerBias = sideDir < 0 ? (1 - t) : t;
-      const darkBonus = (m.darkRatio || 0) * 0.72;
-      const runBonus = (m.runRatio || 0) * 0.54;
-      const chromaPenalty = (m.chromaRatio || 0) * 0.40;
-      const finalScore = (m.score || 0) + darkBonus + runBonus + outerBias * 0.035 - chromaPenalty;
-      if (finalScore > best.score) best = { pos, score: finalScore };
-    }
-    if (!Number.isFinite(best.pos) || best.score < 0.095) return { pos: NaN, score: 0 };
-    return { pos: refineCustomTileImportStrongCardBorderPeak(data, maps, w, h, mode, best.pos, spanStart, spanEnd), score: best.score };
-  }
 
 
 
@@ -34544,112 +33682,6 @@ function concealedKongOwnerOfMeld(meld) {
 
 
 
-  function buildCustomTileImportGridLineScores(data, maps, w, h) {
-    const v = new Float32Array(w);
-    const hor = new Float32Array(h);
-    const len = w * h;
-    const luma = new Float32Array(len);
-    const saturation = new Float32Array(len);
-    for (let i = 0, p = 0; i < len; i += 1, p += 4) {
-      const r = data[p] || 0;
-      const g = data[p + 1] || 0;
-      const b = data[p + 2] || 0;
-      luma[i] = 0.299 * r + 0.587 * g + 0.114 * b;
-      saturation[i] = Math.max(r, g, b) - Math.min(r, g, b);
-    }
-    for (let y = 0; y < h; y += 1) {
-      for (let x = 0; x < w; x += 1) {
-        const idx = y * w + x;
-        const p = idx * 4;
-        if (data[p + 3] < 16) continue;
-        const lum = luma[idx];
-        const sat = saturation[idx];
-        const lx0 = x > 0 ? luma[idx - 1] : lum;
-        const lx1 = x + 1 < w ? luma[idx + 1] : lum;
-        const ly0 = y > 0 ? luma[idx - w] : lum;
-        const ly1 = y + 1 < h ? luma[idx + w] : lum;
-        const gx = Math.abs(lx1 - lx0);
-        const gy = Math.abs(ly1 - ly0);
-        const neutralHit = !!(maps && maps.neutral && maps.neutral[idx]);
-        const blackHit = !!(maps && maps.blackFrame && maps.blackFrame[idx]);
-        const vHit = !!(maps && maps.vLine && maps.vLine[idx]);
-        const hHit = !!(maps && maps.hLine && maps.hLine[idx]);
-        const grayGrid = sat <= 72 && lum >= 70 && lum <= 252 && Math.max(gx, gy) >= 3.5;
-        const paleThinGrid = sat <= 42 && lum >= 138 && lum <= 248 && Math.max(gx, gy) >= 2.2;
-        const coloredFrame = sat <= 170 && lum >= 35 && lum <= 238 && Math.max(gx, gy) >= 5.0;
-        if (!(neutralHit || blackHit || vHit || hHit || grayGrid || paleThinGrid || coloredFrame)) continue;
-        const base = (blackHit ? 1.45 : 0) + (neutralHit ? 0.72 : 0) + (grayGrid ? 0.72 : 0) + (paleThinGrid ? 0.42 : 0) + (coloredFrame ? 0.34 : 0);
-        const verticalWeight = base + (vHit ? 1.65 : 0) + (gx >= gy * 0.46 ? 0.82 : 0);
-        const horizontalWeight = base + (hHit ? 1.65 : 0) + (gy >= gx * 0.46 ? 0.82 : 0);
-        if (verticalWeight > 0) v[x] += verticalWeight;
-        if (horizontalWeight > 0) hor[y] += horizontalWeight;
-      }
-    }
-    return {
-      v: smoothImportSeries(v, Math.max(1, Math.round(w * 0.0025))),
-      h: smoothImportSeries(hor, Math.max(1, Math.round(h * 0.0025)))
-    };
-  }
-
-  function findCustomTileImportRegularGridLines(score, expectedLines, minStep, maxStep) {
-    if (!score || !score.length || expectedLines < 2) return null;
-    const n = score.length;
-    const maxScore = Array.prototype.reduce.call(score, (m, v) => Math.max(m, v), 0);
-    if (!(maxScore > 0)) return null;
-    const threshold = Math.max(maxScore * 0.12, percentileCustomTileImportSeries(score, 0.90) * 0.64, 2.0);
-    const local = [];
-    for (let i = 1; i < n - 1; i += 1) {
-      if (score[i] >= threshold && score[i] >= score[i - 1] && score[i] >= score[i + 1]) local.push(i);
-    }
-    if (score[0] >= threshold) local.push(0);
-    if (score[n - 1] >= threshold) local.push(n - 1);
-    const top = local
-      .sort((a, b) => score[b] - score[a])
-      .filter((pos, index, arr) => arr.findIndex(prev => Math.abs(prev - pos) <= 3) === index)
-      .slice(0, 180)
-      .sort((a, b) => a - b);
-    if (top.length < Math.min(expectedLines, 4)) return null;
-    const lineSupport = pos => customTileImportProjectionSupport(score, pos, Math.max(2, Math.round(Math.min(maxStep, Math.max(minStep, (maxStep + minStep) / 2)) * 0.035)));
-    let best = null;
-    const expectedSpanCount = expectedLines - 1;
-    for (let a = 0; a < top.length; a += 1) {
-      for (let b = a + 1; b < top.length; b += 1) {
-        const start = top[a];
-        const end = top[b];
-        const step = (end - start) / expectedSpanCount;
-        if (step < minStep || step > maxStep) continue;
-        const tolerance = Math.max(2, Math.round(step * 0.075));
-        const lines = [];
-        let support = 0;
-        let matched = 0;
-        let orderedPenalty = 0;
-        for (let k = 0; k < expectedLines; k += 1) {
-          const expected = start + step * k;
-          const rounded = Math.max(0, Math.min(n - 1, Math.round(expected)));
-          const refined = refineCustomTileImportGridLinePosition(score, rounded, tolerance);
-          lines.push(refined);
-          const s = customTileImportProjectionSupport(score, refined, tolerance) / maxScore;
-          support += s;
-          if (s >= 0.10) matched += 1;
-          if (k > 0 && lines[k] <= lines[k - 1]) orderedPenalty += 1;
-        }
-        if (orderedPenalty) continue;
-        const avgSupport = support / expectedLines;
-        const widthPenalty = Math.abs(step - Math.round(step)) / Math.max(1, step) * 0.05;
-        const scoreValue = avgSupport + matched / expectedLines * 0.34 - widthPenalty;
-        if (!best || scoreValue > best.score) {
-          best = { score: scoreValue, confidence: avgSupport, lines, step };
-        }
-      }
-    }
-    if (!best) return null;
-    const deduped = best.lines.map(value => Math.round(value));
-    for (let i = 1; i < deduped.length; i += 1) {
-      if (deduped[i] <= deduped[i - 1]) return null;
-    }
-    return { lines: deduped, confidence: best.confidence, score: best.score, step: best.step };
-  }
-
   function refineCustomTileImportGridLinePosition(score, pos, tolerance) {
     const n = score.length;
     const left = Math.max(0, Math.round(pos - tolerance));
@@ -34713,143 +33745,6 @@ function concealedKongOwnerOfMeld(meld) {
 
 
 
-
-  function completeCustomTileImportCenterOutwardSlotsByEdgeModel(data, maps, w, h, slots, refined, minW, maxW, minH, maxH) {
-    const input = Array.isArray(slots) ? slots : [];
-    if (!input.length) return [];
-    const direct = input.map((slot, index) => {
-      const base = Array.isArray(refined) && refined[index] ? refined[index] : null;
-      if (base) return base;
-      const projected = refineCustomTileImportGridSlotByOuterBandEdges(data, maps, w, h, slot, Math.max(8, minW * 0.44), Math.max(maxW, slot && slot.w ? slot.w * 1.08 : maxW), Math.max(10, minH * 0.42), Math.max(maxH, slot && slot.h ? slot.h * 1.08 : maxH));
-      return projected ? Object.assign({}, slot, projected, {
-        frameScore: Math.max(Number(slot && slot.frameScore) || 0, 4.25),
-        source: 'outer-band-real-card-edge',
-        sourceOrder: slot && Number.isFinite(slot.sourceOrder) ? slot.sourceOrder : index
-      }) : null;
-    });
-    const success = direct
-      .map((rect, index) => ({ rect, slot: input[index], index }))
-      .filter(item => item.rect && item.slot && item.rect.w > 0 && item.rect.h > 0);
-    if (success.length >= input.length) return direct.filter(Boolean);
-    if (success.length < Math.max(3, Math.round(input.length * 0.08))) return direct.filter(Boolean);
-
-    const offsets = success.map(item => buildCustomTileImportSlotOffsetSample(item.slot, item.rect, item.index)).filter(Boolean);
-    if (!offsets.length) return direct.filter(Boolean);
-    const global = medianCustomTileImportSlotOffsets(offsets);
-    const byRow = new Map();
-    const byCol = new Map();
-    offsets.forEach(sample => {
-      const rowKey = Number.isFinite(sample.row) ? String(sample.row) : '';
-      const colKey = Number.isFinite(sample.col) ? String(sample.col) : '';
-      if (rowKey) {
-        if (!byRow.has(rowKey)) byRow.set(rowKey, []);
-        byRow.get(rowKey).push(sample);
-      }
-      if (colKey) {
-        if (!byCol.has(colKey)) byCol.set(colKey, []);
-        byCol.get(colKey).push(sample);
-      }
-    });
-
-    const completed = direct.slice();
-    input.forEach((slot, index) => {
-      if (completed[index]) return;
-      const rowKey = slot && Number.isFinite(slot.sourceRowIndex) ? String(slot.sourceRowIndex) : '';
-      const colKey = slot && Number.isFinite(slot.sourceColIndex) ? String(slot.sourceColIndex) : '';
-      const rowModel = rowKey && byRow.has(rowKey) && byRow.get(rowKey).length >= 1 ? medianCustomTileImportSlotOffsets(byRow.get(rowKey)) : null;
-      const colModel = colKey && byCol.has(colKey) && byCol.get(colKey).length >= 2 ? medianCustomTileImportSlotOffsets(byCol.get(colKey)) : null;
-      const model = mergeCustomTileImportSlotOffsetModels(rowModel, colModel, global);
-      const modelRect = buildCustomTileImportRectFromSlotOffsets(slot, model, w, h, minW, maxW, minH, maxH);
-      if (!modelRect) return;
-      const snapped = snapCustomTileImportModelRectToNearbyRealEdges(data, maps, w, h, modelRect, slot, minW, maxW, minH, maxH) || modelRect;
-      completed[index] = Object.assign({}, slot, snapped, {
-        frameScore: Math.max(Number(slot && slot.frameScore) || 0, 3.55),
-        source: 'edge-model-completed-card',
-        sourceOrder: slot && Number.isFinite(slot.sourceOrder) ? slot.sourceOrder : index
-      });
-    });
-    return completed.filter(Boolean);
-  }
-
-
-  function normalizeCustomTileImportRectsToUniformCardEdges(data, maps, w, h, slots, rects, minW, maxW, minH, maxH) {
-    const input = Array.isArray(slots) ? slots : [];
-    const found = Array.isArray(rects) ? rects : [];
-    if (!input.length || !found.length) return found.filter(Boolean);
-    const byOrder = new Map();
-    found.filter(Boolean).forEach((rect, index) => {
-      const key = Number.isFinite(rect.sourceOrder) ? rect.sourceOrder : index;
-      if (!byOrder.has(key)) byOrder.set(key, rect);
-    });
-    const paired = input.map((slot, index) => {
-      const key = slot && Number.isFinite(slot.sourceOrder) ? slot.sourceOrder : index;
-      const rect = byOrder.get(key) || found[index] || null;
-      return { slot, rect, index };
-    });
-    const candidatePairs = paired.filter(item => {
-      const slot = item.slot;
-      const rect = item.rect;
-      if (!slot || !rect || rect.w <= 0 || rect.h <= 0) return false;
-      if (rect.w < Math.max(8, minW * 0.42) || rect.w > Math.max(maxW, slot.w * 1.12)) return false;
-      if (rect.h < Math.max(10, minH * 0.40) || rect.h > Math.max(maxH, slot.h * 1.12)) return false;
-      const areaRatio = (rect.w * rect.h) / Math.max(1, slot.w * slot.h);
-      if (areaRatio < 0.34 || areaRatio > 1.10) return false;
-      return true;
-    });
-    const slotWModel = robustCustomTileImportCommonSize(input.map(slot => slot && slot.w), minW, Math.max(maxW, medianImportNumber(input.map(slot => slot && slot.w)) * 1.30), NaN);
-    const slotHModel = robustCustomTileImportCommonSize(input.map(slot => slot && slot.h), minH, Math.max(maxH, medianImportNumber(input.map(slot => slot && slot.h)) * 1.30), NaN);
-    let commonW = robustCustomTileImportCommonSize(candidatePairs.map(item => item.rect.w), Math.max(8, minW * 0.42), Math.max(maxW, slotWModel || maxW), NaN);
-    let commonH = robustCustomTileImportCommonSize(candidatePairs.map(item => item.rect.h), Math.max(10, minH * 0.40), Math.max(maxH, slotHModel || maxH), NaN);
-    if (!Number.isFinite(commonW) && Number.isFinite(slotWModel)) commonW = Math.round(slotWModel * 0.78);
-    if (!Number.isFinite(commonH) && Number.isFinite(slotHModel)) commonH = Math.round(slotHModel * 0.78);
-    commonW = Math.max(Math.round(Math.max(8, minW * 0.42)), Math.min(Math.round(Math.max(maxW, (slotWModel || maxW) * 1.08)), Math.round(commonW || 0)));
-    commonH = Math.max(Math.round(Math.max(10, minH * 0.40)), Math.min(Math.round(Math.max(maxH, (slotHModel || maxH) * 1.08)), Math.round(commonH || 0)));
-    if (!commonW || !commonH) return found.filter(Boolean);
-
-    const offsetSamples = candidatePairs.map(item => {
-      const slot = item.slot;
-      const rect = item.rect;
-      if (!slot || !rect) return null;
-      const dx = (rect.x + rect.w / 2) - (slot.x + slot.w / 2);
-      const dy = (rect.y + rect.h / 2) - (slot.y + slot.h / 2);
-      if (!Number.isFinite(dx) || !Number.isFinite(dy)) return null;
-      if (Math.abs(dx) > Math.max(4, slot.w * 0.34) || Math.abs(dy) > Math.max(4, slot.h * 0.34)) return null;
-      return {
-        dx, dy,
-        row: slot && Number.isFinite(slot.sourceRowIndex) ? slot.sourceRowIndex : NaN,
-        col: slot && Number.isFinite(slot.sourceColIndex) ? slot.sourceColIndex : NaN
-      };
-    }).filter(Boolean);
-    const globalDx = medianImportNumber(offsetSamples.map(item => item.dx));
-    const globalDy = medianImportNumber(offsetSamples.map(item => item.dy));
-    const rowDy = new Map();
-    const colDx = new Map();
-    for (let r = 0; r < IMPORT_ROW_COUNTS.length; r += 1) {
-      const list = offsetSamples.filter(item => item.row === r).map(item => item.dy);
-      if (list.length) rowDy.set(r, medianImportNumber(list));
-    }
-    const maxCols = Math.max.apply(null, IMPORT_ROW_COUNTS);
-    for (let c = 0; c < maxCols; c += 1) {
-      const list = offsetSamples.filter(item => item.col === c).map(item => item.dx);
-      if (list.length) colDx.set(c, medianImportNumber(list));
-    }
-
-    const output = [];
-    input.forEach((slot, index) => {
-      if (!slot) return;
-      const dx = colDx.has(slot.sourceColIndex) ? colDx.get(slot.sourceColIndex) : (Number.isFinite(globalDx) ? globalDx : 0);
-      const dy = rowDy.has(slot.sourceRowIndex) ? rowDy.get(slot.sourceRowIndex) : (Number.isFinite(globalDy) ? globalDy : 0);
-      const expected = buildCustomTileImportUniformRectAtCenter(slot.x + slot.w / 2 + dx, slot.y + slot.h / 2 + dy, commonW, commonH, w, h);
-      if (!expected) return;
-      const snapped = snapCustomTileImportUniformRectToNearbyEdges(data, maps, w, h, expected, slot, commonW, commonH) || expected;
-      output.push(Object.assign({}, slot, snapped, {
-        frameScore: Math.max(Number(slot.frameScore) || 0, Number((byOrder.get(Number.isFinite(slot.sourceOrder) ? slot.sourceOrder : index) || {}).frameScore) || 0, 5.05),
-        source: 'uniform-size-center-outward-card-edge',
-        sourceOrder: Number.isFinite(slot.sourceOrder) ? slot.sourceOrder : index
-      }));
-    });
-    return output;
-  }
 
   function robustCustomTileImportCommonSize(values, minSize, maxSize, fallback) {
     const valid = (Array.isArray(values) ? values : [])
@@ -35036,40 +33931,6 @@ function concealedKongOwnerOfMeld(meld) {
     const bottom = findCustomTileImportBestOuterBandEdge(data, maps, w, h, 'horizontal', yb0, yb1, hSpan.start, hSpan.end, true);
     const snapped = buildCustomTileImportSnappedVisibleTileRectFromEdges(Number.isFinite(left) ? left : rect.x, Number.isFinite(right) ? right : rect.x + rect.w - 1, Number.isFinite(top) ? top : rect.y, Number.isFinite(bottom) ? bottom : rect.y + rect.h - 1, slot, w, h, Math.max(8, minW * 0.44), Math.max(maxW, slot.w * 1.10), Math.max(10, minH * 0.42), Math.max(maxH, slot.h * 1.10), 0.30, 1.10);
     return snapped || null;
-  }
-
-  function refineCustomTileImportGridSlotToVisibleTileEdges(data, maps, w, h, slot, minW, maxW, minH, maxH) {
-    if (!data || !slot || slot.w <= 0 || slot.h <= 0) return null;
-    const leftLimit = Math.max(0, Math.round(slot.x));
-    const rightLimit = Math.min(w - 1, Math.round(slot.x + slot.w - 1));
-    const topLimit = Math.max(0, Math.round(slot.y));
-    const bottomLimit = Math.min(h - 1, Math.round(slot.y + slot.h - 1));
-    if (rightLimit <= leftLimit || bottomLimit <= topLimit) return null;
-    const sw = rightLimit - leftLimit + 1;
-    const sh = bottomLimit - topLimit + 1;
-
-    /* g168: 外而內只負責給每張牌的粗略 ROI；最終框線改由「牌中心附近的白牌面主體」向外取得。
-       不再用格槽線當裁切邊，也不再用字/圖案筆畫當邊界。先找中心所在的白牌面連續區段，
-       再把紅框回貼到該白牌面矩形外側的灰色牌邊線。 */
-    let rect = buildCustomTileImportCenterOutwardCardBodyRect(data, maps, w, h, slot, minW, maxW, minH, maxH);
-    if (rect && verifyCustomTileImportCardBodyRect(data, maps, w, h, rect, slot)) return rect;
-
-    // 只有白牌面主體法失敗時，才退回低飽和長灰邊線；仍禁止採用格槽外界。
-    const cx = Math.round(leftLimit + sw * 0.5);
-    const cy = Math.round(topLimit + sh * 0.5);
-    const vSpanA = {
-      start: Math.max(topLimit, Math.round(topLimit + sh * 0.12)),
-      end: Math.min(bottomLimit, Math.round(bottomLimit - sh * 0.12))
-    };
-    const hSpanA = {
-      start: Math.max(leftLimit, Math.round(leftLimit + sw * 0.12)),
-      end: Math.min(rightLimit, Math.round(rightLimit - sw * 0.12))
-    };
-    let edges = findCustomTileImportCenterOutwardRealCardEdges(data, maps, w, h, leftLimit, rightLimit, topLimit, bottomLimit, cx, cy, sw, sh, vSpanA, hSpanA);
-    rect = edges && buildCustomTileImportSnappedVisibleTileRectFromEdges(edges.left, edges.right, edges.top, edges.bottom, slot, w, h, minW, maxW, minH, maxH, 0.46, 1.01);
-    if (rect && verifyCustomTileImportRealCardEdgeFit(data, maps, w, h, rect, slot)) return rect;
-
-    return null;
   }
 
   function buildCustomTileImportCenterOutwardCardBodyRect(data, maps, w, h, slot, minW, maxW, minH, maxH) {
@@ -35460,34 +34321,6 @@ function concealedKongOwnerOfMeld(meld) {
   }
 
 
-  function scoreCustomTileImportVisibleVerticalEdge(data, maps, w, h, x, y0, y1) {
-    const yy0 = Math.max(0, Math.min(h - 1, Math.round(y0)));
-    const yy1 = Math.max(yy0, Math.min(h - 1, Math.round(y1)));
-    const xx = Math.max(0, Math.min(w - 1, Math.round(x)));
-    let score = 0;
-    let total = 0;
-    for (let y = yy0; y <= yy1; y += 1) {
-      const idx = y * w + xx;
-      const p = idx * 4;
-      if (data[p + 3] < 16) continue;
-      const lum = 0.299 * data[p] + 0.587 * data[p + 1] + 0.114 * data[p + 2];
-      const leftLum = xx > 0 ? customTileImportPixelLuma(data, idx - 1) : lum;
-      const rightLum = xx + 1 < w ? customTileImportPixelLuma(data, idx + 1) : lum;
-      const max = Math.max(data[p], data[p + 1], data[p + 2]);
-      const min = Math.min(data[p], data[p + 1], data[p + 2]);
-      const sat = max - min;
-      let s = Math.abs(rightLum - leftLum) / 48;
-      if (maps.vLine && maps.vLine[idx]) s += 1.15;
-      if (maps.blackFrame && maps.blackFrame[idx]) s += 0.80;
-      if (maps.neutral && maps.neutral[idx]) s += 0.48;
-      if (sat <= 75 && lum >= 78 && lum <= 252) s += 0.18;
-      if (sat <= 38 && lum >= 150 && lum <= 248) s += 0.10;
-      score += Math.min(2.8, s);
-      total += 1;
-    }
-    return total ? score / total : 0;
-  }
-
   function scoreCustomTileImportVisibleHorizontalEdge(data, maps, w, h, y, x0, x1) {
     const xx0 = Math.max(0, Math.min(w - 1, Math.round(x0)));
     const xx1 = Math.max(xx0, Math.min(w - 1, Math.round(x1)));
@@ -35551,21 +34384,6 @@ function concealedKongOwnerOfMeld(meld) {
 
 
 
-  function bestCustomTileImportVerticalRealLine(lines, x0, x1, y0, y1, side) {
-    const left = Math.min(x0, x1);
-    const right = Math.max(x0, x1);
-    let best = null;
-    lines.forEach(line => {
-      if (line.x < left || line.x > right) return;
-      const overlap = customTileImportRealLineRangeOverlap(line.y0, line.y1, y0, y1);
-      if (overlap < Math.max(8, (Math.max(y0, y1) - Math.min(y0, y1) + 1) * 0.34)) return;
-      const sideBias = side === 'left' ? (right - line.x) / Math.max(1, right - left + 1) : (line.x - left) / Math.max(1, right - left + 1);
-      const score = line.support * 2 + overlap / Math.max(1, line.len) + sideBias * 0.05;
-      if (!best || score > best.score) best = Object.assign({ score }, line);
-    });
-    return best;
-  }
-
   function bestCustomTileImportHorizontalRealLine(lines, y0, y1, x0, x1, side) {
     const top = Math.min(y0, y1);
     const bottom = Math.max(y0, y1);
@@ -35586,33 +34404,6 @@ function concealedKongOwnerOfMeld(meld) {
     const aspect = rect.h / Math.max(1, rect.w);
     return aspect >= 1.00 && aspect <= 2.55;
   }
-
-  function scoreCustomTileImportRealLineRect(rect, maps, w, h) {
-    const insetX = Math.max(3, Math.round(rect.w * 0.10));
-    const insetY = Math.max(3, Math.round(rect.h * 0.10));
-    const top = customTileImportRealLineSupport(maps.hLine, w, h, 'horizontal', rect.x + insetX, rect.x + rect.w - 1 - insetX, rect.y);
-    const bottom = customTileImportRealLineSupport(maps.hLine, w, h, 'horizontal', rect.x + insetX, rect.x + rect.w - 1 - insetX, rect.y + rect.h - 1);
-    const left = customTileImportRealLineSupport(maps.vLine, w, h, 'vertical', rect.y + insetY, rect.y + rect.h - 1 - insetY, rect.x);
-    const right = customTileImportRealLineSupport(maps.vLine, w, h, 'vertical', rect.y + insetY, rect.y + rect.h - 1 - insetY, rect.x + rect.w - 1);
-    const neutralTop = customTileImportRealLineSupport(maps.neutral, w, h, 'horizontal', rect.x + insetX, rect.x + rect.w - 1 - insetX, rect.y);
-    const neutralBottom = customTileImportRealLineSupport(maps.neutral, w, h, 'horizontal', rect.x + insetX, rect.x + rect.w - 1 - insetX, rect.y + rect.h - 1);
-    const neutralLeft = customTileImportRealLineSupport(maps.neutral, w, h, 'vertical', rect.y + insetY, rect.y + rect.h - 1 - insetY, rect.x);
-    const neutralRight = customTileImportRealLineSupport(maps.neutral, w, h, 'vertical', rect.y + insetY, rect.y + rect.h - 1 - insetY, rect.x + rect.w - 1);
-    const whiteFill = customTileImportRealLineMaskFill(maps.white, w, h, rect.x + insetX, rect.y + insetY, rect.x + rect.w - 1 - insetX, rect.y + rect.h - 1 - insetY);
-    const sides = [
-      top * 0.72 + neutralTop * 0.30,
-      bottom * 0.72 + neutralBottom * 0.30,
-      left * 0.72 + neutralLeft * 0.30,
-      right * 0.72 + neutralRight * 0.30
-    ];
-    const weak = sides.filter(v => v < 0.095).length;
-    const lineAvg = sides.reduce((sum, value) => sum + value, 0) / 4;
-    const balance = 1 - (Math.max(...sides) - Math.min(...sides)) / Math.max(0.1, Math.max(...sides));
-    const score = lineAvg + whiteFill * 0.40 + Math.max(0, balance) * 0.10;
-    return { accept: weak <= 1 && whiteFill >= 0.09 && score >= 0.18, score, whiteFill };
-  }
-
-
 
   function customTileImportRealLineMaskAt(mask, w, h, x, y, radius) {
     const r = Math.max(0, Math.round(radius || 0));
@@ -35667,17 +34458,6 @@ function concealedKongOwnerOfMeld(meld) {
 
   function customTileImportRealLineRangeOverlap(a0, a1, b0, b1) {
     return Math.max(0, Math.min(a1, b1) - Math.max(a0, b0) + 1);
-  }
-
-  function customTileImportRealLineRectOverlap(a, b) {
-    if (!a || !b) return 0;
-    const x0 = Math.max(a.x, b.x);
-    const y0 = Math.max(a.y, b.y);
-    const x1 = Math.min(a.x + a.w, b.x + b.w);
-    const y1 = Math.min(a.y + a.h, b.y + b.h);
-    const iw = Math.max(0, x1 - x0);
-    const ih = Math.max(0, y1 - y0);
-    return (iw * ih) / Math.max(1, Math.min(a.w * a.h, b.w * b.h));
   }
 
   function groupRowsForImport(rects, yThreshold) {
@@ -36643,25 +35423,7 @@ function concealedKongOwnerOfMeld(meld) {
   }
 })();
 
-  (function bindAiSuggestFloatingFollowEvents(){
-    let pending = false;
-    function scheduleAiSuggestRefresh(){
-      if (pending) return;
-      pending = true;
-      requestAnimationFrame(() => {
-        pending = false;
-        if (typeof window.tw16RefreshAiSuggestFloatingLabels === 'function') window.tw16RefreshAiSuggestFloatingLabels();
-        if (typeof window.tw16RefreshDebugPauseToggle === 'function') window.tw16RefreshDebugPauseToggle();
-      });
-    }
-    window.addEventListener('resize', scheduleAiSuggestRefresh, { passive: true });
-    window.addEventListener('scroll', scheduleAiSuggestRefresh, { passive: true, capture: true });
-    document.addEventListener('scroll', scheduleAiSuggestRefresh, { passive: true, capture: true });
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', scheduleAiSuggestRefresh, { passive: true });
-      window.visualViewport.addEventListener('scroll', scheduleAiSuggestRefresh, { passive: true });
-    }
-  })();
+  ()();
 
 </script>
 
