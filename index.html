@@ -15212,7 +15212,10 @@ function loadUiSettings() {
     if (isDirectMingKong) score += 220;
     if (isWeakerPongWhenKongExists) score -= 160;
     if (candidate.type === 'kong') score += 42;
-    if (candidate.type === 'pong') score += claimTileIsHonor ? 18 : 4;
+    /* tw16_ai_aggressive_honor_pong_20260713: 字牌碰牌主分提高，促進積極碰牌加速聽牌。
+       原 +18 北/南/東/西 +18 = 18 不足以拉過 12 分門檻，現在拉高到 36。
+       數牌碰牌維持 +4（不過度影響守牌判斷）。 */
+    if (candidate.type === 'pong') score += claimTileIsHonor ? 36 : 4;
     if (candidate.type === 'chi') score += 2;
     if (candidate.type === 'chi' && chiConsumesExistingCompleteSequence) score -= 170;
     if (SEATS.some(other => other !== seat && state.declaredTing && state.declaredTing[other])) score -= candidate.type === 'chi' ? 10 : 6;
@@ -15264,7 +15267,12 @@ function loadUiSettings() {
     const claimImprovesShape = after.shanten < before.shanten
       || after.effectiveRemaining > before.effectiveRemaining
       || after.waitRemaining > before.waitRemaining;
-    let accept = after.shanten < before.shanten || score >= 12 || after.waitRemaining > before.waitRemaining;
+    /* tw16_ai_aggressive_pong_threshold_20260713: 主門檻由 12 微降為 4，
+       並新增「進張/有效進張不變差」條件，使形狀可接受時積極放行。
+       仍守底線：門清無改善、殘局不利、吃牌破序列時擋。 */
+    let accept = after.shanten < before.shanten || score >= 4 ||
+                 (after.waitRemaining >= before.waitRemaining &&
+                  after.effectiveRemaining >= before.effectiveRemaining);
     if (candidate.type === 'chi') {
       if (!claimImprovesShape) accept = false;
       if (chiConsumesExistingCompleteSequence && after.shanten >= before.shanten) accept = false;
@@ -15272,6 +15280,12 @@ function loadUiSettings() {
     }
     if (candidate.type === 'pong' && wasClosed && !claimTileIsHonor && after.shanten === before.shanten && taiAfter <= taiBefore && after.effectiveRemaining <= before.effectiveRemaining) accept = false;
     if (isDirectMingKong && after.shanten <= before.shanten + 1) accept = true;
+    /* tw16_ai_force_pong_honor_triplet_20260713: 暗手已有 2 張同字牌+
+       可碰 1 張即可形成刻子，屬於 100% 安全且實際推進聽牌的動作，
+       即使 shanten 略增也應直接接受。沿用 after.shanten <= before.shanten+1 上限防呆。 */
+    if (candidate.type === 'pong' && claimTileIsHonor &&
+        (beforeCodeCounts[claimTileCode] || 0) >= 2 &&
+        after.shanten <= before.shanten + 1) accept = true;
     if (candidate.type === 'pong' && claimTileIsHonor && after.shanten <= before.shanten + 1 && score >= 10) accept = true;
     if (candidate.type === 'kong' && claimTileIsHonor && after.shanten <= before.shanten + 1 && score >= 10) accept = true;
     if (isWeakerPongWhenKongExists && !accept) accept = false;
