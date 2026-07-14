@@ -9266,7 +9266,8 @@ function loadUiSettings() {
   }
 
   function isTileManagementPausingGame() {
-    return !!tileManagementPause.active;
+    // 房主按下的 debugPauseBy 也應被視為遊戲暫停狀態，確保來賓端能正確渲染暫停符號
+    return !!(tileManagementPause.active || state.debugPauseBy);
   }
 
   function requestDebugPauseToggle(enabled) {
@@ -17071,28 +17072,27 @@ function loadUiSettings() {
       const idx = entries.findIndex(function(e) { return e && e.code === code; });
       if (idx < 0) return;
       const entry = entries[idx];
-      // tw16_exact_confidence_20260708: 信心分數改成以「精確分數（結構可行性＋公開行為
-      // 訊號，兩者都不需要抽樣）的領先幅度」為主體依據——這張牌的分數比第二名領先越多，
-      // 代表根據可見資訊就能明確分辨「這張特別危險」，不需要等蒙地卡羅樣本池湊夠。
-      // 蒙地卡羅頻率（entry.mcFreq）只在樣本池已經湊夠（entry.validSamples >= 24）且
-      // 頻率本身夠高時，才拿來墊高信心分數，是次要佐證，不是唯一依據——這樣即使
-      // 樣本池還沒暖機完成（例如牌局剛開始），精確分數本身照樣能給出有意義的信心。
       let confidence = 0;
       if (entries.length === 1) {
-        confidence = 0.9; // 候選只剩這一張，公開資訊已經排除其他所有可能
+        confidence = 0.95; 
       } else if (idx === 0) {
         const second = entries[1];
         const secondScore = Number(second && second.score) || 0;
         const thisScore = Number(entry.score) || 0;
-        if (secondScore <= 0) confidence = 0.85;
+        if (secondScore <= 0) confidence = 0.88;
         else {
           const ratio = thisScore / secondScore;
-          confidence = Math.max(0, Math.min(0.9, (ratio - 1) * 0.6));
+          // 領先幅度判定優化：若領先超過 50%，信心大幅提升
+          confidence = Math.max(0, Math.min(0.92, (ratio - 1) * 0.85));
         }
       }
-      if (entry.validSamples >= 24 && entry.mcFreq >= 0.5) confidence = Math.max(confidence, 0.55);
-      // 完全確認：候選清單只有這一張，或信心分數本身已經很高——這種情況幾乎可以肯定放槍。
-      const confirmed = entries.length === 1 || confidence >= 0.85;
+      // 蒙地卡羅佐證加強：若樣本數足夠且頻率極高，即使結構分領先不多也應視為高信心
+      if (entry.validSamples >= 24) {
+        if (entry.mcFreq >= 0.65) confidence = Math.max(confidence, 0.78);
+        else if (entry.mcFreq >= 0.45) confidence = Math.max(confidence, 0.58);
+      }
+      // 門檻優化：降低確認門檻，使危險警告更及時
+      const confirmed = entries.length === 1 || confidence >= 0.75 || (idx === 0 && entry.mcFreq >= 0.8);
       if (confirmed) confidence = Math.max(confidence, 0.92);
       if (!best || confidence > best.confidence) best = { confidence, confirmed, seat: other, entry };
     });
@@ -22298,7 +22298,7 @@ function showIntegrityReport(precomputed) {
       miniDashboardRenderKey = '';
       return;
     }
-    const renderKey = Number(state.tableMode || 4) + '|' + (isTileManagementPausingGame() ? (state.debugPauseBy || '') : '') + '|' + SEATS.map(seat => [
+    const renderKey = Number(state.tableMode || 4) + '|' + (state.debugPauseBy || '') + '|' + SEATS.map(seat => [
       seat,
       seat === state.turn ? 'active' : '',
       dealerDashboardPrefixText(seat),
@@ -22319,7 +22319,7 @@ function showIntegrityReport(precomputed) {
       SEATS.forEach(seat => {
         const card = document.createElement('div');
         const _deciding = !!(state.pending && pendingHumanSeats(state.pending).includes(seat));
-        const _pausedBy = state.debugPauseBy === seat && isTileManagementPausingGame();
+        const _pausedBy = state.debugPauseBy === seat;
         card.className = 'tw16-mini-dashboard-card' + (seat === state.turn ? ' active' : '') + (!isSeatActiveInTable(seat) ? ' tw16-mini-dashboard-inactive' : '') + (_deciding ? ' deciding' : '') + (_pausedBy ? ' tw16-paused-by-card' : '');
         const name = document.createElement('div');
         name.className = 'tw16-mini-dashboard-seat';
@@ -24790,17 +24790,15 @@ function showIntegrityReport(precomputed) {
       const structure = smartAiStructuralWaitShapeCount(seat, targetSeat, code);
       // 精確分數為主體：結構可行性權重明顯拉高，公開行為訊號原樣疊加，兩者都不需要
       // 抽樣就能算，是排序的主要依據。
-      let score = structure * 320;
-      score += behavior;
-      score += publicLeft * 18;
-      if (read) score += (Number(read.threat) || 0) * 8;
-      // 蒙地卡羅頻率只在樣本池已經湊夠時才加分，且權重刻意壓低（1500，遠低於舊版的
-      // 10000），避免抽樣雜訊蓋過根據可見資訊算出來的精確排序，只當「錦上添花」的
-      // 佐證，不是「亂槍打鳥」式的主要依據。
-      if (validSamples > 0) score += mcFreq * 1500;
-      if (visible === 3) score *= 0.35;
-      else if (visible === 2) score *= 0.68;
-      else if (visible === 1) score *= 0.88;
+      let score = structure * 420; // 提高結構分析權重
+      score += behavior * 1.25; // 提高行為訊號權重
+      score += publicLeft * 25; // 提高未見張數基礎分
+      if (read) score += (Number(read.threat) || 0) * 12; // 提高威脅度權重
+      // 蒙地卡羅頻率權重適度回調，增強對複雜手型的感知
+      if (validSamples > 0) score += mcFreq * 2200;
+      if (visible === 3) score *= 0.25; // 三張見光，風險應大幅下降
+      else if (visible === 2) score *= 0.55;
+      else if (visible === 1) score *= 0.82;
       score = Math.max(0, score);
       if (score <= 0) return;
       scored.push({
