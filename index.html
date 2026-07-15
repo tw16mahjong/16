@@ -27932,8 +27932,11 @@ function concealedKongOwnerOfMeld(meld) {
     });
     const normalized = normalizeCustomTileImageMapForRuntime(map);
     const count = Object.keys(normalized).length;
-    if (!count) throw new Error((file.name || 'ZIP') + ' 內沒有可辨識的牌圖檔名。請使用本遊戲「匯出每張牌ZIP」產生的檔案。');
+    if (!count) throw new Error((file.name || 'ZIP') + ' 內沒有可辨識的牌圖檔名。請使用本遇戲「匯出每張牌ZIP」產生的檔案。');
     const checked = await validateCustomTileImageMapForApply(normalized, file.name || '牌圖 ZIP');
+    // ZIP 建檔時就縮小圖片，避免後續讀入套用時空間不足
+    let resizedTiles = checked;
+    try { resizedTiles = await resizeCustomTileImageMap(checked, 120, 160, 0.88); } catch (e) { resizedTiles = checked; }
     const now = new Date().toISOString();
     const sourceName = file.name || ('tile-skin-' + now + '.zip');
     return {
@@ -27942,8 +27945,8 @@ function concealedKongOwnerOfMeld(meld) {
       sourceZipName: sourceName,
       createdAt: now,
       updatedAt: now,
-      tileCount: Object.keys(checked).length,
-      tiles: checked
+      tileCount: Object.keys(resizedTiles).length,
+      tiles: resizedTiles
     };
   }
 
@@ -28077,13 +28080,24 @@ function concealedKongOwnerOfMeld(meld) {
     const record = await getCustomTileSkinSetRecord(id);
     if (!record || !record.tiles) throw new Error('找不到牌圖資料集。');
     const normalized = await validateCustomTileImageMapForApply(record.tiles, record.name || '牌圖資料集');
+    // 讀入套用時縮小圖片以避免 localStorage 空間不足
+    let resized = normalized;
+    try { resized = await resizeCustomTileImageMap(normalized, 120, 160, 0.88); } catch (e) { resized = normalized; }
     try {
-      localStorage.setItem(CUSTOM_TILE_STORE_KEY, JSON.stringify(normalized));
+      localStorage.setItem(CUSTOM_TILE_STORE_KEY, JSON.stringify(resized));
       localStorage.setItem(CUSTOM_TILE_ACTIVE_SKIN_KEY, record.id);
     } catch (err) {
-      alert('已讀入本次牌圖，但無法保存為下次啟動預設；可能是瀏覽器儲存空間不足。');
+      // 第一次失敗：嘗試更小的尺寸
+      try {
+        const smallerMap = await resizeCustomTileImageMap(normalized, 80, 108, 0.80);
+        localStorage.setItem(CUSTOM_TILE_STORE_KEY, JSON.stringify(smallerMap));
+        localStorage.setItem(CUSTOM_TILE_ACTIVE_SKIN_KEY, record.id);
+        resized = smallerMap;
+      } catch (err2) {
+        alert('已讀入本次牌圖，但無法保存為下次啟動預設；即使小圖後仍超出瀏覽器儲存空間限制。');
+      }
     }
-    customTileImageMap = normalized;
+    customTileImageMap = resized;
     pendingCustomTileImport = null;
     customTileImportPointerState = null;
     customTileImportPanState = null;
@@ -28093,7 +28107,7 @@ function concealedKongOwnerOfMeld(meld) {
     addLog('已讀入牌圖資料集：' + (record.name || record.id));
     renderAll();
     if (!options || !options.silent) {
-      openUtilityPanel('牌圖資料庫', '<div class="rulesList"><h3>已讀入套用</h3><p>' + escapeHtml(record.name || record.id) + '</p><p>張數：' + Number(record.tileCount || Object.keys(normalized).length || 0) + '</p>' + buildCustomTileSkinSetPreviewHtml(record, false) + '<div class="menuGrid"><button class="btn" id="tileSkinDbReturnBtn">返回資料庫</button></div></div>');
+      openUtilityPanel('牌圖資料庫', '<div class="rulesList"><h3>已讀入套用</h3><p>' + escapeHtml(record.name || record.id) + '</p><p>張數：' + Number(record.tileCount || Object.keys(resized).length || 0) + '</p>' + buildCustomTileSkinSetPreviewHtml(record, false) + '<div class="menuGrid"><button class="btn" id="tileSkinDbReturnBtn">返回資料庫</button></div></div>');
       const backBtn = byId('tileSkinDbReturnBtn');
       if (backBtn) backBtn.addEventListener('click', () => showCustomTileSkinDatabasePanel());
     }
@@ -28775,16 +28789,28 @@ function concealedKongOwnerOfMeld(meld) {
 
   async function acceptPendingCustomTileImport() {
     const preview = pendingCustomTileImport;
-    const map = normalizeCustomTileImageMapForRuntime(buildCustomTileImportMapFromPreview(preview));
-    if (!Object.keys(map).length) {
+    const rawMap = normalizeCustomTileImageMapForRuntime(buildCustomTileImportMapFromPreview(preview));
+    if (!Object.keys(rawMap).length) {
       addLog('沒有可套用的裁切牌圖');
       return;
     }
+    // 儲存前再次確認圖片已縮小（buildCustomTileImportMapFromPreview 已縮，此處为保险再過一次）
+    let map = rawMap;
+    try {
+      map = await resizeCustomTileImageMap(rawMap, 120, 160, 0.88);
+    } catch (e) { map = rawMap; }
     try {
       localStorage.setItem(CUSTOM_TILE_STORE_KEY, JSON.stringify(map));
     } catch (err) {
-      alert('無法保存牌圖，可能是瀏覽器儲存空間不足。');
-      return;
+      // 第一次失敗：嘗試更小的尺寸
+      try {
+        const smallerMap = await resizeCustomTileImageMap(rawMap, 80, 108, 0.80);
+        localStorage.setItem(CUSTOM_TILE_STORE_KEY, JSON.stringify(smallerMap));
+        map = smallerMap;
+      } catch (err2) {
+        alert('無法保存牌圖，即使小圖後仍超出瀏覽器儲存空間限制。');
+        return;
+      }
     }
     customTileImageMap = map;
     customTileImportPointerState = null;
@@ -31148,7 +31174,21 @@ function concealedKongOwnerOfMeld(meld) {
       try {
         const crop = cropBoundsFromCanvas(ctx, box.bounds, preview.cornerRadiusPercent);
         const priority = (box.codeManual ? 1000000 : 0) + (box.manual ? 300000 : 0) + (box.confident ? 120000 : 30000) + Math.max(0, 900 - (Number.isFinite(box.sourceOrder) ? box.sourceOrder : 0));
-        candidates.push({ code: box.code, src: crop.toDataURL('image/png'), priority });
+        // 裁切後直接縮小到 120x160 並用 JPEG 壓縮，減少儲存空間
+        const cw = crop.width;
+        const ch = crop.height;
+        const maxW = 120, maxH = 160;
+        const scale = Math.min(1, maxW / Math.max(1, cw), maxH / Math.max(1, ch));
+        const nw = Math.max(1, Math.round(cw * scale));
+        const nh = Math.max(1, Math.round(ch * scale));
+        const sc = document.createElement('canvas');
+        sc.width = nw;
+        sc.height = nh;
+        const sctx = sc.getContext('2d');
+        sctx.fillStyle = '#ffffff';
+        sctx.fillRect(0, 0, nw, nh);
+        sctx.drawImage(crop, 0, 0, cw, ch, 0, 0, nw, nh);
+        candidates.push({ code: box.code, src: sc.toDataURL('image/jpeg', 0.88), priority });
       } catch (err) {}
     });
     const best = {};
@@ -31617,15 +31657,17 @@ function concealedKongOwnerOfMeld(meld) {
     const black = Number(p.black) || 0;
     const ink = Number(p.ink) || 0;
     const edge = Number(p.edge) || 0;
+    // 索子(绿色竹節圖案)：綠色成分顯著高、紅色和藍色成分低
     if (suit === 's') {
-      return (green * 3.20) + (ink * 0.16) + (edge * 0.10) - (red * 0.72) - (blue * 0.74) - (black * 0.10);
+      return (green * 4.20) + (ink * 0.18) + (edge * 0.12) - (red * 1.20) - (blue * 1.20) - (black * 0.12);
     }
+    // 筒子(藍色圓形圖案)：藍色成分顯著高、綠色和紅色成分低
     if (suit === 'p') {
-      const colorBalance = Math.min(red, green) * 1.35 + Math.min(Math.max(red, green), blue) * 0.74;
-      return colorBalance + (blue * 1.25) + (red * 0.54) + (green * 0.50) + (edge * 0.12) - (black * 0.28) - Math.abs(red - green) * 0.10;
+      return (blue * 3.50) + (ink * 0.12) + (edge * 0.14) - (red * 0.80) - (green * 1.40) - (black * 0.20);
     }
+    // 萬子(紅色文字圖案)：紅色成分顯著高、綠色成分低
     if (suit === 'm') {
-      return (blue * 1.45) + (black * 1.14) + (red * 0.92) + (edge * 0.14) - (green * 0.92) + (ink * 0.10);
+      return (red * 3.20) + (black * 1.20) + (ink * 0.14) + (edge * 0.14) - (green * 1.40) - (blue * 0.60);
     }
     return 0;
   }
@@ -31646,20 +31688,20 @@ function concealedKongOwnerOfMeld(meld) {
     const suits = ['m', 's', 'p'];
     const cleanRows = Array.isArray(rows) ? rows.filter(row => row && Array.isArray(row.boxes) && row.boxes.length) : [];
     if (!cleanRows.length) return result;
-    const scoreRowSuit = (row, suit, rowIndex) => {
+    const scoreRowSuit = (row, suit) => {
       const colorScore = customTileImportRowSuitColorScore(row, suit);
       const visualDistance = customTileImportVisualRowDistanceScore(row, suit);
       const visualScore = Number.isFinite(visualDistance)
         ? Math.max(-0.65, 0.62 - visualDistance * 2.8)
         : -0.20;
-      const defaultOrderTieBreaker = (cleanRows.length === 3 && suits[rowIndex] === suit) ? 0.055 : 0;
-      return colorScore + visualScore + defaultOrderTieBreaker;
+      // 移除預設順序偏向，完全依顏色與視覺特徵決定花色
+      return colorScore + visualScore;
     };
     if (cleanRows.length === 1) {
       let bestSuit = suits[0];
       let bestScore = -Infinity;
       suits.forEach(suit => {
-        const score = scoreRowSuit(cleanRows[0], suit, 0);
+        const score = scoreRowSuit(cleanRows[0], suit);
         if (score > bestScore) {
           bestScore = score;
           bestSuit = suit;
@@ -31678,7 +31720,7 @@ function concealedKongOwnerOfMeld(meld) {
       let bestPermutation = permutations[0];
       let bestScore = -Infinity;
       permutations.forEach(perm => {
-        const score = perm.reduce((sum, suit, index) => sum + scoreRowSuit(rows3[index], suit, index), 0);
+        const score = perm.reduce((sum, suit, index) => sum + scoreRowSuit(rows3[index], suit), 0);
         if (score > bestScore) {
           bestScore = score;
           bestPermutation = perm;
@@ -31688,8 +31730,8 @@ function concealedKongOwnerOfMeld(meld) {
       return result;
     }
     const options = [];
-    cleanRows.forEach((row, rowIndex) => {
-      suits.forEach(suit => options.push({ row, suit, score: scoreRowSuit(row, suit, rowIndex) }));
+    cleanRows.forEach(row => {
+      suits.forEach(suit => options.push({ row, suit, score: scoreRowSuit(row, suit) }));
     });
     options.sort((a, b) => b.score - a.score);
     const usedRows = new Set();
@@ -35119,6 +35161,59 @@ function concealedKongOwnerOfMeld(meld) {
     if (/^F[1-8]$/.test(code)) return code;
     if (['E','S','W','N','P','F','C'].includes(code)) return code;
     return '';
+  }
+
+  // 圖片縮小輔助函數：將 data URL 圖片縮小到指定尺寸內，並用 JPEG 格式壓縮以節省儲存空間
+  // maxW/maxH: 最大寬高（預設 120x160），quality: JPEG 品質（預設 0.88）
+  function resizeTileDataUrl(src, maxW, maxH, quality) {
+    return new Promise((resolve) => {
+      if (!src || typeof src !== 'string') { resolve(src); return; }
+      const mw = maxW || 120;
+      const mh = maxH || 160;
+      const q = (typeof quality === 'number' && quality > 0 && quality <= 1) ? quality : 0.88;
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const ow = img.naturalWidth || img.width || mw;
+          const oh = img.naturalHeight || img.height || mh;
+          // 若圖片已小於限制，直接轉為 JPEG 即可
+          const scale = Math.min(1, mw / ow, mh / oh);
+          const nw = Math.max(1, Math.round(ow * scale));
+          const nh = Math.max(1, Math.round(oh * scale));
+          const c = document.createElement('canvas');
+          c.width = nw;
+          c.height = nh;
+          const ctx = c.getContext('2d');
+          ctx.drawImage(img, 0, 0, ow, oh, 0, 0, nw, nh);
+          // 若原圖有透明背景，先填白色背景再轉 JPEG
+          const hasAlpha = /^data:image\/(png|webp|gif)/i.test(src);
+          if (hasAlpha) {
+            const c2 = document.createElement('canvas');
+            c2.width = nw;
+            c2.height = nh;
+            const ctx2 = c2.getContext('2d');
+            ctx2.fillStyle = '#ffffff';
+            ctx2.fillRect(0, 0, nw, nh);
+            ctx2.drawImage(c, 0, 0);
+            resolve(c2.toDataURL('image/jpeg', q));
+          } else {
+            resolve(c.toDataURL('image/jpeg', q));
+          }
+        } catch (err) { resolve(src); }
+      };
+      img.onerror = () => resolve(src);
+      img.src = src;
+    });
+  }
+
+  // 批量縮小圖片對映表中的所有圖片
+  async function resizeCustomTileImageMap(map, maxW, maxH, quality) {
+    const keys = Object.keys(map || {});
+    const out = {};
+    for (const key of keys) {
+      out[key] = await resizeTileDataUrl(map[key], maxW, maxH, quality);
+    }
+    return out;
   }
 
   function normalizeCustomTileImageMapForRuntime(map) {
