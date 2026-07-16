@@ -27936,7 +27936,15 @@ function concealedKongOwnerOfMeld(meld) {
     const checked = await validateCustomTileImageMapForApply(normalized, file.name || '牌圖 ZIP');
     // ZIP 建檔時就縮小圖片，避免後續讀入套用時空間不足
     let resizedTiles = checked;
-    try { resizedTiles = await resizeCustomTileImageMap(checked, 120, 160, 0.88); } catch (e) { resizedTiles = checked; }
+    try {
+      resizedTiles = await resizeCustomTileImageMap(checked, 120, 160, 0.82);
+    } catch (e) {
+      try {
+        resizedTiles = await resizeCustomTileImageMap(checked, 80, 108, 0.80);
+      } catch (e2) {
+        resizedTiles = checked;
+      }
+    }
     const now = new Date().toISOString();
     const sourceName = file.name || ('tile-skin-' + now + '.zip');
     return {
@@ -28082,7 +28090,7 @@ function concealedKongOwnerOfMeld(meld) {
     const normalized = await validateCustomTileImageMapForApply(record.tiles, record.name || '牌圖資料集');
     // 讀入套用時縮小圖片以避免 localStorage 空間不足
     let resized = normalized;
-    try { resized = await resizeCustomTileImageMap(normalized, 120, 160, 0.88); } catch (e) { resized = normalized; }
+    try { resized = await resizeCustomTileImageMap(normalized, 120, 160, 0.82); } catch (e) { resized = normalized; }
     try {
       localStorage.setItem(CUSTOM_TILE_STORE_KEY, JSON.stringify(resized));
       localStorage.setItem(CUSTOM_TILE_ACTIVE_SKIN_KEY, record.id);
@@ -28329,9 +28337,37 @@ function concealedKongOwnerOfMeld(meld) {
   }
 
   async function importCustomTileSheet(img) {
-    const detection = detectTilesFromSheet(img);
+    // 在進入偵測與建立 source 之前，先將圖片縮小到合理的範圍 (例如 2048px)
+    // 這樣可以避免後續 detectTilesFromSheet 或 buildCustomTileImportSource 因為大圖而失敗
+    const maxDim = 2048;
+    const rawW = img.naturalWidth || img.width || 1;
+    const rawH = img.naturalHeight || img.height || 1;
+    let finalImg = img;
+    
+    if (rawW > maxDim || rawH > maxDim) {
+      const scale = Math.min(maxDim / rawW, maxDim / rawH);
+      const nw = Math.max(1, Math.round(rawW * scale));
+      const nh = Math.max(1, Math.round(rawH * scale));
+      const c = document.createElement('canvas');
+      c.width = nw;
+      c.height = nh;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0, rawW, rawH, 0, 0, nw, nh);
+      
+      // 將縮小後的畫布轉回 Image 物件
+      const resizedImg = new Image();
+      const loadPromise = new Promise((resolve, reject) => {
+        resizedImg.onload = resolve;
+        resizedImg.onerror = reject;
+      });
+      resizedImg.src = c.toDataURL('image/jpeg', 0.9);
+      await loadPromise;
+      finalImg = resizedImg;
+    }
+
+    const detection = detectTilesFromSheet(finalImg);
     await ensureCustomTileImportReferenceCanvases();
-    const source = buildCustomTileImportSource(img, detection);
+    const source = buildCustomTileImportSource(finalImg, detection);
     const preview = buildCustomTileImportPreview(source, IMPORT_CROP_ADJUST_DEFAULT, IMPORT_CROP_ADJUST_DEFAULT);
     applyAutomaticCustomTileImportRecognition(preview, { pushUndo: false, rebuildMap: true });
     showCustomTileImportPreview(preview);
@@ -28797,7 +28833,7 @@ function concealedKongOwnerOfMeld(meld) {
     // 儲存前再次確認圖片已縮小（buildCustomTileImportMapFromPreview 已縮，此處为保险再過一次）
     let map = rawMap;
     try {
-      map = await resizeCustomTileImageMap(rawMap, 120, 160, 0.88);
+      map = await resizeCustomTileImageMap(rawMap, 120, 160, 0.82);
     } catch (e) { map = rawMap; }
     try {
       localStorage.setItem(CUSTOM_TILE_STORE_KEY, JSON.stringify(map));
@@ -31188,7 +31224,7 @@ function concealedKongOwnerOfMeld(meld) {
         sctx.fillStyle = '#ffffff';
         sctx.fillRect(0, 0, nw, nh);
         sctx.drawImage(crop, 0, 0, cw, ch, 0, 0, nw, nh);
-        candidates.push({ code: box.code, src: sc.toDataURL('image/jpeg', 0.88), priority });
+        candidates.push({ code: box.code, src: sc.toDataURL('image/jpeg', 0.82), priority });
       } catch (err) {}
     });
     const best = {};
@@ -34801,18 +34837,49 @@ function concealedKongOwnerOfMeld(meld) {
   }
 
   function buildCustomTileImportSource(img, detection) {
+    const rawW = img.naturalWidth || img.width || 1;
+    const rawH = img.naturalHeight || img.height || 1;
+    // 限制來源大圖最大尺寸（例如 2048px），避免 Canvas 記憶體溢出或 localStorage 空間不足
+    const maxSourceDim = 2048;
+    const scale = Math.min(1, maxSourceDim / rawW, maxSourceDim / rawH);
+    const nw = Math.max(1, Math.round(rawW * scale));
+    const nh = Math.max(1, Math.round(rawH * scale));
+    
     const fullCanvas = document.createElement('canvas');
-    fullCanvas.width = img.naturalWidth || img.width;
-    fullCanvas.height = img.naturalHeight || img.height;
+    fullCanvas.width = nw;
+    fullCanvas.height = nh;
     const fullCtx = fullCanvas.getContext('2d', { willReadFrequently: true });
-    fullCtx.drawImage(img, 0, 0);
-    const rows = detection && Array.isArray(detection.rows) ? detection.rows : (Array.isArray(detection) ? detection : []);
-    const rects = detection && Array.isArray(detection.rects) ? detection.rects : collectCustomTileImportRects(rows);
+    // 如果是縮放過的，檢測框的座標也需要跟著縮放
+    fullCtx.drawImage(img, 0, 0, rawW, rawH, 0, 0, nw, nh);
+    
+    let rows = detection && Array.isArray(detection.rows) ? detection.rows : (Array.isArray(detection) ? detection : []);
+    let rects = detection && Array.isArray(detection.rects) ? detection.rects : collectCustomTileImportRects(rows);
+    
+    // 如果有縮放，修正座標
+    if (scale < 0.999) {
+      const fixRect = r => {
+        if (!r) return r;
+        return { x: r.x * scale, y: r.y * scale, w: r.w * scale, h: r.h * scale };
+      };
+      rects = rects.map(fixRect);
+      rows = rows.map(row => {
+        if (!row) return row;
+        return Object.assign({}, row, {
+          rect: fixRect(row.rect),
+          boxes: (row.boxes || []).map(box => {
+            if (!box) return box;
+            return Object.assign({}, box, { rect: fixRect(box.rect) });
+          })
+        });
+      });
+    }
+
     return {
       canvas: fullCanvas,
-      width: fullCanvas.width,
-      height: fullCanvas.height,
-      imageSrc: fullCanvas.toDataURL('image/png'),
+      width: nw,
+      height: nh,
+      // 來源圖改用 JPEG 壓縮，大幅節省暫存空間
+      imageSrc: fullCanvas.toDataURL('image/jpeg', 0.85),
       rows,
       rects,
       frames: buildCustomTileImportSourceFrames(rows, rects)
@@ -35170,7 +35237,7 @@ function concealedKongOwnerOfMeld(meld) {
       if (!src || typeof src !== 'string') { resolve(src); return; }
       const mw = maxW || 120;
       const mh = maxH || 160;
-      const q = (typeof quality === 'number' && quality > 0 && quality <= 1) ? quality : 0.88;
+      const q = (typeof quality === 'number' && quality > 0 && quality <= 1) ? quality : 0.82;
       const img = new Image();
       img.onload = () => {
         try {
