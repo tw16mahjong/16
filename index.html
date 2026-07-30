@@ -9520,6 +9520,10 @@ function loadUiSettings() {
   }
 
   function refreshMiniDashboardCountdowns() {
+    // tw16_settings_pause_skip_countdown_20260730: 設定框開啟等暫停狀態時，倒數時限已被
+    // 清空（見 pauseGameForTileManagement），這裡的每秒多節點 DOM 寫入不會呈現任何有意義
+    // 的變化，只會在使用者操作設定畫面時徒增卡頓，直接跳過。
+    if (isUiPriorityModeActive() || isTileManagementPausingGame()) return;
     const dash = dom.tw16MiniDashboard || byId('tw16MiniDashboard');
     SEATS.forEach(seat => {
       if (dash && dash.classList.contains('show')) {
@@ -20055,6 +20059,10 @@ if (action === 'submenu-tiles') {
   }
 
   function checkStallMonitor(reason) {
+    // tw16_settings_pause_skip_stall_20260730: 設定框（或其他工具面板）暫停遊戲期間，
+    // driveSeat 本來就會被 isUiPriorityModeActive() 擋下，這裡的每秒訊號比對／踢動判斷
+    // 完全是白工，還會在使用者操作設定畫面時佔用主執行緒造成卡頓，直接跳過。
+    if (isUiPriorityModeActive() || isTileManagementPausingGame()) return { stalled: false, ageMs: 0, action: 'paused' };
     // tw16_stall_fix: AiDriveRunning 卡死保險
     // rAF 在背景/螢幕熄滅時永不觸發，driveSeat 會卡在 await yieldForUiPriorityFrame
     // 導致 tw16AiDriveRunning = true 永不釋放，stall monitor 因此完全失效
@@ -25033,11 +25041,23 @@ function showIntegrityReport(precomputed) {
     const table = smartAiBuildOpponentReadTable(seat);
     const read = table && table[targetSeat];
     const discardSet = (read && read.discardSet) || new Set();
+    // tw16_genbutsu_pond_wide_safety_20260730: 振聽不只看聽牌者自己的棄牌——牌局中「任何人」
+    // 打出的牌，只要沒被胡走，就是對聽牌者已證實安全的現物，該牌之後就不該再留在危險牌例
+    // 清單裡。牌局已結束（state.ended）時跳過這層擴大過濾：胡牌當下棄牌池的最後一張正是
+    // 剛胡走的那張牌（win 不會像吃碰槓一樣把棄牌從池中移除），危險牌例命中率／排名等事後
+    // 診斷需要精確找到它在候選清單中的名次，不能被這裡的安全過濾誤排除掉。
+    const pondSafeSet = state.ended ? discardSet : (function() {
+      const merged = new Set(discardSet);
+      (state.discards || []).forEach(function(d) {
+        if (d && d.tile && d.tile.code && !isFlower(d.tile.code)) merged.add(d.tile.code);
+      });
+      return merged;
+    })();
     const rawCandidates = Array.isArray(candidateCodes) && candidateCodes.length
       ? candidateCodes
       : ALL_NON_FLOWER_CODES;
     const candidateList = Array.from(new Set(rawCandidates.filter(function(code) {
-      return code && !isFlower(code) && !discardSet.has(code);
+      return code && !isFlower(code) && !pondSafeSet.has(code);
     })));
     if (!candidateList.length) return [];
 
