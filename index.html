@@ -4284,6 +4284,16 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     instanceId: 'i' + Math.random().toString(36).slice(2) + Date.now().toString(36),
     assignedSeat: '',
     hostClientId: '',
+    // tw16_hand_privacy_ecdh_20260802: 手牌加密用的本機金鑰狀態，只存在 net（不進 state）。
+    ecdhKeyPair: null,
+    ecdhPubJwk: null,
+    ecdhReady: false,
+    hostPubJwk: null,
+    hostAesKey: null,
+    guestAesKeys: {},
+    // tw16_channel_encrypt_20260803: 整條 Ably 頻道通訊加密用的房號推導金鑰（Promise），
+    // 連線時開始算，斷線時清空，只存在 net（不進 state）。
+    chanKeyPromise: null,
     ably: null,
     channel: null,
     syncChannel: null,
@@ -4555,6 +4565,14 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     if (!assigned) assigned = assignGuestSeat(msg.clientId, msg.name || '來賓', msg.playerKey || '', preferredSeat, msg.senderInstanceId || msg.sessionId || msg.instanceId || '');
     if (assigned) {
       keepGuestPlayerRecordHuman(assigned, msg, reason || 'message');
+      // tw16_hand_privacy_ecdh_20260802: 不只 join，sync/heartbeat 等各種來賓訊息
+      // 都可能帶著公鑰，這裡統一擷取並在跟快取不同時重新推導，減少「join 當下金鑰
+      // 還沒產生好」這種競態造成永遠沒完成金鑰交換的機率。
+      if (msg.pubKey && net.players[assigned] && JSON.stringify(msg.pubKey) !== JSON.stringify(net.players[assigned].pubKey || null)) {
+        net.players[assigned].pubKey = msg.pubKey;
+        if (net.guestAesKeys) delete net.guestAesKeys[assigned];
+        tw16EnsureHostGuestAesKey(assigned);
+      }
       const action = String(msg.action || '');
       const fromInitialJoin = action === 'guestInitialAutoplayOff' || action === 'join';
       const fromJoinOrSync = /hello|join|sync/.test(String(reason || 'message'));
@@ -4572,6 +4590,200 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     const next = ((Number(net.reliableSeatCounters[safeSeat]) || 0) % 999) + 1;
     net.reliableSeatCounters[safeSeat] = next;
     return '(' + networkSeatCodeChar(safeSeat) + String(next).padStart(3, '0') + ')';
+  }
+
+  // tw16_hand_privacy_ecdh_20260802: 房主廣播的快照走同一條 Ably 頻道，所有人（含
+  // 惡意玩家用開發者工具攔截）都收得到同一份訊息，光靠「不要傳」無法做到只給
+  // 特定收件人看——沒有真正的伺服器可以幫忙做per-recipient過濾。唯一能在公開
+  // 頻道上做到機密性的方法是非對稱加密：房主與每位來賓各自在瀏覽器本機產生一組
+  // ECDH 金鑰對，交換公鑰後各自推導出只有雙方知道的AES金鑰，再用它加密「該來賓
+  // 自己座位的手牌」。就算封包被任何人攔截，密文沒有對應私鑰也解不開。
+  // 任何一步失敗（瀏覽器不支援/尚未完成金鑰交換等）一律靜默回退，不擋住正常對局。
+  function tw16CryptoAvailable() {
+    return !!(window.crypto && window.crypto.subtle && typeof window.crypto.subtle.generateKey === 'function');
+  }
+  async function tw16EcdhGenerateKeyPair() {
+    return await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
+  }
+  async function tw16EcdhExportPublicJwk(keyPair) {
+    return await crypto.subtle.exportKey('jwk', keyPair.publicKey);
+  }
+  async function tw16EcdhDeriveAesKey(privateKey, peerPublicJwk) {
+    const peerPublicKey = await crypto.subtle.importKey('jwk', peerPublicJwk, { name: 'ECDH', namedCurve: 'P-256' }, true, []);
+    return await crypto.subtle.deriveKey({ name: 'ECDH', public: peerPublicKey }, privateKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+  function tw16BytesToBase64(bytes) {
+    let bin = '';
+    const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
+    return btoa(bin);
+  }
+  function tw16Base64ToBytes(b64) {
+    const bin = atob(String(b64 || ''));
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return arr;
+  }
+  async function tw16AesEncryptJson(aesKey, obj) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encoded = new TextEncoder().encode(JSON.stringify(obj));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, aesKey, encoded);
+    return { iv: tw16BytesToBase64(iv), ct: tw16BytesToBase64(ct) };
+  }
+  async function tw16AesDecryptJson(aesKey, payload) {
+    const iv = tw16Base64ToBytes(payload.iv);
+    const ctBytes = tw16Base64ToBytes(payload.ct);
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, aesKey, ctBytes);
+    return JSON.parse(new TextDecoder().decode(plain));
+  }
+  // 本機端每次連線都重新產生一組 ECDH 金鑰對，只保留在 net（不進 state，state 會被
+  // 廣播/存檔），私鑰永遠不離開本機瀏覽器。
+  async function tw16InitEcdhIdentity() {
+    if (!tw16CryptoAvailable()) { net.ecdhReady = false; return; }
+    try {
+      const kp = await tw16EcdhGenerateKeyPair();
+      const pubJwk = await tw16EcdhExportPublicJwk(kp);
+      net.ecdhKeyPair = kp;
+      net.ecdhPubJwk = pubJwk;
+      net.ecdhReady = true;
+      if (net.role === 'host') {
+        publishNetworkPlayers('ecdh-pubkey-ready');
+      } else if (net.role === 'guest') {
+        sendGuestJoin('ecdh-pubkey-ready');
+        if (net.hostPubJwk) tw16EnsureGuestHostAesKey();
+      }
+    } catch (e) {
+      net.ecdhReady = false;
+    }
+  }
+  // tw16_channel_encrypt_20260803: 房主與來賓收送封包走的是同一條公開 Ably 頻道，
+  // 頻道本身沒有存取控制——任何知道 API KEY 的人理論上都能訂閱到同一頻道，看到
+  // 明碼內容。為了讓「房主與來賓之間的通訊」本身具備機密性，改用雙方都知道的
+  // 房號當共用密語，透過 PBKDF2 推導出一把 AES-GCM 對稱金鑰，把整包 wire 封包
+  // （簡碼/壓縮之後、送出 Ably 之前）整包加密；收到封包時先嘗試解密，成功才進入
+  // 原本的解析流程。同房號的人都能解出來，但頻道外、不知道房號的第三方攔截到
+  // 封包也只看得到密文。任何一步失敗（瀏覽器不支援 WebCrypto、金鑰還沒算好等）
+  // 一律靜默回退成明碼傳輸，不擋住正常對局進行。
+  const NETWORK_CHANNEL_ENC_SALT = 'tw16-clean-mahjong-channel-v1';
+
+  async function tw16DeriveRoomChannelKey(room) {
+    if (!tw16CryptoAvailable() || !room) return null;
+    try {
+      const material = await crypto.subtle.importKey('raw', new TextEncoder().encode(String(room)), { name: 'PBKDF2' }, false, ['deriveKey']);
+      return await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt: new TextEncoder().encode(NETWORK_CHANNEL_ENC_SALT), iterations: 100000, hash: 'SHA-256' },
+        material,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt']
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function tw16GetRoomChannelKey() {
+    if (!net.chanKeyPromise) return null;
+    try { return await net.chanKeyPromise; } catch (e) { return null; }
+  }
+
+  // 把已經 pack/zip 過的 wire 訊息整包加密成 {iv, ct} 信封，直接交給 channel.publish()；
+  // 拿不到金鑰（尚未算好/瀏覽器不支援 WebCrypto）就回傳原始 wireMessage，退回明碼，
+  // 確保沒有 WebCrypto 的舊瀏覽器仍然能連線對局。
+  async function tw16EncryptChannelEnvelope(wireMessage) {
+    const key = await tw16GetRoomChannelKey();
+    if (!key || !wireMessage || typeof wireMessage !== 'object') return wireMessage;
+    try {
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encoded = new TextEncoder().encode(JSON.stringify(wireMessage));
+      const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+      return { __tw16ce: 1, iv: tw16BytesToBase64(iv), ct: tw16BytesToBase64(ct) };
+    } catch (e) {
+      return wireMessage;
+    }
+  }
+
+  // 收到封包後先嘗試解密：不是加密信封（例如對方金鑰還沒算好時送出的明碼、或
+  // 舊版相容封包）就原樣放行；有加密信封但目前金鑰未就緒就先丟棄等下一包（金鑰
+  // 算好前的少量封包本來就會遺失，走原本的重送/快照補齊機制即可）；密文本身
+  // 解密失敗（房號不同、資料損毀）也丟棄，不進入後續解析，避免壞資料。
+  async function tw16DecryptChannelEnvelope(data, source) {
+    if (!data || typeof data !== 'object' || data.__tw16ce !== 1) return data;
+    const key = await tw16GetRoomChannelKey();
+    if (!key) return null;
+    try {
+      const iv = tw16Base64ToBytes(data.iv);
+      const ctBytes = tw16Base64ToBytes(data.ct);
+      const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ctBytes);
+      return JSON.parse(new TextDecoder().decode(plain));
+    } catch (e) {
+      recordNetworkEvent('chan-decrypt-error', '頻道封包解密失敗，已略過', { source: source || '', message: e && e.message ? e.message : String(e) });
+      return null;
+    }
+  }
+
+  // guest 端：拿到房主公鑰後推導雙方共用的 AES 金鑰（只需算一次並快取）。
+  async function tw16EnsureGuestHostAesKey() {
+    if (net.hostAesKey || !net.ecdhKeyPair || !net.hostPubJwk) return net.hostAesKey || null;
+    try {
+      net.hostAesKey = await tw16EcdhDeriveAesKey(net.ecdhKeyPair.privateKey, net.hostPubJwk);
+    } catch (e) {
+      net.hostAesKey = null;
+    }
+    return net.hostAesKey;
+  }
+  // 房主端：某位來賓的公鑰到齊後，推導與該座位對應的 AES 金鑰（快取於 net.guestAesKeys[seat]）。
+  async function tw16EnsureHostGuestAesKey(seat) {
+    if (!seat || !net.ecdhKeyPair) return null;
+    if (net.guestAesKeys && net.guestAesKeys[seat]) return net.guestAesKeys[seat];
+    const p = net.players && net.players[seat];
+    if (!p || !p.pubKey) return null;
+    try {
+      const key = await tw16EcdhDeriveAesKey(net.ecdhKeyPair.privateKey, p.pubKey);
+      if (!net.guestAesKeys) net.guestAesKeys = {};
+      net.guestAesKeys[seat] = key;
+      return key;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // guest 端：收到房主專為自己座位加密的手牌後解密，覆蓋回本機 state.hands。
+  // 只接受 seat 對得上自己座位、handId 對得上目前這一局的封包，避免套用到舊局或別人的資料。
+  async function tw16ApplyPrivateHand(data) {
+    try {
+      if (!isOnlineGuest() || !data || data.handSeat !== net.assignedSeat) return;
+      const key = net.hostAesKey || await tw16EnsureGuestHostAesKey();
+      if (!key || !data.enc) return;
+      const handList = await tw16AesDecryptJson(key, data.enc);
+      if (!Array.isArray(handList)) return;
+      if (Number(data.handId || 0) !== Number(state.handId || 0)) return;
+      state.hands[net.assignedSeat] = handList;
+      renderAll();
+    } catch (e) {
+      // 解密失敗就維持現狀，等下一則快照/私密手牌訊息重試，不拋錯中斷流程。
+    }
+  }
+
+  // tw16_hand_privacy_ecdh_20260802: 針對每個已完成金鑰交換的座位，把該座位「真正」的
+  // 手牌（未經遮蔽的 state.hands[seat]）用只有房主與該來賓知道的AES金鑰加密後另外送出；
+  // 這一步是非同步的，獨立於同步的 publishNetworkSnapshot 之外進行，不拖慢原本的狀態同步。
+  // 沒有金鑰的座位（尚未完成交握、或該來賓瀏覽器不支援）直接跳過──此時
+  // tw16RedactHandsForWire 也不會遮蔽它，維持舊行為，保證對局不會卡住。
+  async function tw16PublishPrivateHands(reason) {
+    if (!isOnlineHost() || !net.channel) return;
+    const seats = networkSeatOrder().filter(s => s !== 'east');
+    for (const seat of seats) {
+      const key = await tw16EnsureHostGuestAesKey(seat);
+      if (!key) continue;
+      const handList = Array.isArray(state.hands[seat]) ? state.hands[seat] : [];
+      try {
+        const enc = await tw16AesEncryptJson(key, handList);
+        publishNetworkRoomMessage('privateHand', { handSeat: seat, handId: state.handId || 0, enc: enc }, reason || 'private-hand', { reliable: false });
+      } catch (e) {
+        // 加密/送出失敗就靜默略過，下次快照觸發時會再重試。
+      }
+    }
   }
 
   function makeNetworkPayloadCode() {
@@ -5122,12 +5334,24 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     const resolvedChannelName = channelName || networkRoomChannelName(net.room);
     const wireMessage = buildNetworkCompressedWireMessage(message);
     try {
-      channel.publish(NETWORK_ROOM_EVENT, wireMessage);
-      try {
-        message._ablyEventName = NETWORK_ROOM_EVENT;
-        message._ablyChannelName = resolvedChannelName;
-        message._ablyChannelState = channel && channel.state || '';
-      } catch (e) {}
+      message._ablyEventName = NETWORK_ROOM_EVENT;
+      message._ablyChannelName = resolvedChannelName;
+      message._ablyChannelState = channel && channel.state || '';
+    } catch (e) {}
+    try {
+      // tw16_channel_encrypt_20260803: 整包（簡碼/壓縮之後）用房號推導的 AES-GCM
+      // 金鑰加密再送出 Ably；加密是非同步的，但 channel.publish() 本來就是
+      // fire-and-forget（不等待 Ably 端 ack），所以這裡維持原本同步回傳 true 的
+      // 語意，實際送出改成加密完成後才呼叫，送出失敗一樣記錄事件方便除錯。
+      tw16EncryptChannelEnvelope(wireMessage).then(envelope => {
+        try {
+          channel.publish(NETWORK_ROOM_EVENT, envelope);
+        } catch (e) {
+          recordNetworkEvent('room-channel-error', '封包送出失敗｜' + (message.type || ''), { channel: resolvedChannelName || '', source: debugSource || '', message: e && e.message ? e.message : String(e) });
+        }
+      }).catch(e => {
+        recordNetworkEvent('room-channel-error', '封包加密失敗｜' + (message.type || ''), { channel: resolvedChannelName || '', source: debugSource || '', message: e && e.message ? e.message : String(e) });
+      });
       return true;
     } catch (e) {
       recordNetworkEvent('room-channel-error', '封包送出失敗｜' + (message.type || ''), { channel: resolvedChannelName || '', source: debugSource || '', message: e && e.message ? e.message : String(e) });
@@ -5302,7 +5526,10 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
       scoreChipSettings: currentScoreChipSettings(),
       handStarted: hasStartedNetworkHand(state),
       hostSessionId: net.instanceId,
-      hostClientId: net.clientId
+      hostClientId: net.clientId,
+      // tw16_hand_privacy_ecdh_20260802: 公鑰本來就是公開資訊，讓來賓能推導出
+      // 只有房主與該來賓知道的AES金鑰，藉此加密該來賓自己的手牌。
+      hostPubKey: net.ecdhPubJwk || null
     };
   }
 
@@ -5315,6 +5542,15 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     if (net.role !== 'guest' || !data) return false;
     if (Number(data.seq || 0) > 0) net.hostAdvertisedSeq = Math.max(Number(net.hostAdvertisedSeq || 0), Number(data.seq || 0));
     net.players = data.players ? clonePlain(data.players) : (net.players || {});
+    // tw16_hand_privacy_ecdh_20260802: 收到房主公鑰後推導共用AES金鑰，之後才能解密
+    // 房主傳來的「自己座位手牌」私密封包。
+    // tw16_hand_privacy_ecdh_20260802: 房主重新連線時金鑰會整個重產生，這裡要能偵測
+    // 公鑰跟之前不一樣就重新推導，否則房主重連後密文一律解不開、來賓永遠看不到自己手牌。
+    if (data.hostPubKey && JSON.stringify(data.hostPubKey) !== JSON.stringify(net.hostPubJwk || null)) {
+      net.hostPubJwk = data.hostPubKey;
+      net.hostAesKey = null;
+      tw16EnsureGuestHostAesKey();
+    }
     if (data.scoreChipSettings) applyHostScoreChipSettings(data.scoreChipSettings, source || 'players');
     const assigned = findAssignedGuestSeatForPlayer(net.clientId, net.playerKey, net.assignedSeat || state.viewSeat, net.instanceId);
     if (assigned) {
@@ -5401,6 +5637,9 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
         if (data.type === 'hello' && data.action === 'join') {
           const joinSeat = assignGuestSeat(data.clientId, data.name || '來賓', data.playerKey || '', data.preferredSeat || '', data.senderInstanceId || data.sessionId || '');
           if (joinSeat) {
+            // tw16_hand_privacy_ecdh_20260802: 公鑰擷取已統一交給上面的
+            // touchGuestPlayerFromMessage() 處理（同時涵蓋 join/sync/heartbeat），
+            // 這裡不用重複做一次。
             addLog((data.name || '來賓') + '入座 ' + SEAT_NAME[joinSeat]);
             publishNetworkAck(data, true, 'join-' + joinSeat);
           } else {
@@ -5446,6 +5685,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     }
     if (net.role === 'guest') {
       if (data.type === 'players') return applyNetworkPlayersPayload(data, source);
+      if (data.type === 'privateHand') { tw16ApplyPrivateHand(data); return true; }
       if (data.type === 'state' && data.state) return applySnapshotPayload(normalizeRoomStateToSnapshot(data));
       if (data.type === 'settlement') return applySettlementPayload(Object.assign({}, data, { kind: 'settlement', settlement: data.settlement || data.payload || null }));
       if (data.type === 'ack') return handleNetworkAck(Object.assign({}, data, { kind: 'ack' }));
@@ -9109,7 +9349,10 @@ function loadUiSettings() {
       preferredSeat: networkSeatOrder().includes(state.viewSeat) ? state.viewSeat : '',
       lastAppliedSnapshotSeq: Number(net.lastAppliedSnapshotSeq || 0),
       localAutoplay: false,
-      stopTimeoutTakeover: true
+      stopTimeoutTakeover: true,
+      // tw16_hand_privacy_ecdh_20260802: 公鑰是公開資訊，隨入座請求一併送給房主，
+      // 房主收到後可推導出只有雙方知道的AES金鑰，加密回傳給這位來賓自己的手牌。
+      pubKey: net.ecdhPubJwk || null
     }, reason || 'join');
     updateLobbyStatus(sent ? '已送出入座要求，等待房主分配座位…' : '入座要求送出失敗，正在重試…');
     clearGuestJoinRetry();
@@ -9732,6 +9975,50 @@ function loadUiSettings() {
     );
   }
 
+  // tw16_wall_privacy_20260802: 傳給來賓的快照絕不能帶著尚未摸出之牌的真實牌碼，
+  // 否則任何玩家用瀏覽器開發者工具攔截 Ably 訊息，就能看穿整副牌牆接下來所有人
+  // 要摸到的牌——不管洗牌演算法多安全，結果被原封不動廣播出去就等於沒洗牌。
+  // 只有 drawn:true（已經摸出、已屬於公開資訊的一部分）的牌才保留 code；
+  // 尚未摸出的牌只保留 renderWall() 畫牌背/位置需要的欄位（wallSeat/wallStack/
+  // wallLevel/wallCircleIndex/wallIndex/drawn/id），renderWall() 本身也不讀 code，
+  // 所以移除 code 完全不影響畫面。guest 端一律不會本機執行摸牌邏輯（driveSeat()
+  // 開頭即 isOnlineGuest() 直接 return，人類手動摸牌也是送 intent 給房主代為執行），
+  // 因此 wire 版本缺少未摸牌的 code 不會影響任何遊戲邏輯。
+  function tw16RedactWallTilesForWire(list) {
+    if (!Array.isArray(list)) return list;
+    return list.map(function (t) {
+      if (!t || typeof t !== 'object' || t.drawn === true) return t;
+      const clone = Object.assign({}, t);
+      delete clone.code;
+      return clone;
+    });
+  }
+
+  // tw16_hand_privacy_ecdh_20260802: 廣播快照中的暗牌（state.hands）預設也不該讓
+  // 所有人看光光——房主自己座位(east)一律遮蔽（房主本機渲染用的是真正的 state，
+  // 不吃這份 wire payload，遮蔽不影響房主自己看牌）；其他座位若已完成 ECDH 金鑰
+  // 交換（net.guestAesKeys[seat] 存在），一樣遮蔽並改由 tw16PublishPrivateHands()
+  // 另外加密送出給該座位的來賓本人；若還沒交握完成，維持原本明碼（舊行為、對局
+  // 不中斷），等交握完成後之後的快照就會自動改為遮蔽。melds/discards/flowers 等
+  // 本來就該公開的資訊不受影響。
+  function tw16RedactHandsForWire(hands) {
+    if (!hands || typeof hands !== 'object') return hands;
+    const out = {};
+    Object.keys(hands).forEach(function (seat) {
+      const list = hands[seat];
+      if (!Array.isArray(list)) { out[seat] = list; return; }
+      const shouldRedact = seat === 'east' || !!(net.guestAesKeys && net.guestAesKeys[seat]);
+      if (!shouldRedact) { out[seat] = list; return; }
+      out[seat] = list.map(function (t) {
+        if (!t || typeof t !== 'object') return t;
+        const clone = Object.assign({}, t);
+        delete clone.code;
+        return clone;
+      });
+    });
+    return out;
+  }
+
   function buildLeanSnapshotState() {
     return clonePlain({
       handId: state.handId,
@@ -9745,11 +10032,15 @@ function loadUiSettings() {
       pending: state.pending,
       actionDeadlineAt: state.actionDeadlineAt,
       debugPauseBy: state.debugPauseBy,
-      wall: state.wall,
-      physicalWall: state.physicalWall,
+      wall: tw16RedactWallTilesForWire(state.wall),
+      physicalWall: tw16RedactWallTilesForWire(state.physicalWall),
       openingDeal: state.openingDeal,
       fixedSeatLabelStyles: state.fixedSeatLabelStyles,
       labelPositionsLocked: state.labelPositionsLocked,
+      // tw16_hand_privacy_ecdh_20260802_REVERTED: 曾嘗試用 ECDH+AES-GCM 針對每個座位
+      // 做私密手牌傳遞,但實測發現同步快照(遮蔽版)與非同步解密合併之間有競態,
+      // 會讓來賓自己的手牌間歇性出現牌背/空白。目前先復原成原始明碼傳送,
+      // 避免對局出錯;牌牆(wall/physicalWall)的隱私修復不受影響,仍然保留。
       hands: state.hands,
       melds: state.melds,
       flowers: state.flowers,
@@ -9969,6 +10260,7 @@ function loadUiSettings() {
       if (stateMessage && stateMessage.messageId) payload._messageId = stateMessage.messageId;
       writeLatestHostSnapshotToLocalStorage(payload, snapshotReason);
       recordNetworkEvent('state-out', '送出房主狀態 #' + payload.seq + '｜' + snapshotReason, { seq: payload.seq, reason: snapshotReason, turn: state.turn, phase: state.phase, handId: state.handId || 0, messageId: payload._messageId || '', mirrored: stateMessage ? shouldMirrorNetworkMessageToControl(stateMessage) : false });
+      // tw16_hand_privacy_ecdh_20260802_REVERTED: 已停用,見 buildLeanSnapshotState 內說明。
       return payload;
     } catch (e) {
       addLog('Ably狀態送出失敗');
@@ -10489,6 +10781,10 @@ function loadUiSettings() {
       settlement: state.lastSettlement ? clonePlain(state.lastSettlement) : null,
       animation: consumeNetworkAnimationHint(reason || '')
     });
+    // tw16_hand_privacy_ecdh_20260802: 這是舊版相容協定(v3)的獨立廣播路徑，也會
+    // 呼叫 buildLeanSnapshotState() 遮蔽手牌，所以同樣要觸發私密手牌加密傳送，
+    // 否則走這條路徑的來賓會拿不到自己的手牌內容。
+    // tw16_hand_privacy_ecdh_20260802_REVERTED: 已停用,見 buildLeanSnapshotState 內說明。
     return publishAuthorityV3(payload, reason || 'state');
   }
 
@@ -11056,7 +11352,10 @@ function loadUiSettings() {
       lastAppliedSnapshotHash: String(net.lastAppliedSnapshotHash || ''),
       handId: state.handId || 0,
       phase: state.phase || '',
-      guestSyncing: true
+      guestSyncing: true,
+      // tw16_hand_privacy_ecdh_20260802: sync 頻繁地送，順便帶上公鑰，
+      // 避免 join 當下金鑰還沒產生好導致房主永遠沒拿到公鑰的競態情況。
+      pubKey: net.ecdhPubJwk || null
     }, reason || 'guest-sync');
     if (sent) {
       const maxStep = (Array.isArray(NETWORK_GUEST_SYNC_BACKOFF_STEPS_MS) ? NETWORK_GUEST_SYNC_BACKOFF_STEPS_MS.length : 1) - 1;
@@ -11187,9 +11486,19 @@ function loadUiSettings() {
     net.connectGeneration = connectGeneration;
     net.role = role;
     net.room = String(room).trim();
+    // tw16_channel_encrypt_20260803: 房主與來賓都用同一組房號當共用密語，一連線
+    // 就開始非同步推導這把頻道加密金鑰，之後送出/收到的封包都會用它整包加解密。
+    net.chanKeyPromise = tw16DeriveRoomChannelKey(net.room);
     net.name = String(name || '').trim() || '(請輸入)';
     net.playerKey = getStoredPlayerKey();
     net.instanceId = createNetworkInstanceId();
+    net.ecdhKeyPair = null;
+    net.ecdhPubJwk = null;
+    net.ecdhReady = false;
+    net.hostPubJwk = null;
+    net.hostAesKey = null;
+    net.guestAesKeys = {};
+    tw16InitEcdhIdentity();
     net.connected = false;
     net.connecting = true;
     net.connectionState = 'connecting';
@@ -11308,13 +11617,19 @@ function loadUiSettings() {
         if (!channel || net.room !== String(room).trim()) return;
         try {
           channel.subscribe(msg => {
-            const data = msg && msg.data;
-            if (data && typeof data === 'object') {
-              data._ablyEventName = msg && msg.name || '';
-              data._ablyChannelName = channelName;
-              data._ablyChannelState = channel && channel.state || '';
-            }
-            handleInboundNetworkMessage(data, sourcePrefix + '-' + ((msg && msg.name) || '*'));
+            const raw = msg && msg.data;
+            const eventSource = sourcePrefix + '-' + ((msg && msg.name) || '*');
+            // tw16_channel_encrypt_20260803: 先嘗試整包解密（若是舊版/尚未加密的
+            // 明碼封包，tw16DecryptChannelEnvelope 會原樣放行），解密完成後才進入
+            // 原本的重複封包判斷/佇列處理，確保後續邏輯拿到的一律是明碼物件。
+            tw16DecryptChannelEnvelope(raw, eventSource).then(data => {
+              if (data && typeof data === 'object') {
+                data._ablyEventName = msg && msg.name || '';
+                data._ablyChannelName = channelName;
+                data._ablyChannelState = channel && channel.state || '';
+              }
+              handleInboundNetworkMessage(data, eventSource);
+            });
           });
         } catch (e) {
           if (required) failConnection('Ably訂閱房間失敗：' + (e && e.message ? e.message : e));
@@ -11454,6 +11769,7 @@ function loadUiSettings() {
     net.connectionState = 'offline';
     net.role = 'offline';
     net.room = '';
+    net.chanKeyPromise = null;
     net.assignedSeat = '';
     net.lastAppliedSeq = 0;
     net.lastAppliedSnapshotSeq = 0;
