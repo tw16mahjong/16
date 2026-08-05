@@ -4797,6 +4797,29 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     return String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
   }
 
+  function tw16SimpleEncrypt(text, key) {
+    if (!text || !key) return text || '';
+    try {
+      let res = '';
+      for (let i = 0; i < text.length; i++) {
+        res += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+      }
+      return btoa(unescape(encodeURIComponent(res)));
+    } catch (e) { return ''; }
+  }
+
+  function tw16SimpleDecrypt(encoded, key) {
+    if (!encoded || !key) return '';
+    try {
+      let text = decodeURIComponent(escape(atob(encoded)));
+      let res = '';
+      for (let i = 0; i < text.length; i++) {
+        res += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+      }
+      return res;
+    } catch (e) { return ''; }
+  }
+
   function makeNetworkMessageId(type) {
     net.reliableSeq = (Number(net.reliableSeq) || 0) + 1;
     return [net.instanceId || 'local', net.role || 'offline', String(type || 'message'), Date.now().toString(36), String(net.reliableSeq)].join(':');
@@ -5527,6 +5550,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
       handStarted: hasStartedNetworkHand(state),
       hostSessionId: net.instanceId,
       hostClientId: net.clientId,
+      handMasterKey: (net.assignedSeat && net.players && net.players[net.assignedSeat] && net.players[net.assignedSeat].handMasterKey) || '',
       // tw16_hand_privacy_ecdh_20260802: 公鑰本來就是公開資訊，讓來賓能推導出
       // 只有房主與該來賓知道的AES金鑰，藉此加密該來賓自己的手牌。
       hostPubKey: net.ecdhPubJwk || null
@@ -5542,6 +5566,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     if (net.role !== 'guest' || !data) return false;
     if (Number(data.seq || 0) > 0) net.hostAdvertisedSeq = Math.max(Number(net.hostAdvertisedSeq || 0), Number(data.seq || 0));
     net.players = data.players ? clonePlain(data.players) : (net.players || {});
+    if (data.handMasterKey) net.handMasterKey = data.handMasterKey;
     // tw16_hand_privacy_ecdh_20260802: 收到房主公鑰後推導共用AES金鑰，之後才能解密
     // 房主傳來的「自己座位手牌」私密封包。
     // tw16_hand_privacy_ecdh_20260802: 房主重新連線時金鑰會整個重產生，這裡要能偵測
@@ -5686,7 +5711,7 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
     if (net.role === 'guest') {
       if (data.type === 'players') return applyNetworkPlayersPayload(data, source);
       if (data.type === 'privateHand') { tw16ApplyPrivateHand(data); return true; }
-      if (data.type === 'state' && data.state) return applySnapshotPayload(normalizeRoomStateToSnapshot(data));
+      if (data.type === 'state' && data.state) return applySnapshotPayload(normalizeRoomStateToSnapshot(tw16DecryptHandsInSnapshot(data)));
       if (data.type === 'settlement') return applySettlementPayload(Object.assign({}, data, { kind: 'settlement', settlement: data.settlement || data.payload || null }));
       if (data.type === 'ack') return handleNetworkAck(Object.assign({}, data, { kind: 'ack' }));
       if (data.type === 'textBroadcast') { handleTextBroadcast(Object.assign({}, data, { kind: 'textBroadcast' })); return true; }
@@ -5698,6 +5723,44 @@ html body .hand-bottom .hand-tile-row .tingWaitAssistGroupAllSeats[data-view-sea
 
 
   function byId(id) { return document.getElementById(id); }
+
+  function tw16DecryptHandsInSnapshot(msg) {
+    if (!msg || !msg.state || !msg.handPacketKey) return msg;
+    const packetKey = msg.handPacketKey;
+    const masterKey = net.handMasterKey || '';
+    const fullKey = masterKey + packetKey;
+    if (!fullKey) return msg;
+
+    const stateObj = unpackNetworkState(msg.state);
+    if (stateObj && stateObj.hands) {
+      Object.keys(stateObj.hands).forEach(seat => {
+        if (seat !== net.assignedSeat) return;
+        const list = stateObj.hands[seat];
+        if (Array.isArray(list)) {
+          list.forEach(t => {
+            if (t.enc && !t.code) {
+              t.code = tw16SimpleDecrypt(t.enc, fullKey);
+            }
+          });
+        }
+      });
+      if (stateObj.openingDeal && stateObj.openingDeal.hands) {
+        Object.keys(stateObj.openingDeal.hands).forEach(seat => {
+          if (seat !== net.assignedSeat) return;
+          const list = stateObj.openingDeal.hands[seat];
+          if (Array.isArray(list)) {
+            list.forEach(t => {
+              if (t.enc && !t.code) {
+                t.code = tw16SimpleDecrypt(t.enc, fullKey);
+              }
+            });
+          }
+        });
+      }
+      msg.state = packNetworkState(stateObj);
+    }
+    return msg;
+  }
 
   function createNetworkInstanceId() {
     const cryptoPart = (() => {
@@ -10004,22 +10067,42 @@ function loadUiSettings() {
   function tw16RedactHandsForWire(hands) {
     if (!hands || typeof hands !== 'object') return hands;
     const out = {};
+    const packetKey = net.handPacketKey || '';
     Object.keys(hands).forEach(function (seat) {
       const list = hands[seat];
       if (!Array.isArray(list)) { out[seat] = list; return; }
-      const shouldRedact = seat === 'east' || !!(net.guestAesKeys && net.guestAesKeys[seat]);
-      if (!shouldRedact) { out[seat] = list; return; }
+      const player = net.players && net.players[seat];
+      const masterKey = (player && player.handMasterKey) || '';
+      const fullKey = masterKey + packetKey;
+      const isHost = seat === 'east';
+      if (isHost || !fullKey) {
+        out[seat] = list;
+        return;
+      }
       out[seat] = list.map(function (t) {
         if (!t || typeof t !== 'object') return t;
         const clone = Object.assign({}, t);
-        delete clone.code;
+        if (clone.code) {
+          clone.enc = tw16SimpleEncrypt(clone.code, fullKey);
+          delete clone.code;
+        }
         return clone;
       });
     });
     return out;
   }
 
+  function tw16RedactOpeningDealForWire(opening) {
+    if (!opening || typeof opening !== 'object') return opening;
+    const out = Object.assign({}, opening);
+    if (opening.hands) {
+      out.hands = tw16RedactHandsForWire(opening.hands);
+    }
+    return out;
+  }
+
   function buildLeanSnapshotState() {
+    net.handPacketKey = makeNetworkPayloadCode();
     return clonePlain({
       handId: state.handId,
       windRound: state.windRound,
@@ -10034,7 +10117,7 @@ function loadUiSettings() {
       debugPauseBy: state.debugPauseBy,
       wall: tw16RedactWallTilesForWire(state.wall),
       physicalWall: tw16RedactWallTilesForWire(state.physicalWall),
-      openingDeal: state.openingDeal,
+      openingDeal: tw16RedactOpeningDealForWire(state.openingDeal),
       fixedSeatLabelStyles: state.fixedSeatLabelStyles,
       labelPositionsLocked: state.labelPositionsLocked,
       // tw16_hand_privacy_ecdh_20260802_REVERTED: 曾嘗試用 ECDH+AES-GCM 針對每個座位
@@ -10250,6 +10333,7 @@ function loadUiSettings() {
         hostClientId: payload.hostClientId,
         players: clonePlain(payload.players || {}),
         state: packNetworkState(payload.state || {}),
+        handPacketKey: net.handPacketKey || '',
         settlement: payload.settlement || null,
         animation: payload.animation || null,
         stateHash: stateHash,
@@ -10715,7 +10799,7 @@ function loadUiSettings() {
     const available = networkSeatOrder().filter(s => guestSeatAvailableForNewAssignment(s, now));
     if (!available.length) return '';
     const seat = available.includes(preferredSeat) ? preferredSeat : available[Math.floor(Math.random() * available.length)];
-    net.players[seat] = { clientId, playerKey: playerKey || '', instanceId: instanceId || '', name: name || '來賓', seat, role: 'guest', human: true, autoplay: false, lastSeenAt: Date.now() };
+    net.players[seat] = { clientId, playerKey: playerKey || '', instanceId: instanceId || '', name: name || '來賓', seat, role: 'guest', human: true, autoplay: false, lastSeenAt: Date.now(), handMasterKey: makeNetworkPayloadCode() };
     state.seatAutoPlay[seat] = false;
     removeDuplicateGuestPlayerRecords(seat, clientId, playerKey, 'assign-new');
     return seat;
@@ -10815,6 +10899,7 @@ function loadUiSettings() {
     if (net.role === 'guest') {
       if (data.kind === 'players') {
         net.players = data.players ? clonePlain(data.players) : (net.players || {});
+    if (data.handMasterKey) net.handMasterKey = data.handMasterKey;
         const assigned = findAssignedGuestSeatForPlayer(net.clientId, net.playerKey, net.assignedSeat || state.viewSeat, net.instanceId);
         if (assigned) {
           net.assignedSeat = assigned;
@@ -11018,7 +11103,8 @@ function loadUiSettings() {
       handId: state.handId || 0,
       phase: state.phase || '',
       actionId: state.lastActionId || 0,
-      pendingActionId: pendingActionIdForNetwork()
+      pendingActionId: pendingActionIdForNetwork(),
+      handMasterKey: (net.players && net.players[msg.seat] && net.players[msg.seat].handMasterKey) || ''
     }, reason || 'ack');
   }
 
@@ -11028,6 +11114,7 @@ function loadUiSettings() {
     if (msg.toClientId && msg.toClientId !== net.clientId) return false;
     if (msg.playerKey && msg.playerKey !== net.playerKey) return false;
     if (msg.intentId && net.pendingIntentAcks[msg.intentId]) delete net.pendingIntentAcks[msg.intentId];
+    if (msg.handMasterKey) net.handMasterKey = msg.handMasterKey;
     if (!msg.accepted && msg.action === 'discard' && hasPendingGuestLocalDiscard(msg.seat || net.assignedSeat || '')) {
       rollbackGuestLocalDiscardPending('ack-reject:' + (msg.reason || 'rejected'));
       requestNetworkSync('discard-ack-reject');
@@ -11498,6 +11585,7 @@ function loadUiSettings() {
     net.hostPubJwk = null;
     net.hostAesKey = null;
     net.guestAesKeys = {};
+    net.handMasterKey = role === 'host' ? makeNetworkPayloadCode() : '';
     tw16InitEcdhIdentity();
     net.connected = false;
     net.connecting = true;
@@ -26426,6 +26514,8 @@ function showIntegrityReport(precomputed) {
         // 不含任何可能中斷迴圈的分支。不管下面第二階段發生什麼事，這裡畫出來的牌永遠
         // 是完整、正確數量的。
         hand.forEach((tileObj) => {
+          const faceUp = shouldRenderSeatHandFaceUp(seat);
+          if (faceUp && !tileObj.code) return;
           const node = createTileElement(tileObj, false);
           const decorated = decorateFaceUpHandTile(node, seat, pos, tileObj, revealHand, strategySuggestedTileId, dangerCodeSet, dangerScoreMap, maxDangerScore);
           const renderedNode = decorated || node;
