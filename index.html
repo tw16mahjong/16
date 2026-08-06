@@ -2615,6 +2615,8 @@ html body .hand .hand-row .tile.face-image.settlement-hand-win-tile::before{
 .currentTileImagePreviewCell{display:grid;justify-items:center;align-items:start;gap:1px;width:var(--current-preview-tile-w);min-width:0;}
 .currentTileImagePreviewCell .tile{width:var(--current-preview-tile-w)!important;height:calc(var(--current-preview-tile-w) * 1.43)!important;font-size:calc(var(--current-preview-tile-w) * .68)!important;border-radius:0!important;}
 .currentTileImagePreviewName{font-size:clamp(7px,calc(var(--current-preview-tile-w) * .28),10px);font-weight:900;line-height:1.05;color:#bfdbfe;text-align:center;white-space:nowrap;}
+.currentTileImagePreviewActions{display:flex;justify-content:center;margin:2px 0 4px;}
+.currentTileImagePreviewActions .btn{padding:8px 16px;font-size:13px;}
 .tileSkinSetPreview{--skin-preview-tile-w:clamp(18px,6.4vw,34px);display:grid;gap:7px;width:min(100%,760px);margin:8px auto 0;text-align:left;}
 .tileSkinSetPreview.compact{--skin-preview-tile-w:clamp(13px,4.6vw,22px);gap:3px;margin:7px 0 0;width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;}
 .tileSkinSetPreviewNote{font-size:12px;font-weight:900;color:#cbd5e1;line-height:1.35;text-align:center;}
@@ -28565,12 +28567,50 @@ function concealedKongOwnerOfMeld(meld) {
       }).join('');
       return '<div class="currentTileImagePreviewRow" style="--current-preview-cols:' + row.length + '"><div class="currentTileImagePreviewTitle">' + escapeHtml(rowTitles[rowIndex] || '') + '</div><div class="currentTileImagePreviewTiles">' + tiles + '</div></div>';
     }).join('');
-    return '<div class="currentTileImagePreview"><div class="currentTileImagePreviewNote">' + escapeHtml(note) + '</div>' + body + '</div>';
+    const actions = '<div class="currentTileImagePreviewActions"><button class="btn" id="currentTableTileImageExportPngBtn" type="button">存成整張牌圖</button></div>';
+    return '<div class="currentTileImagePreview"><div class="currentTileImagePreviewNote">' + escapeHtml(note) + '</div>' + actions + body + '</div>';
   }
 
   function showCurrentTableTileImagePreview() {
     const tm = Number(state.tableMode) || 4;
     openUtilityPanel('本局牌圖預覽（' + tm + '人模式）', buildCurrentTableTileImagePreviewHtml());
+    const exportBtn = byId('currentTableTileImageExportPngBtn');
+    if (exportBtn) exportBtn.addEventListener('click', exportCurrentTableTileImagePng);
+  }
+
+  async function exportCurrentTableTileImagePng() {
+    const rowTitles = ['萬子', '索子', '筒子', '字牌', '花牌'];
+    const rows = currentTableTilePreviewRows();
+    const map = {};
+    const rowsForRender = rows.map((row, rowIndex) => {
+      const codes = [];
+      row.forEach(item => {
+        const src = customTileImageSrc(item.gameCode) || TILE_IMAGE_MAP[tileImageKey(item.gameCode)] || '';
+        if (!src) return;
+        map[item.importCode] = src;
+        codes.push(item.importCode);
+      });
+      return { label: rowTitles[rowIndex] || '', codes };
+    }).filter(row => row.codes.length);
+    if (!rowsForRender.length) {
+      addLog('本局尚無可匯出的牌面');
+      return;
+    }
+    let images;
+    try {
+      images = await loadCustomTileSheetImages(map, rowsForRender);
+    } catch (err) {
+      alert('存成整張牌圖失敗：' + (err && err.message ? err.message : err));
+      return;
+    }
+    try {
+      const blob = await renderCustomTileSheetPngBlob(rowsForRender, images);
+      const tm = Number(state.tableMode) || 4;
+      downloadBlob(blob, 'tw16_table_tiles_' + tm + 'p_' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.png');
+      addLog('已存成整張牌圖 PNG');
+    } catch (err) {
+      alert('存成整張牌圖失敗：' + (err && err.message ? err.message : err));
+    }
   }
 
   function customTileSkinPreviewTileHtml(importCode, tiles) {
@@ -29318,6 +29358,7 @@ function concealedKongOwnerOfMeld(meld) {
     const roundSlider = byId('customTileImportCornerRadius');
     const codeSelect = byId('customTileImportCodeSelect');
     const exportZipBtn = byId('customTileImportExportZipBtn');
+    const exportSheetPngBtn = byId('customTileImportExportSheetPngBtn');
     const addBoxBtn = byId('customTileImportAddBoxBtn');
     const deleteBoxBtn = byId('customTileImportDeleteBoxBtn');
     const undoBtn = byId('customTileImportUndoBtn');
@@ -29335,6 +29376,7 @@ function concealedKongOwnerOfMeld(meld) {
     if (acceptBtn) acceptBtn.addEventListener('click', acceptPendingCustomTileImport);
     if (rejectBtn) rejectBtn.addEventListener('click', rejectPendingCustomTileImport);
     if (exportZipBtn) exportZipBtn.addEventListener('click', exportPendingCustomTileImportZip);
+    if (exportSheetPngBtn) exportSheetPngBtn.addEventListener('click', exportPendingCustomTileImportSheetPng);
     if (addBoxBtn) addBoxBtn.addEventListener('click', startCustomTileImportBoxDrawMode);
     if (deleteBoxBtn) deleteBoxBtn.addEventListener('click', deleteSelectedCustomTileImportBoxes);
     if (undoBtn) undoBtn.addEventListener('click', undoCustomTileImportStep);
@@ -29816,6 +29858,100 @@ function concealedKongOwnerOfMeld(meld) {
     addLog('已匯出裁切牌圖 ZIP');
   }
 
+  async function exportPendingCustomTileImportSheetPng() {
+    const preview = pendingCustomTileImport;
+    const map = normalizeCustomTileImageMapForRuntime(buildCustomTileImportMapFromPreview(preview));
+    const rows = IMPORT_TILE_CODES.map((row, rowIndex) => ({
+      label: IMPORT_ROW_LABELS[rowIndex] || '',
+      codes: row.filter(code => !!map[code])
+    })).filter(row => row.codes.length);
+    if (!rows.length) {
+      addLog('沒有可匯出的裁切牌圖');
+      return;
+    }
+    let images;
+    try {
+      images = await loadCustomTileSheetImages(map, rows);
+    } catch (err) {
+      alert('匯出總覽PNG失敗：' + (err && err.message ? err.message : err));
+      return;
+    }
+    try {
+      const blob = await renderCustomTileSheetPngBlob(rows, images);
+      downloadBlob(blob, 'tw16_tiles_sheet_' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.png');
+      addLog('已匯出牌圖總覽 PNG');
+    } catch (err) {
+      alert('匯出總覽PNG失敗：' + (err && err.message ? err.message : err));
+    }
+  }
+
+  function loadCustomTileSheetImages(map, rows) {
+    const codes = [];
+    rows.forEach(row => row.codes.forEach(code => codes.push(code)));
+    const loaders = codes.map(code => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve({ code, img });
+      img.onerror = () => reject(new Error('圖片載入失敗：' + code));
+      img.src = map[code];
+    }));
+    return Promise.all(loaders).then(list => {
+      const byCode = {};
+      list.forEach(item => { byCode[item.code] = item.img; });
+      return byCode;
+    });
+  }
+
+  function renderCustomTileSheetPngBlob(rows, images) {
+    return new Promise((resolve, reject) => {
+      try {
+        // 高解析度：每張牌以固定寬高繪製，確保輸出圖檔清晰銳利。
+        const cellW = 240;
+        const cellH = 320;
+        const gap = 14;
+        const borderW = 3;
+        const padding = 28;
+        const labelH = 30;
+        const maxCols = Math.max.apply(null, rows.map(row => row.codes.length).concat([1]));
+        const sheetW = padding * 2 + maxCols * cellW + Math.max(0, maxCols - 1) * gap;
+        const sheetH = padding * 2 + rows.reduce((sum, row) => sum + labelH + cellH + gap, 0);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(sheetW);
+        canvas.height = Math.round(sheetH);
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        let y = padding;
+        rows.forEach(row => {
+          ctx.fillStyle = '#111111';
+          ctx.font = 'bold 18px "Noto Sans TC","Microsoft JhengHei",sans-serif';
+          ctx.textBaseline = 'top';
+          ctx.fillText(row.label, padding, y);
+          y += labelH;
+          let x = padding;
+          row.codes.forEach(code => {
+            const img = images[code];
+            if (img) {
+              ctx.drawImage(img, x, y, cellW, cellH);
+            }
+            // 細黑框
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = borderW;
+            ctx.strokeRect(x + borderW / 2, y + borderW / 2, cellW - borderW, cellH - borderW);
+            x += cellW + gap;
+          });
+          y += cellH + gap;
+        });
+        canvas.toBlob(blob => {
+          if (blob) resolve(blob); else reject(new Error('產生PNG失敗'));
+        }, 'image/png', 1);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
   function zipSafeTileFilename(code) {
     const label = importTileDisplayText(code).replace(/[\\/:*?"<>|\s]+/g, '_');
     return String(code || 'tile').replace(/[\\/:*?"<>|\s]+/g, '_') + '_' + label + '.png';
@@ -29961,6 +30097,7 @@ function concealedKongOwnerOfMeld(meld) {
       + '<div class="customTileImportRoundControl"><button type="button" class="customTileImportRoundBtn" id="customTileImportRoundCornerBtn">加圓角</button><input id="customTileImportCornerRadius" type="range" min="' + IMPORT_CORNER_RADIUS_MIN + '" max="' + IMPORT_CORNER_RADIUS_MAX + '" step="1" value="' + cornerRadius + '" aria-label="圓角幅度"><span class="customTileImportControlValue" id="customTileImportCornerRadiusValue">' + escapeHtml(formatCustomTileImportCornerRadius(cornerRadius)) + '</span><button type="button" class="customTileImportRedPointSelectBtn" id="customTileImportRedPointSelectAllBtn">紅點全選</button><button type="button" class="customTileImportRedPointSelectBtn" id="customTileImportRedPointClearSelectionBtn">紅點全不選</button></div>'
       + '</div><div class="customTileImportActions">'
       + '<button class="btn" id="customTileImportExportZipBtn" type="button">匯出每張牌ZIP</button>'
+      + '<button class="btn" id="customTileImportExportSheetPngBtn" type="button">存成總覽PNG</button>'
       + '<button class="btn" id="customTileImportAcceptBtn" type="button">建檔並套用</button>'
       + '<button class="btn red" id="customTileImportRejectBtn" type="button">取消編輯</button>'
       + '</div></div>';
